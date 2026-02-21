@@ -255,34 +255,3 @@ log_dir: "outputs/logs"
 | `numpy` | ≥1.24 | Numerical ops |
 | `matplotlib` | ≥3.7 | Visualization |
 
----
-
-## 📄 Citation
-
-If you use this work, please cite:
-
-```bibtex
-@misc{cardiac_shape_gnn,
-  author       = {YOUR NAME},
-  title        = {Cardiac Shape GNN: LV Reconstruction from SSM via Graph Neural Networks},
-  year         = {2024},
-  publisher    = {GitHub},
-  url          = {https://github.com/YOUR_USERNAME/cardiac-shape-gnn}
-}
-```
-
-**Also cite the UK Digital Heart SSM:**
-```bibtex
-@article{bai2015bi,
-  title        = {A bi-ventricular cardiac atlas built from 1000+ high resolution MR images},
-  author       = {Bai, Wenjia and others},
-  journal      = {Medical image analysis},
-  year         = {2015}
-}
-```
-
----
-
-## 📝 License
-
-MIT License. See [LICENSE](LICENSE).
