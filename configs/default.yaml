@@ -1,0 +1,65 @@
+# =============================================================================
+# Cardiac Shape GNN — Default Configuration
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Data Paths
+# ---------------------------------------------------------------------------
+ssm_dir: "Statistical-Shape-Model"          # UK Digital Heart SSM repo root
+ssm_mean_mesh: "LV_ED_mean.vtk"             # Mean shape VTK file (relative to ssm_dir)
+ssm_pca_modes: "LV_ED_pc_100_modes.csv.gz"  # Principal components
+ssm_pca_vars:  "LV_ED_var_100_modes.csv.gz" # Explained variances
+
+data_dir: "data/heart_dataset_gnn"          # Output directory for generated dataset
+acdc_dir: "data/acdc"                       # Root of ACDC patient folders
+
+# ---------------------------------------------------------------------------
+# Dataset Generation
+# ---------------------------------------------------------------------------
+num_samples: 500          # Number of synthetic LV shapes to generate
+num_pca_modes: 10         # Number of PCA modes used for sampling
+pca_sigma_clip: 3.0       # Clip weights to ±(pca_sigma_clip * std)
+num_slices: 20            # Z-axis slices per shape
+points_per_contour: 80    # Contour sample points (endo + epi per slice)
+slice_epsilon: 2.0        # Slice thickness in mm (±epsilon around each z)
+
+# ---------------------------------------------------------------------------
+# Graph Construction
+# ---------------------------------------------------------------------------
+knn_intra_slice: 8        # k-NN edges within each Z-slice
+knn_inter_slice: 3        # k-NN edges between adjacent Z-slices
+
+# ---------------------------------------------------------------------------
+# Model Architecture
+# ---------------------------------------------------------------------------
+node_features: 5          # Input node feature dimension [x, y, z, r, tissue_type]
+hidden_dim: 128           # Hidden layer width
+deformation_cap: 20.0     # tanh output is scaled by this (mm)
+
+# ---------------------------------------------------------------------------
+# Training
+# ---------------------------------------------------------------------------
+batch_size: 16
+learning_rate: 3.0e-4
+weight_decay: 1.0e-5
+epochs: 100
+smoothness_weight: 0.05   # λ for Laplacian smoothness loss
+val_split: 0.2
+seed: 42
+num_workers: 4            # DataLoader workers
+pin_memory: true          # Set false if using CPU only
+
+# Early stopping
+patience: 15              # Stop if val loss does not improve for this many epochs
+
+# LR scheduler (CosineAnnealingLR)
+lr_scheduler: true
+lr_min: 1.0e-6
+
+# ---------------------------------------------------------------------------
+# Outputs
+# ---------------------------------------------------------------------------
+checkpoint_dir: "outputs/checkpoints"
+log_dir: "outputs/logs"
+viz_dir: "outputs/visualizations"
+save_every: 10            # Save checkpoint every N epochs (in addition to best)
