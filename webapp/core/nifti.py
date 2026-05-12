@@ -64,7 +64,7 @@ def select_frame(data: np.ndarray, frame: int = 0) -> np.ndarray:
 def case_metadata(case: dict[str, Any]) -> dict[str, Any]:
     data = case["mri"]["data"]
     z_count = int(data.shape[2])
-    return {
+    meta = {
         "id": case["id"],
         "name": case["name"],
         "shape": [int(v) for v in data.shape],
@@ -73,7 +73,14 @@ def case_metadata(case: dict[str, Any]) -> dict[str, Any]:
         "frames": frame_count(data),
         "hasSegmentation": case.get("seg") is not None,
         "centerSlice": z_count // 2,
+        "hasEs": case.get("mri_es") is not None,
+        "hasEsSeg": case.get("seg_es") is not None,
     }
+    if case.get("mri_es") is not None:
+        es_data = case["mri_es"]["data"]
+        meta["esSlices"] = int(es_data.shape[2])
+        meta["esFrames"] = frame_count(es_data)
+    return meta
 
 
 def _robust_window(volume: np.ndarray) -> tuple[float, float]:

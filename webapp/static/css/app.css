@@ -35,6 +35,89 @@
 /* Mode-based visibility on results page */
 body.mode-3d .wt-only { display: none !important; }
 
+/* Phase toggle buttons */
+.phase-toggle, .results-phase-toggle {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.phase-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: var(--bg-warm);
+  color: var(--ink-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+}
+
+.phase-btn:hover {
+  border-color: var(--border-hover);
+  background: var(--white);
+}
+
+.phase-btn.active {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.results-phase-toggle {
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+/* Dual upload label */
+.dual-upload-label {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Slice dot legend */
+.dot.slice-dot {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--ink-muted);
+}
+
+/* Dual viewport labels */
+.viewport-label {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  z-index: 10;
+  padding: 4px 14px;
+  border-radius: 20px;
+  background: rgba(231, 76, 94, 0.85);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+}
+
+.viewport-label-es {
+  background: rgba(245, 158, 11, 0.85);
+}
+
+/* Dual viewport wrapper divider */
+.dual-viewport-wrapper {
+  background: #0d1117;
+}
+
+.dual-viewport-wrapper > div {
+  overflow: hidden;
+  border-radius: 4px;
+}
+
 *, *::before, *::after { box-sizing: border-box; }
 
 html {

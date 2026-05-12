@@ -138,8 +138,8 @@ def _list_acdc_patients() -> list[Path]:
     return sorted(p for p in DEMO_DATA_ROOT.iterdir() if p.is_dir() and p.name.startswith("patient"))
 
 
-def _load_acdc_patient(patient_dir: Path) -> tuple[dict, dict, dict]:
-    """Load a real ACDC patient: 4D MRI + ED frame + ED GT segmentation."""
+def _load_acdc_patient(patient_dir: Path) -> tuple[dict, dict, dict, dict | None, dict | None]:
+    """Load a real ACDC patient: 4D MRI + ED frame + ED GT segmentation + ES if available."""
     from core.nifti import resolve_nifti_path
 
     info_path = patient_dir / "Info.cfg"
@@ -152,6 +152,7 @@ def _load_acdc_patient(patient_dir: Path) -> tuple[dict, dict, dict]:
 
     patient_name = patient_dir.name
     ed_frame = int(info.get("ED", 1))
+    es_frame = int(info.get("ES", 1))
     group = info.get("Group", "")
 
     # Try loading 4D volume
@@ -163,13 +164,28 @@ def _load_acdc_patient(patient_dir: Path) -> tuple[dict, dict, dict]:
     gt_path = patient_dir / gt_pattern
     seg = load_nifti(gt_path)
 
+    # Load ES frame MRI and segmentation if available
+    es_mri = None
+    es_seg = None
+    try:
+        es_mri_path = patient_dir / f"{patient_name}_frame{es_frame:02d}.nii"
+        es_mri = load_nifti(es_mri_path)
+    except Exception:
+        pass
+    try:
+        es_gt_path = patient_dir / f"{patient_name}_frame{es_frame:02d}_gt.nii"
+        es_seg = load_nifti(es_gt_path)
+    except Exception:
+        pass
+
     patient_info = {
         "ed_frame": ed_frame,
+        "es_frame": es_frame,
         "group": group,
         "height": info.get("Height"),
         "weight": info.get("Weight"),
     }
-    return mri, seg, patient_info
+    return mri, seg, patient_info, es_mri, es_seg
 
 
 @app.get("/api/patients")
@@ -234,7 +250,7 @@ def demo_case():
         patient_dir = random.choice(patients)
 
     try:
-        mri, seg, patient_info = _load_acdc_patient(patient_dir)
+        mri, seg, patient_info, es_mri, es_seg = _load_acdc_patient(patient_dir)
         group_label = f" ({patient_info['group']})" if patient_info.get('group') else ""
         case = _register_case(
             f"{patient_dir.name}{group_label}",
@@ -242,6 +258,10 @@ def demo_case():
             seg,
         )
         case["patient_info"] = patient_info
+        if es_mri is not None:
+            case["mri_es"] = es_mri
+        if es_seg is not None:
+            case["seg_es"] = es_seg
     except Exception as exc:
         log.exception("Failed to load ACDC patient %s", patient_dir.name)
         return _json_error(f"Failed to load patient: {exc}", 500)
@@ -267,6 +287,16 @@ def upload_case():
         seg = load_nifti(seg_path) if seg_path is not None else None
         case_name = request.form.get("caseName") or Path(mri["path"]).stem
         case = _register_case(case_name, mri, seg)
+
+        # Wall-thickness mode: also accept ES files
+        if "mri_es" in request.files and request.files["mri_es"].filename:
+            es_mri_path = _save_upload(request.files["mri_es"], case_dir)
+            es_seg_path = None
+            if "segmentation_es" in request.files and request.files["segmentation_es"].filename:
+                es_seg_path = _save_upload(request.files["segmentation_es"], case_dir)
+            case["mri_es"] = load_nifti(es_mri_path)
+            case["seg_es"] = load_nifti(es_seg_path) if es_seg_path else None
+
     except (ValueError, FileNotFoundError, NiftiLoadError) as exc:
         return _json_error(str(exc), 400)
     except Exception as exc:
@@ -283,10 +313,94 @@ def get_slice(case_id: str):
         return _json_error("Case not found.", 404)
     z = request.args.get("z", case["mri"]["data"].shape[2] // 2, type=int)
     frame = request.args.get("frame", 0, type=int)
+    phase = request.args.get("phase", "ed")  # "ed" or "es"
     try:
+        if phase == "es" and case.get("mri_es") is not None:
+            es_case = {
+                "id": case["id"],
+                "mri": case["mri_es"],
+                "seg": case.get("seg_es"),
+                "drawn_masks": case.get("drawn_masks_es", {}),
+            }
+            return jsonify(slice_payload(es_case, z=z, frame=frame))
         return jsonify(slice_payload(case, z=z, frame=frame))
     except Exception as exc:
         return _json_error(f"Could not render slice: {exc}", 500)
+
+
+@app.get("/api/case/<case_id>/slice-contours")
+def get_slice_contours(case_id: str):
+    """Return ordered segmentation contours in the same world-mm space as the 3D mesh."""
+    case = _get_case(case_id)
+    if case is None:
+        return _json_error("Case not found.", 404)
+    phase = request.args.get("phase", "ed")
+    frame = request.args.get("frame", 0, type=int)
+
+    seg_dict = case.get("seg")
+    mri_dict = case["mri"]
+    if phase == "es" and case.get("seg_es") is not None:
+        seg_dict = case["seg_es"]
+        mri_dict = case.get("mri_es", mri_dict)
+
+    if seg_dict is None:
+        return jsonify({"slices": []})
+
+    seg_vol = select_frame(seg_dict["data"], frame)
+    spacing = mri_dict["zooms"]
+    affine = seg_dict.get("affine")
+    if affine is None:
+        affine = mri_dict.get("affine")
+    dz = float(spacing[2])
+    n_slices = int(seg_vol.shape[2])
+
+    try:
+        from skimage import measure as sk_measure
+    except ImportError:
+        return jsonify({"slices": [], "spacing": list(spacing)})
+
+    # Use the same vox2world as extract_contours in sdf_model.py
+    def vox2world(rows, cols, z_idx):
+        """Transform voxel coords to world-mm coords using affine (XY) + dz (Z)."""
+        if affine is not None:
+            vox = np.column_stack([cols, rows, np.zeros(len(rows)), np.ones(len(rows))])
+            world = (np.asarray(affine) @ vox.T).T
+            world[:, 2] = z_idx * dz
+            return world[:, :3]
+        else:
+            # Fallback: simple spacing
+            return np.column_stack([
+                rows * spacing[0],
+                cols * spacing[1],
+                np.full(len(rows), z_idx * dz),
+            ])
+
+    slices_out = []
+    for z in range(n_slices):
+        seg_slice = np.rint(seg_vol[:, :, z]).astype(np.int16)
+        if not np.any(seg_slice > 0):
+            continue
+        slice_data = {"z": z, "zMm": float(z * dz), "contours": []}
+        for lbl, name in [(2, "myo"), (3, "lv")]:
+            mask = (seg_slice == lbl).astype(np.float64)
+            if mask.sum() == 0:
+                continue
+            contours = sk_measure.find_contours(mask, 0.5)
+            for contour in contours:
+                if len(contour) < 5:
+                    continue
+                step = max(1, len(contour) // 60)
+                pts = contour[::step]
+                # Transform to world coordinates (same as mesh)
+                world_pts = vox2world(pts[:, 0], pts[:, 1], z)
+                slice_data["contours"].append({
+                    "label": name,
+                    "points": world_pts.tolist(),
+                })
+        if slice_data["contours"]:
+            slices_out.append(slice_data)
+
+    return jsonify({"slices": slices_out, "spacing": list(spacing)})
 
 
 @app.post("/api/case/<case_id>/mask")
@@ -333,25 +447,36 @@ def infer_case(case_id: str):
     payload = request.get_json(silent=True) or {}
     frame = int(payload.get("frame", 0))
     use_sdf = payload.get("useSdfModel", True)  # prefer SDF model when available
+    phase = payload.get("phase", "ed")  # "ed" or "es"
 
     try:
+        # Pick the right data based on phase
+        if phase == "es" and case.get("mri_es") is not None:
+            mri_data = case["mri_es"]
+            seg_data = case.get("seg_es")
+            drawn_masks = case.get("drawn_masks_es", {})
+        else:
+            mri_data = case["mri"]
+            seg_data = case.get("seg")
+            drawn_masks = case.get("drawn_masks", {})
+
         # Determine segmentation source
         seg_volume = None
         source = None
         full_seg = None
 
-        if case.get("seg") is not None:
-            seg_volume = select_frame(case["seg"]["data"], frame)
-            source = "ACDC ground-truth segmentation"
-            full_seg = case["seg"]["data"]
-        elif case.get("drawn_masks"):
-            mri_volume = select_frame(case["mri"]["data"], frame)
+        if seg_data is not None:
+            seg_volume = select_frame(seg_data["data"], frame)
+            source = f"ACDC ground-truth segmentation ({phase.upper()})"
+            full_seg = seg_data["data"]
+        elif drawn_masks:
+            mri_volume = select_frame(mri_data["data"], frame)
             seg_volume = segmentation_from_drawings(
                 tuple(int(v) for v in mri_volume.shape),
-                case["drawn_masks"],
-                case["mri"]["zooms"],
+                drawn_masks,
+                mri_data["zooms"],
             )
-            source = "Drawn LV mask"
+            source = f"Drawn LV mask ({phase.upper()})"
             full_seg = None
         else:
             return _json_error(
@@ -362,12 +487,12 @@ def infer_case(case_id: str):
         # Try SDF neural model inference first
         sdf_result = None
         if use_sdf and seg_volume is not None:
-            sdf_result = _try_sdf_inference(case, seg_volume, frame)
+            sdf_result = _try_sdf_inference(case, seg_volume, frame, phase=phase)
 
         # Always compute voxel-based metrics (volumes, EF, etc.)
         voxel_result = analyse_segmentation(
             seg_volume=seg_volume,
-            spacing=case["mri"]["zooms"],
+            spacing=mri_data["zooms"],
             source=source,
             full_segmentation=full_seg,
         )
@@ -397,7 +522,7 @@ def infer_case(case_id: str):
     return jsonify(result)
 
 
-def _try_sdf_inference(case: dict, seg_volume: np.ndarray, frame: int) -> dict | None:
+def _try_sdf_inference(case: dict, seg_volume: np.ndarray, frame: int, phase: str = "ed") -> dict | None:
     """Attempt SDF model inference. Returns result dict or None on failure."""
     model, cfg = _load_sdf_model()
     if model is None:
@@ -407,8 +532,12 @@ def _try_sdf_inference(case: dict, seg_volume: np.ndarray, frame: int) -> dict |
         from core.sdf_model import extract_contours, predict_sdf_meshes
 
         affine = case.get("seg", {}).get("affine")
+        if phase == "es" and case.get("seg_es"):
+            affine = case["seg_es"].get("affine", affine)
         if affine is None:
             affine = case.get("mri", {}).get("affine")
+        if phase == "es" and case.get("mri_es"):
+            affine = case["mri_es"].get("affine", affine)
         if affine is None:
             log.warning("No affine matrix available, skipping SDF inference")
             return None
@@ -416,13 +545,7 @@ def _try_sdf_inference(case: dict, seg_volume: np.ndarray, frame: int) -> dict |
         dz = float(case["mri"]["zooms"][2])
 
         contours = extract_contours(seg_volume, affine, dz)
-        phase_val = 0.0  # ED by default
-
-        # Check patient_info for ED/ES phase
-        patient_info = case.get("patient_info", {})
-        ed_frame = patient_info.get("ed_frame")
-        if ed_frame is not None and frame != ed_frame - 1:
-            phase_val = 1.0  # ES
+        phase_val = 0.0 if phase == "ed" else 1.0  # ED=0, ES=1
 
         result = predict_sdf_meshes(
             model=model,
@@ -446,6 +569,6 @@ def _try_sdf_inference(case: dict, seg_volume: np.ndarray, frame: int) -> dict |
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    port = int(os.environ.get("PORT", "8003"))
+    port = int(os.environ.get("PORT", "8009"))
     app.run(host="127.0.0.1", port=port, debug=True)
 

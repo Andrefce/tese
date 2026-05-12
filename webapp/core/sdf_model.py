@@ -322,6 +322,116 @@ def _build_grid_and_query(
     return sdf_e.reshape(shape), sdf_p.reshape(shape), dlt.reshape(shape), lo, hi, voxel
 
 
+def _snap_mesh_to_contours(
+    vertices: np.ndarray,
+    contour_xyz: np.ndarray,
+    tissue_labels: np.ndarray,
+    surface: str = "endo",
+) -> np.ndarray:
+    """Radially project mesh vertices onto interpolated contour boundaries.
+
+    For every vertex between the first and last contour slice, the target
+    radial profile is obtained by linearly interpolating between the two
+    bracketing contour rings.  This ensures the mesh transitions smoothly
+    between slices and eliminates the "tire / corrugated" artefact where
+    slices bulge and inter-slice tissue pinches inward.
+
+    Vertices beyond the contour-slice range are smoothly faded back toward
+    the raw SDF prediction so that the mesh can taper naturally at the apex
+    and base.
+
+    Both ``vertices`` and ``contour_xyz`` must be in the same coordinate space
+    (normalized, before denormalization).
+    """
+    target_tissue = 0.0 if surface == "endo" else 1.0
+    cmask = np.abs(tissue_labels - target_tissue) < 0.5
+    cont = contour_xyz[cmask]
+
+    if len(cont) < 4 or len(vertices) == 0:
+        return vertices
+
+    # ── Build polar-ring representation for each contour slice ──
+    z_unique = np.unique(np.round(cont[:, 2], 5))
+    if len(z_unique) < 2:
+        return vertices
+
+    ring_data = []  # (z, sorted_angles, sorted_radii, centroid_xy)
+    for zc in np.sort(z_unique):
+        rmask = np.abs(cont[:, 2] - zc) < 1e-4
+        ring_xy = cont[rmask, :2]
+        if len(ring_xy) < 4:
+            continue
+        ctr = ring_xy.mean(axis=0)
+        dx = ring_xy[:, 0] - ctr[0]
+        dy = ring_xy[:, 1] - ctr[1]
+        ang = np.arctan2(dy, dx)
+        rad = np.sqrt(dx ** 2 + dy ** 2)
+        order = np.argsort(ang)
+        ring_data.append((float(zc), ang[order], rad[order], ctr))
+
+    if len(ring_data) < 2:
+        return vertices
+
+    n_rings = len(ring_data)
+    ring_z = np.array([r[0] for r in ring_data])
+    ring_centroids = np.array([r[3] for r in ring_data])
+
+    verts = vertices.copy()
+    vz = verts[:, 2]
+
+    # ── Bracket each vertex between two adjacent contour slices ──
+    idx_hi = np.searchsorted(ring_z, vz).clip(1, n_rings - 1)
+    idx_lo = idx_hi - 1
+    z_lo = ring_z[idx_lo]
+    z_hi = ring_z[idx_hi]
+    dz = z_hi - z_lo
+    dz[dz < 1e-10] = 1.0
+    t = np.clip((vz - z_lo) / dz, 0.0, 1.0)
+
+    # Interpolated 2D centroid for each vertex
+    c_interp = (ring_centroids[idx_lo] * (1.0 - t[:, None])
+                + ring_centroids[idx_hi] * t[:, None])
+
+    dxy = verts[:, :2] - c_interp
+    v_angles = np.arctan2(dxy[:, 1], dxy[:, 0])
+    v_radii = np.sqrt(dxy[:, 0] ** 2 + dxy[:, 1] ** 2)
+    valid = v_radii > 1e-8
+
+    # ── Target radius via per-slice-pair vectorised interp ──
+    target_r = v_radii.copy()
+    for pi in range(n_rings - 1):
+        group = valid & (idx_lo == pi)
+        if not group.any():
+            continue
+        gi = np.where(group)[0]
+        _, sa_lo, sr_lo, _ = ring_data[pi]
+        _, sa_hi, sr_hi, _ = ring_data[pi + 1]
+        r_lo = np.interp(v_angles[gi], sa_lo, sr_lo, period=2.0 * np.pi)
+        r_hi = np.interp(v_angles[gi], sa_hi, sr_hi, period=2.0 * np.pi)
+        target_r[gi] = r_lo * (1.0 - t[gi]) + r_hi * t[gi]
+
+    # ── Blend: 1.0 inside slice range, fade to 0.0 outside ──
+    dz_min = float(np.min(np.diff(ring_z))) if n_rings > 1 else 1.0
+    fade = dz_min * 1.5  # fade over 1.5 inter-slice gaps
+    blend = np.ones(len(verts), dtype=np.float32)
+    below = vz < ring_z[0]
+    above = vz > ring_z[-1]
+    if below.any():
+        blend[below] = np.clip(1.0 - (ring_z[0] - vz[below]) / fade, 0.0, 1.0)
+    if above.any():
+        blend[above] = np.clip(1.0 - (vz[above] - ring_z[-1]) / fade, 0.0, 1.0)
+
+    # ── Apply radial correction ──
+    raw_scale = np.ones(len(verts), dtype=np.float32)
+    raw_scale[valid] = target_r[valid] / v_radii[valid]
+    scale_f = 1.0 + blend * (raw_scale - 1.0)
+
+    verts[:, 0] = c_interp[:, 0] + dxy[:, 0] * scale_f
+    verts[:, 1] = c_interp[:, 1] + dxy[:, 1] * scale_f
+
+    return verts
+
+
 @torch.no_grad()
 def predict_sdf_meshes(
     model: SDFNetwork,
@@ -358,6 +468,18 @@ def predict_sdf_meshes(
     endo_verts, endo_faces = _mc_field(sdf_e, lo, voxel, iso)
     # Marching cubes on epi SDF
     epi_verts, epi_faces = _mc_field(sdf_p, lo, voxel, iso)
+
+    # ── Post-process: snap mesh vertices to input contour rings ──
+    # The SDF model is an approximation; force the mesh to pass through
+    # the ground-truth contour boundaries at each slice Z.
+    if len(endo_verts) > 0:
+        endo_verts = _snap_mesh_to_contours(
+            endo_verts, contour_xyz, tissue_labels, surface="endo"
+        )
+    if len(epi_verts) > 0:
+        epi_verts = _snap_mesh_to_contours(
+            epi_verts, contour_xyz, tissue_labels, surface="epi"
+        )
 
     # Un-normalize back to mm space
     if centroid is None:
