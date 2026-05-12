@@ -1,0 +1,13 @@
+# Web app server
+Flask>=3.0
+
+# Numeric and medical-image I/O
+numpy>=1.26
+nibabel>=5.2
+
+# Segmentation and geometry utilities
+scipy>=1.11
+scikit-image>=0.22
+
+# SDF model inference
+torch>=2.2
