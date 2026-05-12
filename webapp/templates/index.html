@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CardioSDF — Cardiac MRI Analysis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+
+  <!-- ═══ Navigation ═══ -->
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a href="#" class="nav-brand" data-nav="upload">
+        <svg class="brand-heart" viewBox="0 0 32 32" fill="none">
+          <path d="M16 28 C6 20, 2 14, 6 8 A6 6 0 0 1 16 8 A6 6 0 0 1 26 8 C30 14, 26 20, 16 28Z"
+                fill="#e74c5e" opacity="0.85"/>
+          <path d="M4 16 Q8 14 11 16 Q12.5 18 14 16 Q16 12 18 16 Q20 20 22 16 Q26 14 28 16"
+                stroke="#e74c5e" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.5"/>
+        </svg>
+        <span>CardioSDF</span>
+      </a>
+      <div class="nav-tabs">
+        <button class="nav-tab active" data-nav="upload">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload
+        </button>
+        <button class="nav-tab" data-nav="viewer" disabled>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+          Viewer
+        </button>
+        <button class="nav-tab" data-nav="results" disabled>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          Results
+        </button>
+      </div>
+      <div class="nav-status">
+        <span class="status-pill" id="caseStatus">No case</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══ Page: Upload ═══ -->
+  <section class="page page-upload active" id="pageUpload">
+    <div class="page-center">
+      <div class="upload-hero fade-in">
+        <div class="hero-icon">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <h1>Cardiac MRI Analysis</h1>
+        <p class="hero-sub">Upload cardiac MRI data and segmentation to reconstruct the 3D left ventricle or analyse wall thickness.</p>
+      </div>
+
+      <!-- Mode selector -->
+      <div class="mode-selector slide-up">
+        <button class="mode-card active" data-mode="3d" type="button">
+          <div class="mode-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3 L2 9 L12 15 L22 9 Z"/><path d="M2 15 L12 21 L22 15"/><path d="M2 9 L12 15 L22 9"/></svg>
+          </div>
+          <h3>3D Reconstruction</h3>
+          <p>Upload ED <em>or</em> ES frame with segmentation. View the 3D cardiac model.</p>
+        </button>
+        <button class="mode-card" data-mode="wt" type="button">
+          <div class="mode-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/><circle cx="12" cy="12" r="9" stroke-dasharray="4 2"/></svg>
+          </div>
+          <h3>Wall Thickness</h3>
+          <p>Upload <em>both</em> ED and ES frames with segmentation for AHA 17-segment analysis.</p>
+        </button>
+      </div>
+
+      <div class="upload-card slide-up">
+        <form id="uploadForm" class="upload-form">
+          <!-- 3D mode: single frame -->
+          <div id="uploadSingle" class="upload-mode-panel">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="mriFile">MRI Volume</label>
+                <div class="file-drop" id="mriDrop">
+                  <input id="mriFile" name="mri" type="file" accept=".nii,.nii.gz">
+                  <div class="file-drop-inner">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span class="drop-label">Drop <strong>.nii</strong> or <strong>.nii.gz</strong></span>
+                    <span class="drop-hint">ED or ES frame</span>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="segFile">GT Segmentation <span class="optional">(optional)</span></label>
+                <div class="file-drop" id="segDrop">
+                  <input id="segFile" name="segmentation" type="file" accept=".nii,.nii.gz">
+                  <div class="file-drop-inner">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+                    <span class="drop-label">LV segmentation labels</span>
+                    <span class="drop-hint">ACDC label format</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="caseName">Patient / Case ID</label>
+            <input id="caseName" name="caseName" type="text" class="text-input"
+                   placeholder="e.g. patient042_ED">
+          </div>
+
+          <div class="form-actions">
+            <button class="btn btn-primary btn-lg" type="submit" id="uploadBtn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Upload &amp; Analyze
+            </button>
+            <span class="form-or">or</span>
+            <div class="demo-group">
+              <select id="patientSelect" class="text-input patient-select">
+                <option value="">Random patient</option>
+              </select>
+              <button id="demoButton" class="btn btn-ghost btn-lg" type="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                Load ACDC Patient
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Page: Viewer ═══ -->
+  <section class="page page-viewer" id="pageViewer">
+    <div class="viewer-layout">
+      <!-- Sidebar -->
+      <aside class="viewer-sidebar">
+        <div class="sidebar-section">
+          <h3 class="sidebar-heading">Case Info</h3>
+          <div class="info-table">
+            <div class="info-row"><span>Dimensions</span><strong id="shapeReadout">—</strong></div>
+            <div class="info-row"><span>Spacing (mm)</span><strong id="spacingReadout">—</strong></div>
+            <div class="info-row"><span>Frames</span><strong id="framesReadout">—</strong></div>
+            <div class="info-row"><span>GT Seg</span><strong id="gtReadout">—</strong></div>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <h3 class="sidebar-heading">Navigation</h3>
+          <div class="control-group">
+            <label class="control-label">Frame</label>
+            <div class="slider-row">
+              <input id="frameSlider" type="range" min="0" max="0" value="0" class="slider">
+              <output id="frameValue" class="slider-val">0</output>
+            </div>
+          </div>
+          <div class="control-group">
+            <label class="control-label">Slice (z)</label>
+            <div class="slider-row">
+              <input id="sliceSlider" type="range" min="0" max="0" value="0" class="slider">
+              <output id="sliceValue" class="slider-val">0</output>
+            </div>
+          </div>
+          <div class="control-group" style="margin-top:14px">
+            <label class="control-label">Zoom</label>
+            <div class="slider-row">
+              <input id="zoomSlider" type="range" min="100" max="500" value="100" step="10" class="slider">
+              <output id="zoomValue" class="slider-val">1×</output>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <h3 class="sidebar-heading">Overlays</h3>
+          <div class="toggle-row">
+            <label class="toggle-label">
+              <input type="checkbox" id="gtToggle" checked>
+              <span class="toggle-switch"></span>
+              Show GT Segmentation
+            </label>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <h3 class="sidebar-heading">Drawing Tools</h3>
+          <div class="tool-buttons">
+            <button id="drawButton" class="tool-btn active" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+              Draw
+            </button>
+            <button id="eraseButton" class="tool-btn" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/></svg>
+              Erase
+            </button>
+            <button id="clearButton" class="tool-btn" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+              Clear
+            </button>
+          </div>
+          <div class="control-group">
+            <label class="control-label">Brush size</label>
+            <div class="slider-row">
+              <input id="brushSlider" type="range" min="2" max="40" value="10" class="slider">
+              <output id="brushValue" class="slider-val">10</output>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-actions">
+          <button id="saveMaskButton" class="btn btn-outline btn-block" type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Save Mask
+          </button>
+          <button id="inferButton" class="btn btn-primary btn-block" type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Run Inference
+          </button>
+        </div>
+      </aside>
+
+      <!-- Canvas area -->
+      <div class="viewer-main">
+        <div class="viewer-top-bar">
+          <span class="slice-caption" id="sliceCaption">Load a case to begin</span>
+          <div class="viewer-legend">
+            <span class="legend-item"><i class="legend-dot" style="background:#3b82f6"></i>RV</span>
+            <span class="legend-item"><i class="legend-dot" style="background:#22c55e"></i>MYO</span>
+            <span class="legend-item"><i class="legend-dot" style="background:#e74c5e"></i>LV</span>
+            <span class="legend-item"><i class="legend-dot" style="background:#f59e0b"></i>Drawn</span>
+          </div>
+        </div>
+        <div class="canvas-container" id="canvasContainer">
+          <div class="canvas-wrapper" id="canvasWrapper">
+            <canvas id="mriCanvas" width="512" height="512"></canvas>
+            <div class="brush-cursor" id="canvasCrosshair"></div>
+          </div>
+          <div class="canvas-placeholder" id="canvasEmpty">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3"><rect x="2" y="2" width="20" height="20" rx="2.18"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+            <span>Upload an MRI or load the demo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Page: Results ═══ -->
+  <section class="page page-results" id="pageResults">
+    <div class="results-layout">
+      <!-- Top: Metrics (WT mode only) -->
+      <div class="results-header fade-in wt-only">
+        <h2>Clinical Metrics</h2>
+        <div class="results-source">
+          <span id="inferenceSource">Idle</span>
+          <span class="mesh-badge" id="meshStatus">No mesh</span>
+        </div>
+      </div>
+
+      <div class="metrics-grid slide-up wt-only">
+        <article class="metric-card">
+          <span class="metric-label">LV Volume</span>
+          <strong class="metric-value" data-key="lvVolumeMl">—</strong>
+          <span class="metric-unit">mL</span>
+        </article>
+        <article class="metric-card accent">
+          <span class="metric-label">Ejection Fraction</span>
+          <strong class="metric-value" data-key="ejectionFractionPct">—</strong>
+          <span class="metric-unit">%</span>
+        </article>
+        <article class="metric-card">
+          <span class="metric-label">Myocardial Mass</span>
+          <strong class="metric-value" data-key="myocardialMassG">—</strong>
+          <span class="metric-unit">g</span>
+        </article>
+        <article class="metric-card">
+          <span class="metric-label">Mean Wall Thickness</span>
+          <strong class="metric-value" data-key="meanWallThicknessMm">—</strong>
+          <span class="metric-unit">mm</span>
+        </article>
+        <article class="metric-card">
+          <span class="metric-label">EDV</span>
+          <strong class="metric-value" data-key="edvMl">—</strong>
+          <span class="metric-unit">mL</span>
+        </article>
+        <article class="metric-card">
+          <span class="metric-label">ESV</span>
+          <strong class="metric-value" data-key="esvMl">—</strong>
+          <span class="metric-unit">mL</span>
+        </article>
+        <article class="metric-card">
+          <span class="metric-label">Stroke Volume</span>
+          <strong class="metric-value" data-key="strokeVolumeMl">—</strong>
+          <span class="metric-unit">mL</span>
+        </article>
+        <article class="metric-card">
+          <span class="metric-label">Endo Surface Area</span>
+          <strong class="metric-value" data-key="endoSurfaceAreaCm2">—</strong>
+          <span class="metric-unit">cm²</span>
+        </article>
+      </div>
+
+      <!-- Bottom row: 3D + regional -->
+      <div class="results-bottom">
+        <!-- 3D Model — large -->
+        <div class="card-3d slide-up">
+          <div class="card-header">
+            <h3>LV 3D Reconstruction</h3>
+            <div class="legend">
+              <span><i class="dot endo"></i> Endocardium</span>
+              <span><i class="dot epi"></i> Epicardium</span>
+              <span><i class="dot wt"></i> Thickness</span>
+            </div>
+          </div>
+          <div id="heartViewport" class="heart-viewport">
+            <div class="viewport-placeholder" id="threeFallback">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.25"><path d="M12 3 L2 9 L12 15 L22 9 Z"/><path d="M2 15 L12 21 L22 15"/></svg>
+              <span>Run inference to generate 3D model</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Wall Thickness Analysis (WT mode only) -->
+      <div class="results-wall-section slide-up wt-only">
+        <div class="results-header" style="margin-top:8px">
+          <h2>Wall Thickness — AHA 17-Segment</h2>
+        </div>
+        <div class="wall-analysis-grid">
+          <!-- Bullseye plot -->
+          <div class="card-bullseye">
+            <div class="card-header">
+              <h3>Bullseye Plot</h3>
+              <div class="bullseye-colorbar">
+                <span>0 mm</span>
+                <div class="colorbar-gradient"></div>
+                <span>15 mm</span>
+              </div>
+            </div>
+            <div class="bullseye-container">
+              <canvas id="bullseyeCanvas" width="420" height="420"></canvas>
+            </div>
+          </div>
+          <!-- Regional thickness list -->
+          <div class="card-regional">
+            <div class="card-header">
+              <h3>Segment Details</h3>
+            </div>
+            <div id="regionalList" class="regional-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Toast notifications -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <span class="loading-text" id="loadingText">Processing…</span>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
+
