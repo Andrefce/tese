@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+import core.inference as inference
 from app import CASES, _attach_es_phase, _register_case, app
 from core.inference import compare_wall_thickness_results
 
@@ -81,6 +82,31 @@ def test_paired_inference_returns_difference_payload():
     assert len(payload["difference"]["aha17Delta"]) == 17
     assert payload["difference"]["meshes"]["endo"]["vertices"]
     assert "marching_cubes" not in payload["difference"]["meshMethod"]
+    assert "ellipsoid" not in payload["difference"]["meshMethod"]
+
+
+def test_difference_mesh_uses_segmentation_solid_when_contours_unavailable(monkeypatch):
+    monkeypatch.setattr(inference, "_optional_measure", lambda: None)
+    ed_mri, ed_seg, spacing = _synthetic_volume(scale=1.0)
+    es_mri, es_seg, _ = _synthetic_volume(scale=0.82)
+    case = _register_case(
+        "paired-no-contours",
+        _nifti_like("ed-mri", ed_mri, spacing),
+        _nifti_like("ed-seg", ed_seg, spacing),
+    )
+    _attach_es_phase(
+        case,
+        _nifti_like("es-mri", es_mri, spacing),
+        _nifti_like("es-seg", es_seg, spacing),
+    )
+
+    response = app.test_client().post(f"/api/case/{case['id']}/infer-paired", json={"useSdfModel": False})
+
+    assert response.status_code == 200
+    difference = response.get_json()["difference"]
+    assert difference["meshMethod"] == "segmentation_loft_solid"
+    assert len(difference["meshes"]["endo"]["vertices"]) > 1000
+    assert difference["meshes"]["endo"]["values"]
 
 
 def test_compare_wall_thickness_uses_es_minus_ed_convention():

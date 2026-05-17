@@ -145,6 +145,7 @@ def index():
     return render_template(
         "index.html",
         model_checkpoint=os.environ.get("ACDC_SDF_CHECKPOINT", ""),
+        asset_version=os.environ.get("K_REVISION", os.environ.get("APP_VERSION", "local")),
     )
 
 

@@ -394,39 +394,66 @@ def _resample_contour_by_angle(points: np.ndarray, sectors: int) -> np.ndarray:
     return np.asarray(out, dtype=np.float32)
 
 
-def _solid_lv_mesh_from_segmentation(
-    seg_volume: np.ndarray,
+def _angle_delta(a: np.ndarray, b: float) -> np.ndarray:
+    return np.abs((a - b + math.pi) % (2.0 * math.pi) - math.pi)
+
+
+def _mask_boundary_ring_by_angle(
+    mask: np.ndarray,
     spacing: tuple[float, float, float],
-    sectors: int = 96,
-) -> tuple[np.ndarray, np.ndarray, str]:
-    measure = _optional_measure()
-    if measure is None:
-        labels = np.rint(seg_volume).astype(np.int16)
-        return (*_ellipsoid_mesh(labels == LBL_LV, spacing), "ellipsoid_fallback")
+    sectors: int,
+) -> np.ndarray | None:
+    pts = np.argwhere(mask)
+    if len(pts) < 8:
+        return None
 
-    labels = np.rint(seg_volume).astype(np.int16)
-    lv_mask = labels == LBL_LV
-    rings: list[np.ndarray] = []
-    for z_idx in range(lv_mask.shape[2]):
-        mask = lv_mask[:, :, z_idx].astype(np.uint8)
-        if int(mask.sum()) <= 10:
-            continue
-        contours = measure.find_contours(mask, 0.5)
-        if not contours:
-            continue
-        contour = max(contours, key=_contour_area).astype(np.float32)
-        if len(contour) < 8:
-            continue
-        xy = np.column_stack([contour[:, 0] * spacing[0], contour[:, 1] * spacing[1]])
-        ring_xy = _resample_contour_by_angle(xy, sectors=sectors)
-        z_col = np.full((len(ring_xy), 1), z_idx * spacing[2], dtype=np.float32)
-        rings.append(np.column_stack([ring_xy, z_col]))
+    xy = np.column_stack([
+        pts[:, 0].astype(np.float32) * float(spacing[0]),
+        pts[:, 1].astype(np.float32) * float(spacing[1]),
+    ])
+    center = xy.mean(axis=0)
+    rel = xy - center
+    radii = np.linalg.norm(rel, axis=1)
+    valid = radii > 1e-6
+    if int(valid.sum()) < 8:
+        return None
 
-    if len(rings) < 2:
-        return _surface_mesh(lv_mask, spacing)
+    xy = xy[valid]
+    rel = rel[valid]
+    radii = radii[valid]
+    angles = np.arctan2(rel[:, 1], rel[:, 0])
+    targets = np.linspace(-math.pi, math.pi, int(sectors), endpoint=False)
+    base_window = (2.0 * math.pi / float(sectors)) * 1.5
+    outward_pad = 0.45 * max(float(spacing[0]), float(spacing[1]))
 
+    ring = []
+    all_indices = np.arange(len(xy))
+    for target in targets:
+        delta = _angle_delta(angles, float(target))
+        chosen = None
+        window = base_window
+        for _ in range(5):
+            candidates = all_indices[delta <= window]
+            if len(candidates):
+                chosen = candidates[int(np.argmax(radii[candidates]))]
+                break
+            window *= 1.75
+        if chosen is None:
+            chosen = int(np.argmin(delta))
+
+        direction = rel[chosen] / max(float(radii[chosen]), 1e-6)
+        ring.append(xy[chosen] + direction * outward_pad)
+
+    return np.asarray(ring, dtype=np.float32)
+
+
+def _loft_rings_to_mesh(
+    rings: list[np.ndarray],
+    sectors: int,
+    cap_ends: bool = True,
+) -> tuple[np.ndarray, np.ndarray]:
     vertices = np.vstack(rings).astype(np.float32)
-    faces = []
+    faces: list[list[int]] = []
     for ring_idx in range(len(rings) - 1):
         base = ring_idx * sectors
         nxt = (ring_idx + 1) * sectors
@@ -435,7 +462,66 @@ def _solid_lv_mesh_from_segmentation(
             faces.append([base + i, nxt + i, base + j])
             faces.append([base + j, nxt + i, nxt + j])
 
-    return vertices, np.asarray(faces, dtype=np.int32), "contour_loft_open_ends"
+    if cap_ends:
+        bottom_center = len(vertices)
+        top_center = bottom_center + 1
+        cap_vertices = np.asarray(
+            [rings[0].mean(axis=0), rings[-1].mean(axis=0)],
+            dtype=np.float32,
+        )
+        vertices = np.vstack([vertices, cap_vertices]).astype(np.float32)
+        top_base = (len(rings) - 1) * sectors
+        for i in range(sectors):
+            j = (i + 1) % sectors
+            faces.append([bottom_center, j, i])
+            faces.append([top_center, top_base + i, top_base + j])
+
+    return vertices, np.asarray(faces, dtype=np.int32)
+
+
+def _solid_lv_mesh_from_segmentation(
+    seg_volume: np.ndarray,
+    spacing: tuple[float, float, float],
+    sectors: int = 96,
+) -> tuple[np.ndarray, np.ndarray, str]:
+    measure = _optional_measure()
+    labels = np.rint(seg_volume).astype(np.int16)
+    lv_mask = labels == LBL_LV
+    rings: list[np.ndarray] = []
+    used_pixel_ring = False
+
+    for z_idx in range(lv_mask.shape[2]):
+        mask = lv_mask[:, :, z_idx].astype(np.uint8)
+        if int(mask.sum()) <= 10:
+            continue
+
+        ring_xy = None
+        if measure is not None:
+            try:
+                contours = measure.find_contours(mask, 0.5)
+                if contours:
+                    contour = max(contours, key=_contour_area).astype(np.float32)
+                    if len(contour) >= 8:
+                        xy = np.column_stack([contour[:, 0] * spacing[0], contour[:, 1] * spacing[1]])
+                        ring_xy = _resample_contour_by_angle(xy, sectors=sectors)
+            except Exception:
+                ring_xy = None
+
+        if ring_xy is None:
+            ring_xy = _mask_boundary_ring_by_angle(mask.astype(bool), spacing, sectors)
+            used_pixel_ring = True
+        if ring_xy is None:
+            continue
+
+        z_col = np.full((len(ring_xy), 1), z_idx * spacing[2], dtype=np.float32)
+        rings.append(np.column_stack([ring_xy, z_col]))
+
+    if len(rings) < 2:
+        return _surface_mesh(lv_mask, spacing)
+
+    vertices, faces = _loft_rings_to_mesh(rings, sectors, cap_ends=True)
+    method = "segmentation_loft_solid" if used_pixel_ring else "contour_loft_solid"
+    return vertices, faces, method
 
 
 def _signed_delta_status(value: float | None) -> str:
