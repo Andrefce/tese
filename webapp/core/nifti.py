@@ -36,7 +36,7 @@ def resolve_nifti_path(path: Path) -> Path:
 def load_nifti(path: Path) -> dict[str, Any]:
     nib = _nibabel()
     real = resolve_nifti_path(path)
-    img = nib.load(str(real))
+    img: Any = nib.load(str(real))
     data = np.asarray(img.get_fdata(dtype=np.float32))
     if data.ndim not in (3, 4):
         raise NiftiLoadError(f"Expected a 3D or 4D NIfTI volume, got shape {data.shape}")
@@ -64,22 +64,42 @@ def select_frame(data: np.ndarray, frame: int = 0) -> np.ndarray:
 def case_metadata(case: dict[str, Any]) -> dict[str, Any]:
     data = case["mri"]["data"]
     z_count = int(data.shape[2])
+    ed_phase = {
+        "slices": z_count,
+        "frames": frame_count(data),
+        "shape": [int(v) for v in data.shape],
+        "spacing": [round(float(v), 3) for v in case["mri"]["zooms"]],
+        "hasSegmentation": case.get("seg") is not None,
+        "centerSlice": z_count // 2,
+    }
     meta = {
         "id": case["id"],
         "name": case["name"],
-        "shape": [int(v) for v in data.shape],
-        "spacing": [round(float(v), 3) for v in case["mri"]["zooms"]],
-        "slices": z_count,
-        "frames": frame_count(data),
-        "hasSegmentation": case.get("seg") is not None,
-        "centerSlice": z_count // 2,
+        "shape": ed_phase["shape"],
+        "spacing": ed_phase["spacing"],
+        "slices": ed_phase["slices"],
+        "frames": ed_phase["frames"],
+        "hasSegmentation": ed_phase["hasSegmentation"],
+        "centerSlice": ed_phase["centerSlice"],
         "hasEs": case.get("mri_es") is not None,
         "hasEsSeg": case.get("seg_es") is not None,
+        "phases": {"ed": ed_phase},
     }
     if case.get("mri_es") is not None:
         es_data = case["mri_es"]["data"]
+        es_phase = {
+            "slices": int(es_data.shape[2]),
+            "frames": frame_count(es_data),
+            "shape": [int(v) for v in es_data.shape],
+            "spacing": [round(float(v), 3) for v in case["mri_es"]["zooms"]],
+            "hasSegmentation": case.get("seg_es") is not None,
+            "centerSlice": int(es_data.shape[2]) // 2,
+        }
         meta["esSlices"] = int(es_data.shape[2])
         meta["esFrames"] = frame_count(es_data)
+        meta["phases"]["es"] = es_phase
+    if case.get("patient_info"):
+        meta["patientInfo"] = case["patient_info"]
     return meta
 
 

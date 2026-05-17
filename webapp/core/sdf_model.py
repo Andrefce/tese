@@ -510,7 +510,11 @@ def predict_sdf_meshes(
     regional = _regional_wall_stats(endo_verts_mm, wall_for_mesh)
 
     # Mesh payloads
-    from .inference import _mesh_payload, _reduce_mesh, _aha_17_segment_stats
+    from .inference import _mesh_payload, _reduce_mesh, _aha_17_segment_stats, _remove_planar_z_caps
+
+    if spacing is not None:
+        endo_faces = _remove_planar_z_caps(endo_verts_mm, endo_faces, spacing)
+        epi_faces = _remove_planar_z_caps(epi_verts_mm, epi_faces, spacing)
 
     metrics = {
         "meanWallThicknessMm": round(wall_mean, 2) if wall_mean is not None else None,

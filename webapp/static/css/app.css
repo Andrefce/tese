@@ -1064,6 +1064,57 @@ button { cursor: pointer; }
 .dot.endo { background: var(--primary); }
 .dot.epi  { background: var(--accent-blue); }
 .dot.wt   { background: var(--accent-amber); }
+.dot.diff { background: linear-gradient(90deg, #2563eb, #f8fafc, #dc2626); }
+
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.comparison-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "label unit"
+    "value unit";
+  align-items: end;
+  gap: 4px 8px;
+  padding: 14px 16px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.comparison-card.accent {
+  border-color: #fecaca;
+  background: linear-gradient(135deg, #fff7ed 0%, #fff 70%);
+}
+
+.comparison-card span {
+  grid-area: label;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.comparison-card strong {
+  grid-area: value;
+  font-family: var(--font-mono);
+  font-size: 22px;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.comparison-card small {
+  grid-area: unit;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-faint);
+}
 
 .heart-viewport {
   position: relative;
@@ -1143,6 +1194,16 @@ button { cursor: pointer; }
   );
 }
 
+.colorbar-gradient.difference {
+  background: linear-gradient(90deg,
+    #2563eb 0%,
+    #93c5fd 28%,
+    #f8fafc 50%,
+    #fca5a5 72%,
+    #dc2626 100%
+  );
+}
+
 /* Regional */
 
 .card-regional {
@@ -1215,6 +1276,19 @@ button { cursor: pointer; }
 
 .regional-row[data-status="thick"] .regional-bar span {
   background: #ef4444;
+}
+
+.regional-bar.difference span,
+.regional-row[data-status="thickening"] .regional-bar span {
+  background: #dc2626;
+}
+
+.regional-row[data-status="thinning"] .regional-bar span {
+  background: #2563eb;
+}
+
+.regional-row[data-status="minimal"] .regional-bar span {
+  background: #94a3b8;
 }
 
 .regional-value {
@@ -1319,6 +1393,9 @@ button { cursor: pointer; }
   .metrics-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+  .comparison-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
   .wall-analysis-grid {
     grid-template-columns: 1fr;
   }
@@ -1352,5 +1429,6 @@ button { cursor: pointer; }
   }
 
   .metrics-grid { grid-template-columns: 1fr 1fr; }
+  .comparison-grid { grid-template-columns: 1fr; }
   .wall-analysis-grid { grid-template-columns: 1fr; }
 }

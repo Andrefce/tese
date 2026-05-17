@@ -366,21 +366,45 @@
 
       <!-- Bottom row: 3D + regional -->
       <div class="results-bottom">
-        <!-- Phase toggle for results (visible when both ED and ES results exist) -->
+        <!-- Result view toggle for paired wall-thickness results -->
         <div class="results-phase-toggle" id="resultsPhaseToggle" style="display:none">
           <button class="phase-btn active" data-results-phase="ed" type="button">Diastole (ED)</button>
           <button class="phase-btn" data-results-phase="es" type="button">Systole (ES)</button>
-          <button class="phase-btn" data-results-phase="both" type="button">Both</button>
+          <button class="phase-btn" data-results-phase="difference" type="button">Difference</button>
+        </div>
+
+        <div class="comparison-grid wt-only" id="comparisonSummary" style="display:none">
+          <article class="comparison-card">
+            <span>ED mean WT</span>
+            <strong data-comparison-key="edMeanWallThicknessMm">—</strong>
+            <small>mm</small>
+          </article>
+          <article class="comparison-card">
+            <span>ES mean WT</span>
+            <strong data-comparison-key="esMeanWallThicknessMm">—</strong>
+            <small>mm</small>
+          </article>
+          <article class="comparison-card accent">
+            <span>ES - ED</span>
+            <strong data-comparison-key="meanDeltaWallThicknessMm">—</strong>
+            <small>mm</small>
+          </article>
+          <article class="comparison-card">
+            <span>Relative thickening</span>
+            <strong data-comparison-key="relativeThickeningPct">—</strong>
+            <small>%</small>
+          </article>
         </div>
 
         <!-- 3D Model — large -->
         <div class="card-3d slide-up">
           <div class="card-header">
-            <h3>LV 3D Reconstruction</h3>
+            <h3 id="meshTitle">LV 3D Reconstruction</h3>
             <div class="legend">
               <span><i class="dot endo"></i> Endocardium</span>
               <span><i class="dot epi"></i> Epicardium</span>
               <span><i class="dot wt"></i> Thickness</span>
+              <span><i class="dot diff"></i> Difference</span>
               <span><i class="dot slice-dot"></i> Slices</span>
             </div>
           </div>
@@ -396,17 +420,17 @@
       <!-- Wall Thickness Analysis (WT mode only) -->
       <div class="results-wall-section slide-up wt-only">
         <div class="results-header" style="margin-top:8px">
-          <h2>Wall Thickness — AHA 17-Segment</h2>
+          <h2 id="wallSectionTitle">Wall Thickness — AHA 17-Segment</h2>
         </div>
         <div class="wall-analysis-grid">
           <!-- Bullseye plot -->
           <div class="card-bullseye">
             <div class="card-header">
-              <h3>Bullseye Plot</h3>
-              <div class="bullseye-colorbar">
-                <span>0 mm</span>
-                <div class="colorbar-gradient"></div>
-                <span>15 mm</span>
+              <h3 id="bullseyeTitle">Bullseye Plot</h3>
+              <div class="bullseye-colorbar" id="bullseyeColorbar">
+                <span id="bullseyeMinLabel">0 mm</span>
+                <div class="colorbar-gradient" id="bullseyeGradient"></div>
+                <span id="bullseyeMaxLabel">15 mm</span>
               </div>
             </div>
             <div class="bullseye-container">

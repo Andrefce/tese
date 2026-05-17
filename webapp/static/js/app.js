@@ -28,6 +28,8 @@
     hasEs: false,
     resultsEd: null,   // stored inference result for ED
     resultsEs: null,    // stored inference result for ES
+    resultsDifference: null,
+    results: null,
     resultsPhase: "ed", // which phase to show in results
     sliceContours: null, // 3D slice contour data
   };
@@ -78,6 +80,56 @@
   function enableTab(name) {
     const tab = document.querySelector(`.nav-tab[data-nav="${name}"]`);
     if (tab) tab.disabled = false;
+  }
+
+  function phaseInfo(phase) {
+    const meta = state.caseMeta || {};
+    if (meta.phases && meta.phases[phase]) return meta.phases[phase];
+    if (phase === "es") {
+      return {
+        slices: meta.esSlices || meta.slices || 1,
+        frames: meta.esFrames || 1,
+        shape: meta.shape || [],
+        spacing: meta.spacing || [],
+        hasSegmentation: !!meta.hasEsSeg,
+        centerSlice: Math.floor((meta.esSlices || meta.slices || 1) / 2),
+      };
+    }
+    return {
+      slices: meta.slices || 1,
+      frames: meta.frames || 1,
+      shape: meta.shape || [],
+      spacing: meta.spacing || [],
+      hasSegmentation: !!meta.hasSegmentation,
+      centerSlice: meta.centerSlice || 0,
+    };
+  }
+
+  function setViewerPhase(phase, resetPosition = false) {
+    const info = phaseInfo(phase);
+    state.phase = phase;
+    if (resetPosition) {
+      state.currentZ = info.centerSlice || Math.floor((info.slices || 1) / 2);
+      state.currentFrame = 0;
+    } else {
+      state.currentZ = Math.max(0, Math.min((info.slices || 1) - 1, state.currentZ));
+      state.currentFrame = Math.max(0, Math.min((info.frames || 1) - 1, state.currentFrame));
+    }
+
+    shapeReadout.textContent = (info.shape || []).join(" × ") || "—";
+    spacingReadout.textContent = (info.spacing || []).map((v) => Number(v).toFixed(2)).join(" × ") || "—";
+    framesReadout.textContent = String(info.frames || 1);
+    gtReadout.textContent = info.hasSegmentation ? "Yes" : "No";
+    gtReadout.style.color = info.hasSegmentation ? "var(--accent-green)" : "var(--ink-muted)";
+
+    frameSlider.max = Math.max(0, (info.frames || 1) - 1);
+    frameSlider.value = state.currentFrame;
+    frameValue.textContent = String(state.currentFrame);
+    sliceSlider.max = Math.max(0, (info.slices || 1) - 1);
+    sliceSlider.value = state.currentZ;
+    sliceValue.textContent = String(state.currentZ);
+
+    $$(".phase-btn[data-phase]").forEach((b) => b.classList.toggle("active", b.dataset.phase === phase));
   }
 
   // ─── Loading overlay ───
@@ -211,26 +263,16 @@
     state.hasEs = !!caseMeta.hasEs;
     state.resultsEd = null;
     state.resultsEs = null;
+    state.resultsDifference = null;
+    state.results = null;
+    state.resultsPhase = "ed";
     state.sliceContours = null;
 
     // Status
     caseStatus.textContent = caseMeta.name;
     caseStatus.classList.add("loaded");
 
-    // Readouts
-    shapeReadout.textContent = caseMeta.shape.join(" × ");
-    spacingReadout.textContent = caseMeta.spacing.map((v) => v.toFixed(2)).join(" × ");
-    framesReadout.textContent = String(caseMeta.frames);
-    gtReadout.textContent = caseMeta.hasSegmentation ? "Yes" : "No";
-    gtReadout.style.color = caseMeta.hasSegmentation ? "var(--accent-green)" : "var(--ink-muted)";
-
-    // Sliders
-    frameSlider.max = Math.max(0, caseMeta.frames - 1);
-    frameSlider.value = 0;
-    frameValue.textContent = "0";
-    sliceSlider.max = Math.max(0, caseMeta.slices - 1);
-    sliceSlider.value = state.currentZ;
-    sliceValue.textContent = String(state.currentZ);
+    setViewerPhase("ed", true);
 
     canvasEmpty.style.display = "none";
 
@@ -343,8 +385,9 @@
       canvas.height = data.height;
       renderCanvas();
 
+      const info = phaseInfo(state.phase);
       sliceCaption.textContent =
-        `Slice ${data.z} / ${state.caseMeta.slices - 1}  ·  Frame ${data.frame}  ·  ${data.width} × ${data.height}`;
+        `${state.phase.toUpperCase()}  ·  Slice ${data.z} / ${(info.slices || 1) - 1}  ·  Frame ${data.frame}  ·  ${data.width} × ${data.height}`;
     } catch (err) {
       toast(`Slice error: ${err.message}`, "error");
     }
@@ -505,7 +548,8 @@
     if (!state.caseId) return;
     e.preventDefault();
     const d = e.deltaY > 0 ? 1 : -1;
-    const nz = Math.max(0, Math.min(state.caseMeta.slices - 1, state.currentZ + d));
+    const info = phaseInfo(state.phase);
+    const nz = Math.max(0, Math.min((info.slices || 1) - 1, state.currentZ + d));
     if (nz !== state.currentZ) {
       state.currentZ = nz;
       sliceSlider.value = nz;
@@ -523,12 +567,13 @@
     try {
       await apiPost(`/api/case/${state.caseId}/mask`, {
         z: state.currentZ,
+        phase: state.phase,
         width: state.sliceWidth,
         height: state.sliceHeight,
         mask: u8ToB64(state.drawnData),
       });
       state.dirty = false;
-      toast(`Mask saved for slice ${state.currentZ}`, "success");
+      toast(`Mask saved for ${state.phase.toUpperCase()} slice ${state.currentZ}`, "success");
     } catch (err) {
       toast(`Save failed: ${err.message}`, "error");
     }
@@ -546,6 +591,7 @@
       try {
         await apiPost(`/api/case/${state.caseId}/mask`, {
           z: state.currentZ,
+          phase: state.phase,
           width: state.sliceWidth,
           height: state.sliceHeight,
           mask: u8ToB64(state.drawnData),
@@ -556,47 +602,42 @@
 
     showLoading("Running cardiac inference…");
     try {
-      // Always run ED inference
-      const edResult = await apiPost(`/api/case/${state.caseId}/infer`, {
-        frame: state.currentFrame,
-        phase: "ed",
-      });
-      // Attach slice contours
-      await fetchSliceContours();
-      edResult.sliceContours = state.sliceContours;
-      state.resultsEd = edResult;
-
-      // If ES data available (WT mode), run ES inference too
-      if (state.hasEs && state.mode === "wt") {
-        try {
-          const esResult = await apiPost(`/api/case/${state.caseId}/infer`, {
-            frame: 0,
-            phase: "es",
-          });
-          // Fetch ES contours
-          const esContours = await apiGet(`/api/case/${state.caseId}/slice-contours?phase=es`);
-          esResult.sliceContours = esContours;
-          state.resultsEs = esResult;
-        } catch (esErr) {
-          toast(`ES inference: ${esErr.message}`, "error");
-          state.resultsEs = null;
-        }
-      }
-
-      // Show results
-      displayMetrics(edResult);
-      if (edResult.meshes) build3DScene(edResult.meshes, edResult.sliceContours);
-      inferenceSource.textContent = edResult.source || "Complete";
-
-      // Show phase toggle in results if both phases have results
-      const resultsToggle = $("#resultsPhaseToggle");
-      if (state.resultsEs) {
-        resultsToggle.style.display = "flex";
+      if (state.mode === "wt" && state.hasEs) {
+        const paired = await apiPost(`/api/case/${state.caseId}/infer-paired`, {
+          edFrame: state.phase === "ed" ? state.currentFrame : 0,
+          esFrame: state.phase === "es" ? state.currentFrame : 0,
+        });
+        paired.ed.sliceContours = await apiGet(`/api/case/${state.caseId}/slice-contours?phase=ed`);
+        paired.es.sliceContours = await apiGet(`/api/case/${state.caseId}/slice-contours?phase=es`);
+        state.results = paired;
+        state.resultsEd = paired.ed;
+        state.resultsEs = paired.es;
+        state.resultsDifference = paired.difference;
+        state.resultsPhase = "difference";
+        setResultsToggleVisible(true);
+        setResultsPhaseButtons("difference");
+        showResultsForPhase();
+        inferenceSource.textContent = paired.source || "Complete";
       } else {
-        resultsToggle.style.display = "none";
+        const result = await apiPost(`/api/case/${state.caseId}/infer`, {
+          frame: state.currentFrame,
+          phase: state.phase,
+        });
+        await fetchSliceContours();
+        result.sliceContours = state.sliceContours;
+        state.results = { ed: result, es: null, difference: null };
+        state.resultsEd = result;
+        state.resultsEs = null;
+        state.resultsDifference = null;
+        state.resultsPhase = "ed";
+        setResultsToggleVisible(false);
+        displayMetrics(result, { mode: "wallThickness" });
+        if (result.meshes) build3DScene(result.meshes, result.sliceContours, { meshMode: "wallThickness" });
+        inferenceSource.textContent = result.source || "Complete";
       }
 
       navigateTo("results");
+      showResultsForPhase();
       toast("Inference complete", "success");
     } catch (err) {
       toast(`Inference failed: ${err.message}`, "error");
@@ -605,8 +646,52 @@
     }
   });
 
+  function setResultsToggleVisible(visible) {
+    const resultsToggle = $("#resultsPhaseToggle");
+    if (resultsToggle) resultsToggle.style.display = visible ? "flex" : "none";
+    const summary = $("#comparisonSummary");
+    if (summary) summary.style.display = visible ? "grid" : "none";
+  }
+
+  function setResultsPhaseButtons(phase) {
+    $$(".phase-btn[data-results-phase]").forEach((b) => b.classList.toggle("active", b.dataset.resultsPhase === phase));
+  }
+
+  function formatSigned(value, digits = 1) {
+    if (value == null || !Number.isFinite(Number(value))) return "—";
+    const n = Number(value);
+    return `${n > 0 ? "+" : ""}${n.toFixed(digits)}`;
+  }
+
+  function updateComparisonSummary(difference) {
+    const metrics = difference && difference.metrics ? difference.metrics : {};
+    $$('[data-comparison-key]').forEach((el) => {
+      const key = el.dataset.comparisonKey;
+      const value = metrics[key];
+      el.textContent = key === "meanDeltaWallThicknessMm" ? formatSigned(value, 1) : (value != null ? Number(value).toFixed(1) : "—");
+    });
+  }
+
+  function setWallLabels(mode) {
+    const difference = mode === "difference";
+    const title = $("#wallSectionTitle");
+    const bullseyeTitle = $("#bullseyeTitle");
+    const meshTitle = $("#meshTitle");
+    const minLabel = $("#bullseyeMinLabel");
+    const maxLabel = $("#bullseyeMaxLabel");
+    const gradient = $("#bullseyeGradient");
+    if (title) title.textContent = difference ? "Wall Thickening — AHA 17-Segment" : "Wall Thickness — AHA 17-Segment";
+    if (bullseyeTitle) bullseyeTitle.textContent = difference ? "Difference Bullseye" : "Bullseye Plot";
+    if (meshTitle) meshTitle.textContent = difference ? "LV Wall Thickening Difference" : "LV 3D Reconstruction";
+    if (minLabel) minLabel.textContent = difference ? "-5 mm" : "0 mm";
+    if (maxLabel) maxLabel.textContent = difference ? "+5 mm" : "15 mm";
+    if (gradient) gradient.classList.toggle("difference", difference);
+  }
+
   // ─── Display metrics ───
-  function displayMetrics(result) {
+  function displayMetrics(result, opts = {}) {
+    const mode = opts.mode || (result && result.kind === "difference" ? "difference" : "wallThickness");
+    setWallLabels(mode);
     const m = result.metrics || {};
 
     $$(".metric-value[data-key]").forEach((el) => {
@@ -621,13 +706,9 @@
       efEl.style.color = ef < 40 ? "#ef4444" : ef < 55 ? "var(--accent-amber)" : "var(--primary)";
     }
 
-    // AHA 17-segment bullseye
-    const aha17 = result.aha17 || [];
-    if (aha17.length === 17) {
-      drawBullseye(aha17);
-    }
+    const aha17 = mode === "difference" ? (result.aha17Delta || []) : (result.aha17 || []);
+    if (aha17.length === 17) drawBullseye(aha17, { mode });
 
-    // Regional list (use aha17 if available, fallback to regionalThickness)
     const segments = aha17.length === 17 ? aha17 : (result.regionalThickness || []);
     const list = $("#regionalList");
     list.innerHTML = "";
@@ -635,23 +716,35 @@
       const row = document.createElement("div");
       row.className = "regional-row";
       row.dataset.status = r.status || "unavailable";
-      const mm = r.meanMm != null ? r.meanMm : 0;
-      const pct = Math.min(100, (mm / 18) * 100);
+      const value = mode === "difference" ? r.deltaMm : r.meanMm;
+      const pct = mode === "difference" ? Math.min(100, (Math.abs(value || 0) / 6) * 100) : Math.min(100, ((value || 0) / 18) * 100);
       const idLabel = r.id ? `<span class="regional-id">${r.id}</span>` : "";
-      row.innerHTML = `
-        ${idLabel}
-        <span class="regional-name">${r.name}</span>
-        <div class="regional-bar"><span style="width:${pct}%"></span></div>
-        <span class="regional-value">${r.meanMm != null ? r.meanMm.toFixed(1) + " mm" : "—"}</span>
-      `;
+      if (mode === "difference") {
+        row.innerHTML = `
+          ${idLabel}
+          <span class="regional-name">${r.name}</span>
+          <div class="regional-bar difference"><span style="width:${pct}%"></span></div>
+          <span class="regional-value">${formatSigned(value, 1)} mm</span>
+        `;
+        row.title = `ED ${r.edMeanMm ?? "—"} mm · ES ${r.esMeanMm ?? "—"} mm · ${r.relativeThickeningPct ?? "—"}%`;
+      } else {
+        row.innerHTML = `
+          ${idLabel}
+          <span class="regional-name">${r.name}</span>
+          <div class="regional-bar"><span style="width:${pct}%"></span></div>
+          <span class="regional-value">${value != null ? Number(value).toFixed(1) + " mm" : "—"}</span>
+        `;
+      }
       list.appendChild(row);
     });
 
     meshStatus.textContent = result.meshMethod ? result.meshMethod : "ready";
+    if (mode === "difference") updateComparisonSummary(result);
   }
 
   // ─── AHA 17-Segment Bullseye ───
-  function drawBullseye(aha17) {
+  function drawBullseye(aha17, opts = {}) {
+    const mode = opts.mode || "wallThickness";
     const canvas = $("#bullseyeCanvas");
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -671,28 +764,28 @@
     for (let i = 0; i < 6; i++) {
       const startAngle = -Math.PI / 2 + i * (Math.PI / 3);
       const endAngle = startAngle + Math.PI / 3;
-      drawArc(ctx, cx, cy, r1, r0, startAngle, endAngle, aha17[i]);
+      drawArc(ctx, cx, cy, r1, r0, startAngle, endAngle, aha17[i], mode);
     }
 
     // Mid ring: segments 7-12, each 60°
     for (let i = 0; i < 6; i++) {
       const startAngle = -Math.PI / 2 + i * (Math.PI / 3);
       const endAngle = startAngle + Math.PI / 3;
-      drawArc(ctx, cx, cy, r2, r1, startAngle, endAngle, aha17[6 + i]);
+      drawArc(ctx, cx, cy, r2, r1, startAngle, endAngle, aha17[6 + i], mode);
     }
 
     // Apical ring: segments 13-16, each 90°
     for (let i = 0; i < 4; i++) {
       const startAngle = -Math.PI / 2 + i * (Math.PI / 2);
       const endAngle = startAngle + Math.PI / 2;
-      drawArc(ctx, cx, cy, r3, r2, startAngle, endAngle, aha17[12 + i]);
+      drawArc(ctx, cx, cy, r3, r2, startAngle, endAngle, aha17[12 + i], mode);
     }
 
     // Apex: segment 17 (center circle)
-    const apexVal = aha17[16].meanMm;
+    const apexVal = mode === "difference" ? aha17[16].deltaMm : aha17[16].meanMm;
     ctx.beginPath();
     ctx.arc(cx, cy, r3, 0, 2 * Math.PI);
-    ctx.fillStyle = apexVal != null ? thicknessColor(apexVal) : "#e8ecf1";
+    ctx.fillStyle = apexVal != null ? valueColor(apexVal, mode) : "#e8ecf1";
     ctx.fill();
     ctx.strokeStyle = "#fff";
     ctx.lineWidth = 2;
@@ -702,17 +795,17 @@
       ctx.font = "bold 11px Inter, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(apexVal.toFixed(1), cx, cy);
+      ctx.fillText(mode === "difference" ? formatSigned(apexVal, 1) : apexVal.toFixed(1), cx, cy);
     }
   }
 
-  function drawArc(ctx, cx, cy, rInner, rOuter, startAngle, endAngle, segment) {
-    const val = segment ? segment.meanMm : null;
+  function drawArc(ctx, cx, cy, rInner, rOuter, startAngle, endAngle, segment, mode = "wallThickness") {
+    const val = segment ? (mode === "difference" ? segment.deltaMm : segment.meanMm) : null;
     ctx.beginPath();
     ctx.arc(cx, cy, rOuter, startAngle, endAngle);
     ctx.arc(cx, cy, rInner, endAngle, startAngle, true);
     ctx.closePath();
-    ctx.fillStyle = val != null ? thicknessColor(val) : "#e8ecf1";
+    ctx.fillStyle = val != null ? valueColor(val, mode) : "#e8ecf1";
     ctx.fill();
     ctx.strokeStyle = "#fff";
     ctx.lineWidth = 2;
@@ -729,7 +822,7 @@
       ctx.font = "bold 11px Inter, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(val.toFixed(1), tx, ty);
+      ctx.fillText(mode === "difference" ? formatSigned(val, 1) : val.toFixed(1), tx, ty);
     }
 
     // Segment number
@@ -763,6 +856,29 @@
       }
     }
     return `rgb(231,76,94)`;
+  }
+
+  function differenceColor(mm) {
+    const t = Math.max(0, Math.min(1, (mm + 5) / 10));
+    const stops = [
+      [0, [37, 99, 235]],
+      [0.5, [248, 250, 252]],
+      [1, [220, 38, 38]],
+    ];
+    for (let i = 0; i < stops.length - 1; i++) {
+      if (t >= stops[i][0] && t <= stops[i + 1][0]) {
+        const f = (t - stops[i][0]) / (stops[i + 1][0] - stops[i][0]);
+        const r = Math.round(stops[i][1][0] + f * (stops[i + 1][1][0] - stops[i][1][0]));
+        const g = Math.round(stops[i][1][1] + f * (stops[i + 1][1][1] - stops[i][1][1]));
+        const b = Math.round(stops[i][1][2] + f * (stops[i + 1][1][2] - stops[i][1][2]));
+        return `rgb(${r},${g},${b})`;
+      }
+    }
+    return "rgb(220,38,38)";
+  }
+
+  function valueColor(value, mode) {
+    return mode === "difference" ? differenceColor(value) : thicknessColor(value);
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -843,7 +959,7 @@
     })();
   }
 
-  function build3DScene(meshes, contourData) {
+  function build3DScene(meshes, contourData, opts = {}) {
     // Cleanup dual viewports if they exist
     if (dualScenes.ed || dualScenes.es) cleanupDualViewports();
 
@@ -877,13 +993,17 @@
       const m = buildMesh(meshes.endo, {
         color: 0xe74c5e, emissive: 0x330011, emissiveIntensity: 0.3,
         opacity: 1.0, transparent: false, roughness: 0.25, metalness: 0.15,
-        values: meshes.endo.values, cmMin: 2, cmMax: 14, side: THREE.DoubleSide,
+        values: meshes.endo.values,
+        cmMin: opts.cmMin ?? (opts.meshMode === "difference" ? -5 : 2),
+        cmMax: opts.cmMax ?? (opts.meshMode === "difference" ? 5 : 14),
+        colorMode: opts.meshMode || "wallThickness",
+        side: THREE.DoubleSide,
       }, meshCenter);
       if (m) { scene.add(m); count++; }
     }
 
     // Epicardium — semi-transparent shell, centered
-    if (meshes.epi && meshes.epi.vertices.length > 0) {
+    if (opts.showEpi !== false && meshes.epi && meshes.epi.vertices.length > 0) {
       const m = buildMesh(meshes.epi, {
         color: 0x3b82f6, emissive: 0x0a1530, emissiveIntensity: 0.15,
         opacity: 0.18, transparent: true, roughness: 0.5, metalness: 0.05,
@@ -1084,7 +1204,7 @@
       const m = buildMesh(meshes.endo, {
         color: endoColor, emissive: 0x330011, emissiveIntensity: 0.3,
         opacity: 1.0, transparent: false, roughness: 0.25, metalness: 0.15,
-        values: meshes.endo.values, cmMin: 2, cmMax: 14, side: THREE.DoubleSide,
+        values: meshes.endo.values, cmMin: 2, cmMax: 14, colorMode: "wallThickness", side: THREE.DoubleSide,
       }, center);
       if (m) scn.add(m);
     }
@@ -1207,7 +1327,7 @@
       for (let i = 0; i < n; i++) {
         const v = i < opts.values.length ? opts.values[i] : 0;
         const t = Math.max(0, Math.min(1, (v - (opts.cmMin || 3)) / ((opts.cmMax || 15) - (opts.cmMin || 3))));
-        const c = wtColor(t);
+        const c = opts.colorMode === "difference" ? diffColor(t) : wtColor(t);
         cols[i * 3] = c[0]; cols[i * 3 + 1] = c[1]; cols[i * 3 + 2] = c[2];
       }
       geo.setAttribute("color", new THREE.BufferAttribute(cols, 3));
@@ -1271,6 +1391,25 @@
     return stops[stops.length - 1][1];
   }
 
+  function diffColor(t) {
+    const stops = [
+      [0, [0.15, 0.39, 0.92]],
+      [0.5, [0.97, 0.98, 0.99]],
+      [1, [0.86, 0.15, 0.15]],
+    ];
+    for (let i = 0; i < stops.length - 1; i++) {
+      if (t >= stops[i][0] && t <= stops[i + 1][0]) {
+        const f = (t - stops[i][0]) / (stops[i + 1][0] - stops[i][0]);
+        return [
+          stops[i][1][0] + f * (stops[i + 1][1][0] - stops[i][1][0]),
+          stops[i][1][1] + f * (stops[i + 1][1][1] - stops[i][1][1]),
+          stops[i][1][2] + f * (stops[i + 1][1][2] - stops[i][1][2]),
+        ];
+      }
+    }
+    return stops[stops.length - 1][1];
+  }
+
   // ─── File drop visuals ───
   $$(".file-drop").forEach((drop) => {
     drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("dragover"); });
@@ -1281,10 +1420,9 @@
   // ─── Phase toggle (viewer) ───
   $$(".phase-btn[data-phase]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      $$(".phase-btn[data-phase]").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      state.phase = btn.dataset.phase;
+      setViewerPhase(btn.dataset.phase, true);
       fetchSlice();
+      fetchSliceContours();
     });
   });
 
@@ -1301,21 +1439,25 @@
   function showResultsForPhase() {
     const phase = state.resultsPhase;
 
-    // When switching away from "both", clean up dual viewports
-    if (phase !== "both") {
-      cleanupDualViewports();
-    }
+    cleanupDualViewports();
 
-    if (phase === "both") {
-      const edMeshes = state.resultsEd ? state.resultsEd.meshes : null;
-      const esMeshes = state.resultsEs ? state.resultsEs.meshes : null;
-      buildDual3DScene(edMeshes, esMeshes);
-      if (state.resultsEd) displayMetrics(state.resultsEd);
+    if (phase === "difference") {
+      const result = state.resultsDifference;
+      if (result) {
+        displayMetrics(result, { mode: "difference" });
+        const scale = result.colorScale || { min: -5, max: 5 };
+        if (result.meshes) build3DScene(result.meshes, null, {
+          meshMode: "difference",
+          cmMin: scale.min,
+          cmMax: scale.max,
+          showEpi: false,
+        });
+      }
     } else {
       const result = phase === "es" ? state.resultsEs : state.resultsEd;
       if (result) {
-        displayMetrics(result);
-        if (result.meshes) build3DScene(result.meshes, result.sliceContours);
+        displayMetrics(result, { mode: "wallThickness" });
+        if (result.meshes) build3DScene(result.meshes, result.sliceContours, { meshMode: "wallThickness" });
       }
     }
   }
@@ -1348,7 +1490,7 @@
   async function fetchSliceContours() {
     if (!state.caseId) return;
     try {
-      const data = await apiGet(`/api/case/${state.caseId}/slice-contours?phase=${state.phase}`);
+      const data = await apiGet(`/api/case/${state.caseId}/slice-contours?phase=${state.phase}&frame=${state.currentFrame}`);
       state.sliceContours = data;
     } catch (_) {
       state.sliceContours = null;

@@ -10,7 +10,12 @@ import numpy as np
 from flask import Flask, jsonify, render_template, request
 from werkzeug.utils import secure_filename
 
-from core.inference import analyse_segmentation, make_demo_case, segmentation_from_drawings
+from core.inference import (
+    analyse_segmentation,
+    compare_wall_thickness_results,
+    make_demo_case,
+    segmentation_from_drawings,
+)
 from core.nifti import (
     NiftiLoadError,
     case_metadata,
@@ -89,6 +94,42 @@ def _register_case(
     }
     CASES[case_id] = case
     return case
+
+
+def _spatial_shape(volume: dict[str, Any]) -> tuple[int, int, int]:
+    return tuple(int(v) for v in volume["data"].shape[:3])
+
+
+def _validate_segmentation_shape(mri: dict[str, Any], seg: dict[str, Any] | None, label: str) -> None:
+    if seg is not None and _spatial_shape(seg) != _spatial_shape(mri):
+        raise ValueError(
+            f"{label} MRI shape {_spatial_shape(mri)} and segmentation shape "
+            f"{_spatial_shape(seg)} do not match."
+        )
+
+
+def _attach_es_phase(
+    case: dict[str, Any],
+    es_mri: dict[str, Any],
+    es_seg: dict[str, Any] | None = None,
+) -> None:
+    if _spatial_shape(es_mri) != _spatial_shape(case["mri"]):
+        raise ValueError(
+            f"ED MRI shape {_spatial_shape(case['mri'])} and ES MRI shape "
+            f"{_spatial_shape(es_mri)} do not match."
+        )
+    _validate_segmentation_shape(es_mri, es_seg, "ES")
+    case["mri_es"] = es_mri
+    case["seg_es"] = es_seg
+    case.setdefault("drawn_masks_es", {})
+
+
+def _phase_data(case: dict[str, Any], phase: str) -> tuple[dict[str, Any], dict[str, Any] | None, dict[int, np.ndarray]]:
+    if phase == "es":
+        if case.get("mri_es") is None:
+            raise ValueError("ES MRI is not loaded for this case.")
+        return case["mri_es"], case.get("seg_es"), case.setdefault("drawn_masks_es", {})
+    return case["mri"], case.get("seg"), case.setdefault("drawn_masks", {})
 
 
 def _get_case(case_id: str) -> dict[str, Any] | None:
@@ -259,9 +300,7 @@ def demo_case():
         )
         case["patient_info"] = patient_info
         if es_mri is not None:
-            case["mri_es"] = es_mri
-        if es_seg is not None:
-            case["seg_es"] = es_seg
+            _attach_es_phase(case, es_mri, es_seg)
     except Exception as exc:
         log.exception("Failed to load ACDC patient %s", patient_dir.name)
         return _json_error(f"Failed to load patient: {exc}", 500)
@@ -294,8 +333,11 @@ def upload_case():
             es_seg_path = None
             if "segmentation_es" in request.files and request.files["segmentation_es"].filename:
                 es_seg_path = _save_upload(request.files["segmentation_es"], case_dir)
-            case["mri_es"] = load_nifti(es_mri_path)
-            case["seg_es"] = load_nifti(es_seg_path) if es_seg_path else None
+            _attach_es_phase(
+                case,
+                load_nifti(es_mri_path),
+                load_nifti(es_seg_path) if es_seg_path else None,
+            )
 
     except (ValueError, FileNotFoundError, NiftiLoadError) as exc:
         return _json_error(str(exc), 400)
@@ -414,19 +456,25 @@ def save_drawn_mask(case_id: str):
         width = int(payload["width"])
         height = int(payload["height"])
         mask = decode_mask_base64(payload["mask"], width=width, height=height)
+        phase = str(payload.get("phase", "ed")).lower()
     except Exception as exc:
         return _json_error(f"Invalid mask payload: {exc}", 400)
 
-    expected_width = int(case["mri"]["data"].shape[0])
-    expected_height = int(case["mri"]["data"].shape[1])
+    try:
+        mri_data, _, drawn_masks = _phase_data(case, phase)
+    except ValueError as exc:
+        return _json_error(str(exc), 400)
+
+    expected_width = int(mri_data["data"].shape[0])
+    expected_height = int(mri_data["data"].shape[1])
     if width != expected_width or height != expected_height:
         return _json_error(
             f"Mask size {width}×{height} does not match "
             f"slice size {expected_width}×{expected_height}.",
             400,
         )
-    case["drawn_masks"][z] = (mask > 0).astype(np.uint8)
-    return jsonify({"ok": True, "z": z, "paintedPixels": int(mask.sum())})
+    drawn_masks[z] = (mask > 0).astype(np.uint8)
+    return jsonify({"ok": True, "z": z, "phase": phase, "paintedPixels": int(mask.sum())})
 
 
 @app.post("/api/case/<case_id>/clear-masks")
@@ -434,8 +482,72 @@ def clear_masks(case_id: str):
     case = _get_case(case_id)
     if case is None:
         return _json_error("Case not found.", 404)
-    case["drawn_masks"] = {}
-    return jsonify({"ok": True})
+    payload = request.get_json(silent=True) or {}
+    phase = str(payload.get("phase", "ed")).lower()
+    if phase == "es":
+        case["drawn_masks_es"] = {}
+    else:
+        case["drawn_masks"] = {}
+    return jsonify({"ok": True, "phase": phase})
+
+
+def _run_phase_inference(
+    case: dict[str, Any],
+    phase: str,
+    frame: int,
+    use_sdf: bool,
+) -> tuple[dict[str, Any], np.ndarray, dict[str, Any]]:
+    mri_data, seg_data, drawn_masks = _phase_data(case, phase)
+
+    seg_volume = None
+    source = None
+    full_seg = None
+
+    if seg_data is not None:
+        seg_volume = select_frame(seg_data["data"], frame)
+        source = f"ACDC ground-truth segmentation ({phase.upper()})"
+        full_seg = seg_data["data"]
+    elif drawn_masks:
+        mri_volume = select_frame(mri_data["data"], frame)
+        seg_volume = segmentation_from_drawings(
+            tuple(int(v) for v in mri_volume.shape),
+            drawn_masks,
+            mri_data["zooms"],
+        )
+        source = f"Drawn LV mask ({phase.upper()})"
+    else:
+        raise ValueError(
+            f"Provide a GT segmentation or draw an LV mask for {phase.upper()} before running inference."
+        )
+
+    sdf_result = None
+    if use_sdf and seg_volume is not None:
+        sdf_result = _try_sdf_inference(case, seg_volume, frame, phase=phase)
+
+    voxel_result = analyse_segmentation(
+        seg_volume=seg_volume,
+        spacing=mri_data["zooms"],
+        source=source,
+        full_segmentation=full_seg,
+    )
+
+    if sdf_result is not None:
+        result = voxel_result
+        result["meshes"] = sdf_result["meshes"]
+        result["meshMethod"] = sdf_result["meshMethod"]
+        result["regionalThickness"] = sdf_result["regionalThickness"]
+        result["aha17"] = sdf_result.get("aha17", [])
+        for k in ("meanWallThicknessMm", "p95WallThicknessMm",
+                  "endoSurfaceAreaCm2", "epiSurfaceAreaCm2"):
+            if sdf_result["metrics"].get(k) is not None:
+                result["metrics"][k] = sdf_result["metrics"][k]
+        result["source"] = f"{source} + SDF model"
+    else:
+        result = voxel_result
+
+    result["phase"] = phase
+    result["frame"] = int(frame)
+    return result, seg_volume, mri_data
 
 
 @app.post("/api/case/<case_id>/infer")
@@ -450,69 +562,7 @@ def infer_case(case_id: str):
     phase = payload.get("phase", "ed")  # "ed" or "es"
 
     try:
-        # Pick the right data based on phase
-        if phase == "es" and case.get("mri_es") is not None:
-            mri_data = case["mri_es"]
-            seg_data = case.get("seg_es")
-            drawn_masks = case.get("drawn_masks_es", {})
-        else:
-            mri_data = case["mri"]
-            seg_data = case.get("seg")
-            drawn_masks = case.get("drawn_masks", {})
-
-        # Determine segmentation source
-        seg_volume = None
-        source = None
-        full_seg = None
-
-        if seg_data is not None:
-            seg_volume = select_frame(seg_data["data"], frame)
-            source = f"ACDC ground-truth segmentation ({phase.upper()})"
-            full_seg = seg_data["data"]
-        elif drawn_masks:
-            mri_volume = select_frame(mri_data["data"], frame)
-            seg_volume = segmentation_from_drawings(
-                tuple(int(v) for v in mri_volume.shape),
-                drawn_masks,
-                mri_data["zooms"],
-            )
-            source = f"Drawn LV mask ({phase.upper()})"
-            full_seg = None
-        else:
-            return _json_error(
-                "Provide a GT segmentation or draw an LV mask before running inference.",
-                400,
-            )
-
-        # Try SDF neural model inference first
-        sdf_result = None
-        if use_sdf and seg_volume is not None:
-            sdf_result = _try_sdf_inference(case, seg_volume, frame, phase=phase)
-
-        # Always compute voxel-based metrics (volumes, EF, etc.)
-        voxel_result = analyse_segmentation(
-            seg_volume=seg_volume,
-            spacing=mri_data["zooms"],
-            source=source,
-            full_segmentation=full_seg,
-        )
-
-        # Merge: use SDF meshes if available, voxel metrics otherwise
-        if sdf_result is not None:
-            result = voxel_result
-            result["meshes"] = sdf_result["meshes"]
-            result["meshMethod"] = sdf_result["meshMethod"]
-            result["regionalThickness"] = sdf_result["regionalThickness"]
-            result["aha17"] = sdf_result.get("aha17", [])
-            # Add SDF-specific metrics
-            for k in ("meanWallThicknessMm", "p95WallThicknessMm",
-                      "endoSurfaceAreaCm2", "epiSurfaceAreaCm2"):
-                if sdf_result["metrics"].get(k) is not None:
-                    result["metrics"][k] = sdf_result["metrics"][k]
-            result["source"] = f"{source} + SDF model"
-        else:
-            result = voxel_result
-
+        result, _, _ = _run_phase_inference(case, phase, frame, use_sdf)
     except ValueError as exc:
         return _json_error(str(exc), 400)
     except Exception as exc:
@@ -520,6 +570,54 @@ def infer_case(case_id: str):
         return _json_error(f"Inference failed: {exc}", 500)
 
     return jsonify(result)
+
+
+@app.post("/api/case/<case_id>/infer-paired")
+def infer_paired_case(case_id: str):
+    case = _get_case(case_id)
+    if case is None:
+        return _json_error("Case not found.", 404)
+    if case.get("mri_es") is None:
+        return _json_error("Load both ED and ES MRI data before running paired wall-thickness inference.", 400)
+
+    payload = request.get_json(silent=True) or {}
+    use_sdf = payload.get("useSdfModel", True)
+    ed_frame = int(payload.get("edFrame", payload.get("frame", 0)))
+    es_frame = int(payload.get("esFrame", 0))
+
+    try:
+        ed_result, ed_seg_volume, ed_mri = _run_phase_inference(case, "ed", ed_frame, use_sdf)
+        es_result, _, _ = _run_phase_inference(case, "es", es_frame, use_sdf)
+
+        ed_lv = ed_result.get("metrics", {}).get("lvVolumeMl")
+        es_lv = es_result.get("metrics", {}).get("lvVolumeMl")
+        if ed_lv is not None and es_lv is not None:
+            stroke = float(ed_lv) - float(es_lv)
+            ef = stroke / float(ed_lv) * 100.0 if float(ed_lv) > 0 else None
+            for result in (ed_result, es_result):
+                result["metrics"]["edvMl"] = round(float(ed_lv), 2)
+                result["metrics"]["esvMl"] = round(float(es_lv), 2)
+                result["metrics"]["strokeVolumeMl"] = round(stroke, 2)
+                result["metrics"]["ejectionFractionPct"] = round(ef, 1) if ef is not None else None
+
+        difference = compare_wall_thickness_results(
+            ed_result,
+            es_result,
+            ed_seg_volume=ed_seg_volume,
+            spacing=ed_mri["zooms"],
+        )
+    except ValueError as exc:
+        return _json_error(str(exc), 400)
+    except Exception as exc:
+        log.exception("Paired inference failed for case %s", case_id)
+        return _json_error(f"Paired inference failed: {exc}", 500)
+
+    return jsonify({
+        "source": "Paired ED/ES wall-thickness inference",
+        "ed": ed_result,
+        "es": es_result,
+        "difference": difference,
+    })
 
 
 def _try_sdf_inference(case: dict, seg_volume: np.ndarray, frame: int, phase: str = "ed") -> dict | None:
@@ -531,18 +629,16 @@ def _try_sdf_inference(case: dict, seg_volume: np.ndarray, frame: int, phase: st
     try:
         from core.sdf_model import extract_contours, predict_sdf_meshes
 
-        affine = case.get("seg", {}).get("affine")
-        if phase == "es" and case.get("seg_es"):
-            affine = case["seg_es"].get("affine", affine)
+        mri_data, seg_data, _ = _phase_data(case, phase)
+
+        affine = seg_data.get("affine") if seg_data is not None else None
         if affine is None:
-            affine = case.get("mri", {}).get("affine")
-        if phase == "es" and case.get("mri_es"):
-            affine = case["mri_es"].get("affine", affine)
+            affine = mri_data.get("affine")
         if affine is None:
             log.warning("No affine matrix available, skipping SDF inference")
             return None
 
-        dz = float(case["mri"]["zooms"][2])
+        dz = float(mri_data["zooms"][2])
 
         contours = extract_contours(seg_volume, affine, dz)
         phase_val = 0.0 if phase == "ed" else 1.0  # ED=0, ES=1
@@ -556,7 +652,7 @@ def _try_sdf_inference(case: dict, seg_volume: np.ndarray, frame: int, phase: st
             scale=contours["scale"],
             centroid=contours["centroid"],
             seg_volume=seg_volume,
-            spacing=case["mri"]["zooms"],
+            spacing=mri_data["zooms"],
         )
         log.info("SDF inference OK: endo=%d verts, epi=%d verts",
                  result["metrics"].get("endoVertices", 0),

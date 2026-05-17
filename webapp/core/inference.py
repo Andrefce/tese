@@ -51,6 +51,35 @@ def _mesh_area_cm2(vertices: np.ndarray, faces: np.ndarray) -> float | None:
     return float(area_mm2 / 100.0)
 
 
+def _remove_planar_z_caps(
+    vertices: np.ndarray,
+    faces: np.ndarray,
+    spacing: tuple[float, float, float] | None = None,
+) -> np.ndarray:
+    if len(vertices) == 0 or len(faces) == 0:
+        return faces.astype(np.int32)
+
+    z = vertices[:, 2]
+    zmin, zmax = float(np.nanmin(z)), float(np.nanmax(z))
+    if not np.isfinite(zmin) or not np.isfinite(zmax) or zmax <= zmin:
+        return faces.astype(np.int32)
+
+    z_tol = max(float(spacing[2]) * 0.55 if spacing else 0.75, (zmax - zmin) * 0.015)
+    tri = vertices[faces]
+    edge_a = tri[:, 1] - tri[:, 0]
+    edge_b = tri[:, 2] - tri[:, 0]
+    normals = np.cross(edge_a, edge_b)
+    normal_len = np.linalg.norm(normals, axis=1)
+    horizontal = np.zeros(len(faces), dtype=bool)
+    valid = normal_len > 1e-8
+    horizontal[valid] = np.abs(normals[valid, 2]) / normal_len[valid] > 0.92
+    near_bottom = np.all(np.abs(tri[:, :, 2] - zmin) <= z_tol, axis=1)
+    near_top = np.all(np.abs(tri[:, :, 2] - zmax) <= z_tol, axis=1)
+    keep = ~(horizontal & (near_bottom | near_top))
+    kept_faces = faces[keep]
+    return kept_faces.astype(np.int32) if len(kept_faces) else faces.astype(np.int32)
+
+
 def _reduce_mesh(
     vertices: np.ndarray,
     faces: np.ndarray,
@@ -133,7 +162,8 @@ def _surface_mesh(
             padded, level=0.5, spacing=tuple(spacing)
         )
         vertices = vertices - np.asarray(spacing, dtype=np.float32)
-        return vertices.astype(np.float32), faces.astype(np.int32), "marching_cubes"
+        faces = _remove_planar_z_caps(vertices, faces, spacing)
+        return vertices.astype(np.float32), faces.astype(np.int32), "marching_cubes_trimmed"
     except Exception:
         vertices, faces = _ellipsoid_mesh(mask, spacing, shell=shell)
         return vertices, faces, "ellipsoid"
@@ -150,10 +180,27 @@ def _nearest_wall_thickness(
         return None
     distances, _ = cKDTree(epi_vertices).query(endo_vertices, k=1, workers=-1)
     distances = np.asarray(distances, dtype=np.float32)
-    distances = distances[np.isfinite(distances)]
-    if distances.size == 0:
+    finite = np.isfinite(distances)
+    if not finite.any():
         return None
+    distances[~finite] = np.nan
     return distances
+
+
+def _finite_mean(values: np.ndarray | None) -> float | None:
+    if values is None:
+        return None
+    vals = np.asarray(values, dtype=np.float32)
+    vals = vals[np.isfinite(vals)]
+    return float(vals.mean()) if vals.size else None
+
+
+def _finite_percentile(values: np.ndarray | None, percentile: float) -> float | None:
+    if values is None:
+        return None
+    vals = np.asarray(values, dtype=np.float32)
+    vals = vals[np.isfinite(vals)]
+    return float(np.percentile(vals, percentile)) if vals.size else None
 
 
 def _regional_wall_stats(endo_vertices: np.ndarray, thickness: np.ndarray | None) -> list[dict[str, Any]]:
@@ -296,6 +343,191 @@ def _mesh_payload(
     return payload
 
 
+def _mesh_vertices(mesh: dict[str, Any] | None) -> np.ndarray:
+    if not mesh or not mesh.get("vertices"):
+        return np.empty((0, 3), dtype=np.float32)
+    return np.asarray(mesh["vertices"], dtype=np.float32).reshape(-1, 3)
+
+
+def _mesh_values(mesh: dict[str, Any] | None) -> np.ndarray | None:
+    if not mesh or not mesh.get("values"):
+        return None
+    return np.asarray(mesh["values"], dtype=np.float32)
+
+
+def _sample_values_nearest(
+    source_vertices: np.ndarray,
+    source_values: np.ndarray | None,
+    target_vertices: np.ndarray,
+) -> np.ndarray | None:
+    if source_values is None or len(source_vertices) == 0 or len(target_vertices) == 0:
+        return None
+    if len(source_values) != len(source_vertices):
+        return None
+    cKDTree = _optional_ckdtree()
+    if cKDTree is None:
+        return None
+    _, idx = cKDTree(source_vertices).query(target_vertices, k=1, workers=-1)
+    return source_values[np.asarray(idx, dtype=np.int64)].astype(np.float32)
+
+
+def _contour_area(points: np.ndarray) -> float:
+    x = points[:, 0]
+    y = points[:, 1]
+    return 0.5 * abs(float(np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1))))
+
+
+def _resample_contour_by_angle(points: np.ndarray, sectors: int) -> np.ndarray:
+    center = points.mean(axis=0)
+    rel = points - center
+    angles = np.arctan2(rel[:, 1], rel[:, 0])
+    targets = np.linspace(-math.pi, math.pi, int(sectors), endpoint=False)
+    order = np.argsort(angles)
+    angles = angles[order]
+    pts = points[order]
+    closed_angles = np.concatenate([angles - 2.0 * math.pi, angles, angles + 2.0 * math.pi])
+    closed_pts = np.vstack([pts, pts, pts])
+    out = []
+    for angle in targets:
+        idx = int(np.argmin(np.abs(closed_angles - angle)))
+        out.append(closed_pts[idx])
+    return np.asarray(out, dtype=np.float32)
+
+
+def _solid_lv_mesh_from_segmentation(
+    seg_volume: np.ndarray,
+    spacing: tuple[float, float, float],
+    sectors: int = 96,
+) -> tuple[np.ndarray, np.ndarray, str]:
+    measure = _optional_measure()
+    if measure is None:
+        labels = np.rint(seg_volume).astype(np.int16)
+        return (*_ellipsoid_mesh(labels == LBL_LV, spacing), "ellipsoid_fallback")
+
+    labels = np.rint(seg_volume).astype(np.int16)
+    lv_mask = labels == LBL_LV
+    rings: list[np.ndarray] = []
+    for z_idx in range(lv_mask.shape[2]):
+        mask = lv_mask[:, :, z_idx].astype(np.uint8)
+        if int(mask.sum()) <= 10:
+            continue
+        contours = measure.find_contours(mask, 0.5)
+        if not contours:
+            continue
+        contour = max(contours, key=_contour_area).astype(np.float32)
+        if len(contour) < 8:
+            continue
+        xy = np.column_stack([contour[:, 0] * spacing[0], contour[:, 1] * spacing[1]])
+        ring_xy = _resample_contour_by_angle(xy, sectors=sectors)
+        z_col = np.full((len(ring_xy), 1), z_idx * spacing[2], dtype=np.float32)
+        rings.append(np.column_stack([ring_xy, z_col]))
+
+    if len(rings) < 2:
+        return _surface_mesh(lv_mask, spacing)
+
+    vertices = np.vstack(rings).astype(np.float32)
+    faces = []
+    for ring_idx in range(len(rings) - 1):
+        base = ring_idx * sectors
+        nxt = (ring_idx + 1) * sectors
+        for i in range(sectors):
+            j = (i + 1) % sectors
+            faces.append([base + i, nxt + i, base + j])
+            faces.append([base + j, nxt + i, nxt + j])
+
+    return vertices, np.asarray(faces, dtype=np.int32), "contour_loft_open_ends"
+
+
+def _signed_delta_status(value: float | None) -> str:
+    if value is None or not np.isfinite(value):
+        return "unavailable"
+    if value > 1.0:
+        return "thickening"
+    if value < -1.0:
+        return "thinning"
+    return "minimal"
+
+
+def compare_wall_thickness_results(
+    ed_result: dict[str, Any],
+    es_result: dict[str, Any],
+    ed_seg_volume: np.ndarray | None = None,
+    spacing: tuple[float, float, float] | None = None,
+) -> dict[str, Any]:
+    ed_segments = {int(s.get("id", 0)): s for s in ed_result.get("aha17", [])}
+    es_segments = {int(s.get("id", 0)): s for s in es_result.get("aha17", [])}
+    aha_delta = []
+    for seg_id, name in enumerate(AHA_17_NAMES, start=1):
+        ed_mean = ed_segments.get(seg_id, {}).get("meanMm")
+        es_mean = es_segments.get(seg_id, {}).get("meanMm")
+        delta = None
+        relative = None
+        if ed_mean is not None and es_mean is not None:
+            delta = float(es_mean) - float(ed_mean)
+            if abs(float(ed_mean)) > 0.5:
+                relative = delta / float(ed_mean) * 100.0
+        aha_delta.append({
+            "id": seg_id,
+            "name": name,
+            "edMeanMm": round(float(ed_mean), 2) if ed_mean is not None else None,
+            "esMeanMm": round(float(es_mean), 2) if es_mean is not None else None,
+            "deltaMm": round(delta, 2) if delta is not None else None,
+            "relativeThickeningPct": round(relative, 1) if relative is not None else None,
+            "status": _signed_delta_status(delta),
+        })
+
+    ed_mean = ed_result.get("metrics", {}).get("meanWallThicknessMm")
+    es_mean = es_result.get("metrics", {}).get("meanWallThicknessMm")
+    mean_delta = float(es_mean) - float(ed_mean) if ed_mean is not None and es_mean is not None else None
+    rel_delta = mean_delta / float(ed_mean) * 100.0 if mean_delta is not None and abs(float(ed_mean)) > 0.5 else None
+
+    ed_mesh = ed_result.get("meshes", {}).get("endo")
+    es_mesh = es_result.get("meshes", {}).get("endo")
+    ed_vertices = _mesh_vertices(ed_mesh)
+    es_vertices = _mesh_vertices(es_mesh)
+    ed_values = _mesh_values(ed_mesh)
+    es_values = _mesh_values(es_mesh)
+
+    difference_vertices = ed_vertices
+    difference_faces = np.asarray(ed_mesh.get("faces", []), dtype=np.int32).reshape(-1, 3) if ed_mesh else np.empty((0, 3), dtype=np.int32)
+    mesh_method = "nearest_endocardial_mesh"
+    if ed_seg_volume is not None and spacing is not None:
+        solid_vertices, solid_faces, solid_method = _solid_lv_mesh_from_segmentation(ed_seg_volume, spacing)
+        if len(solid_vertices) and len(solid_faces):
+            difference_vertices = solid_vertices
+            difference_faces = solid_faces
+            mesh_method = solid_method
+
+    ed_sample = _sample_values_nearest(ed_vertices, ed_values, difference_vertices)
+    es_sample = _sample_values_nearest(es_vertices, es_values, difference_vertices)
+    diff_values = None
+    if ed_sample is not None and es_sample is not None:
+        diff_values = (es_sample - ed_sample).astype(np.float32)
+
+    finite_diff = diff_values[np.isfinite(diff_values)] if diff_values is not None else np.empty(0, dtype=np.float32)
+    abs_max = float(np.percentile(np.abs(finite_diff), 98)) if finite_diff.size else 5.0
+    if not np.isfinite(abs_max) or abs_max < 1.0:
+        abs_max = 5.0
+
+    return {
+        "kind": "difference",
+        "source": "Paired ED/ES wall-thickness comparison",
+        "meshMethod": mesh_method,
+        "differenceMethod": "ES nearest-neighbor sampled onto ED solid LV mesh" if mesh_method != "nearest_endocardial_mesh" else "ES nearest-neighbor sampled onto ED endocardial mesh",
+        "metrics": {
+            "edMeanWallThicknessMm": round(float(ed_mean), 2) if ed_mean is not None else None,
+            "esMeanWallThicknessMm": round(float(es_mean), 2) if es_mean is not None else None,
+            "meanDeltaWallThicknessMm": round(mean_delta, 2) if mean_delta is not None else None,
+            "relativeThickeningPct": round(rel_delta, 1) if rel_delta is not None else None,
+        },
+        "aha17Delta": aha_delta,
+        "colorScale": {"min": round(-abs_max, 2), "max": round(abs_max, 2), "center": 0.0},
+        "meshes": {
+            "endo": _mesh_payload(difference_vertices, difference_faces, diff_values, max_faces=50000),
+        },
+    }
+
+
 def _frame_volumes(seg_data: np.ndarray, spacing: tuple[float, float, float]) -> list[float]:
     if seg_data.ndim != 4:
         return []
@@ -342,8 +574,8 @@ def analyse_segmentation(
     myo_volume_ml = _volume_ml(myo_mask, spacing)
     epi_volume_ml = _volume_ml(epi_mask, spacing)
     rv_volume_ml = _volume_ml(rv_mask, spacing) if rv_mask.any() else None
-    wall_mean = float(np.mean(wall_values)) if wall_values is not None and wall_values.size else None
-    wall_p95 = float(np.percentile(wall_values, 95)) if wall_values is not None and wall_values.size else None
+    wall_mean = _finite_mean(wall_values)
+    wall_p95 = _finite_percentile(wall_values, 95)
     endo_area = _mesh_area_cm2(endo_vertices, endo_faces)
     epi_area = _mesh_area_cm2(epi_vertices, epi_faces)
 

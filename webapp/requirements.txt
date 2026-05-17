@@ -11,3 +11,6 @@ scikit-image>=0.22
 
 # SDF model inference
 torch>=2.2
+
+# Tests
+pytest>=8.0
