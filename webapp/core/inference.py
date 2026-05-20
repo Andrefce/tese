@@ -371,6 +371,47 @@ def _sample_values_nearest(
     return source_values[np.asarray(idx, dtype=np.int64)].astype(np.float32)
 
 
+def _radial_surface_motion_values(
+    ed_vertices: np.ndarray,
+    es_vertices: np.ndarray,
+    target_vertices: np.ndarray,
+) -> np.ndarray | None:
+    """Return signed ED→ES radial motion sampled on target vertices.
+
+    Positive values mean the ES surface is inward from the ED surface along
+    the local ED radial direction (expected systolic contraction). Negative
+    values indicate outward motion/expansion.
+    """
+    if len(ed_vertices) == 0 or len(es_vertices) == 0 or len(target_vertices) == 0:
+        return None
+    cKDTree = _optional_ckdtree()
+    if cKDTree is None:
+        return None
+
+    ed_center = np.nanmean(ed_vertices, axis=0)
+    if not np.all(np.isfinite(ed_center)):
+        return None
+
+    _, es_idx = cKDTree(es_vertices).query(target_vertices, k=1, workers=-1)
+    nearest_es = es_vertices[np.asarray(es_idx, dtype=np.int64)]
+
+    radial = target_vertices - ed_center
+    radial_norm = np.linalg.norm(radial, axis=1)
+    valid = radial_norm > 1e-6
+    if not valid.any():
+        return None
+
+    directions = np.zeros_like(radial, dtype=np.float32)
+    directions[valid] = radial[valid] / radial_norm[valid, None]
+    motion = np.einsum("ij,ij->i", target_vertices - nearest_es, directions).astype(np.float32)
+
+    # At rare near-centroid vertices, fall back to unsigned nearest distance.
+    if (~valid).any():
+        motion[~valid] = np.linalg.norm(target_vertices[~valid] - nearest_es[~valid], axis=1)
+    motion[~np.isfinite(motion)] = np.nan
+    return motion
+
+
 def _contour_area(points: np.ndarray) -> float:
     x = points[:, 0]
     y = points[:, 1]
@@ -576,19 +617,35 @@ def compare_wall_thickness_results(
 
     difference_vertices = ed_vertices
     difference_faces = np.asarray(ed_mesh.get("faces", []), dtype=np.int32).reshape(-1, 3) if ed_mesh else np.empty((0, 3), dtype=np.int32)
-    mesh_method = "nearest_endocardial_mesh"
-    if ed_seg_volume is not None and spacing is not None:
+    mesh_method = "ed_endocardial_surface_radial_motion"
+
+    # Prefer the true ED endocardial surface because it preserves LV geometry.
+    # Only fall back to the segmentation loft when the ED mesh is missing or is
+    # the old ellipsoid fallback, which looks like a generic smooth blob.
+    ed_mesh_method = str(ed_result.get("meshMethod", ""))
+    needs_segmentation_fallback = (
+        len(difference_vertices) == 0
+        or len(difference_faces) == 0
+        or "ellipsoid" in ed_mesh_method
+    )
+    if needs_segmentation_fallback and ed_seg_volume is not None and spacing is not None:
         solid_vertices, solid_faces, solid_method = _solid_lv_mesh_from_segmentation(ed_seg_volume, spacing)
         if len(solid_vertices) and len(solid_faces):
             difference_vertices = solid_vertices
             difference_faces = solid_faces
-            mesh_method = solid_method
+            mesh_method = f"{solid_method}_radial_motion"
 
-    ed_sample = _sample_values_nearest(ed_vertices, ed_values, difference_vertices)
-    es_sample = _sample_values_nearest(es_vertices, es_values, difference_vertices)
-    diff_values = None
-    if ed_sample is not None and es_sample is not None:
-        diff_values = (es_sample - ed_sample).astype(np.float32)
+    diff_values = _radial_surface_motion_values(ed_vertices, es_vertices, difference_vertices)
+    difference_method = "ED→ES inward radial endocardial motion sampled on the ED LV surface"
+    value_label = "ED→ES radial contraction (mm)"
+    if diff_values is None:
+        ed_sample = _sample_values_nearest(ed_vertices, ed_values, difference_vertices)
+        es_sample = _sample_values_nearest(es_vertices, es_values, difference_vertices)
+        if ed_sample is not None and es_sample is not None:
+            diff_values = (es_sample - ed_sample).astype(np.float32)
+            mesh_method = mesh_method.replace("radial_motion", "wall_thickness_delta")
+            difference_method = "ES wall-thickness nearest-neighbor sampled onto ED LV surface"
+            value_label = "ES−ED wall-thickness change (mm)"
 
     finite_diff = diff_values[np.isfinite(diff_values)] if diff_values is not None else np.empty(0, dtype=np.float32)
     abs_max = float(np.percentile(np.abs(finite_diff), 98)) if finite_diff.size else 5.0
@@ -599,12 +656,15 @@ def compare_wall_thickness_results(
         "kind": "difference",
         "source": "Paired ED/ES wall-thickness comparison",
         "meshMethod": mesh_method,
-        "differenceMethod": "ES nearest-neighbor sampled onto ED solid LV mesh" if mesh_method != "nearest_endocardial_mesh" else "ES nearest-neighbor sampled onto ED endocardial mesh",
+        "differenceMethod": difference_method,
+        "valueLabel": value_label,
         "metrics": {
             "edMeanWallThicknessMm": round(float(ed_mean), 2) if ed_mean is not None else None,
             "esMeanWallThicknessMm": round(float(es_mean), 2) if es_mean is not None else None,
             "meanDeltaWallThicknessMm": round(mean_delta, 2) if mean_delta is not None else None,
             "relativeThickeningPct": round(rel_delta, 1) if rel_delta is not None else None,
+            "meanRadialMotionMm": round(float(np.nanmean(finite_diff)), 2) if finite_diff.size else None,
+            "p95RadialMotionMm": round(float(np.nanpercentile(finite_diff, 95)), 2) if finite_diff.size else None,
         },
         "aha17Delta": aha_delta,
         "colorScale": {"min": round(-abs_max, 2), "max": round(abs_max, 2), "center": 0.0},

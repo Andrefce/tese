@@ -178,8 +178,38 @@
     return data;
   }
 
+  async function hydrateSdfResult(result, label = "SDF") {
+    if (!result || !result.sdfResultUrl || result.meshes) return result;
+    try {
+      showLoading(`Loading ${label} 3D model from cloud…`);
+      const sdfData = await fetch(result.sdfResultUrl).then((r) => {
+        if (!r.ok) throw new Error(`GCS fetch failed: ${r.status}`);
+        return r.json();
+      });
+      result.meshes = sdfData.meshes;
+      result.meshMethod = sdfData.meshMethod;
+      result.regionalThickness = sdfData.regionalThickness;
+      result.aha17 = sdfData.aha17 || [];
+    } catch (err) {
+      console.warn(`${label} mesh fetch failed, using voxel meshes:`, err.message);
+      toast(`${label} 3D model unavailable, using voxel meshes`, "warning");
+    }
+    return result;
+  }
+
   function setBusy(el, busy) {
     el.classList.toggle("busy", busy);
+  }
+
+  // Poll a background job until done; rejects on error.
+  async function pollJob(jobId, label) {
+    for (;;) {
+      await new Promise((resolve) => setTimeout(resolve, 2500));
+      const job = await apiGet(`/api/jobs/${jobId}`);
+      if (job.status === "done") return job.result;
+      if (job.status === "error") throw new Error(job.error || "Inference failed");
+      showLoading(`${label}…`);
+    }
   }
 
   // ─── DOM refs ───
@@ -600,15 +630,25 @@
       } catch (_) {}
     }
 
-    showLoading("Running cardiac inference…");
+    showLoading("Starting inference…");
     try {
       if (state.mode === "wt" && state.hasEs) {
-        const paired = await apiPost(`/api/case/${state.caseId}/infer-paired`, {
-          edFrame: state.phase === "ed" ? state.currentFrame : 0,
-          esFrame: state.phase === "es" ? state.currentFrame : 0,
+        const edFrame = state.phase === "ed" ? state.currentFrame : 0;
+        const esFrame = state.phase === "es" ? state.currentFrame : 0;
+        showLoading("Queuing paired ED+ES inference…");
+        const { jobId } = await apiPost(`/api/case/${state.caseId}/infer-paired/start`, {
+          edFrame,
+          esFrame,
         });
-        paired.ed.sliceContours = await apiGet(`/api/case/${state.caseId}/slice-contours?phase=ed`);
-        paired.es.sliceContours = await apiGet(`/api/case/${state.caseId}/slice-contours?phase=es`);
+        const paired = await pollJob(jobId, "Running paired ED+ES inference (may take a few minutes)");
+
+        await Promise.all([
+          hydrateSdfResult(paired.ed, "ED SDF"),
+          hydrateSdfResult(paired.es, "ES SDF"),
+        ]);
+
+        paired.ed.sliceContours = await apiGet(`/api/case/${state.caseId}/slice-contours?phase=ed&frame=${edFrame}`);
+        paired.es.sliceContours = await apiGet(`/api/case/${state.caseId}/slice-contours?phase=es&frame=${esFrame}`);
         state.results = paired;
         state.resultsEd = paired.ed;
         state.resultsEs = paired.es;
@@ -619,11 +659,16 @@
         showResultsForPhase();
         inferenceSource.textContent = paired.source || "Complete";
       } else {
-        const result = await apiPost(`/api/case/${state.caseId}/infer`, {
+        showLoading(`Queuing ${state.phase.toUpperCase()} inference…`);
+        const { jobId } = await apiPost(`/api/case/${state.caseId}/infer/start`, {
           frame: state.currentFrame,
           phase: state.phase,
         });
-        await fetchSliceContours();
+        const result = await pollJob(jobId, `Running ${state.phase.toUpperCase()} inference`);
+        await hydrateSdfResult(result, `${state.phase.toUpperCase()} SDF`);
+        state.sliceContours = await apiGet(
+          `/api/case/${state.caseId}/slice-contours?phase=${state.phase}&frame=${state.currentFrame}`
+        );
         result.sliceContours = state.sliceContours;
         state.results = { ed: result, es: null, difference: null };
         state.resultsEd = result;
@@ -682,7 +727,7 @@
     const gradient = $("#bullseyeGradient");
     if (title) title.textContent = difference ? "Wall Thickening — AHA 17-Segment" : "Wall Thickness — AHA 17-Segment";
     if (bullseyeTitle) bullseyeTitle.textContent = difference ? "Difference Bullseye" : "Bullseye Plot";
-    if (meshTitle) meshTitle.textContent = difference ? "LV Wall Thickening Difference" : "LV 3D Reconstruction";
+    if (meshTitle) meshTitle.textContent = difference ? "LV ED→ES Shape Change" : "LV 3D Reconstruction";
     if (minLabel) minLabel.textContent = difference ? "-5 mm" : "0 mm";
     if (maxLabel) maxLabel.textContent = difference ? "+5 mm" : "15 mm";
     if (gradient) gradient.classList.toggle("difference", difference);
@@ -738,7 +783,9 @@
       list.appendChild(row);
     });
 
-    meshStatus.textContent = result.meshMethod ? result.meshMethod : "ready";
+    meshStatus.textContent = result.valueLabel
+      ? `${result.valueLabel} · ${result.meshMethod || "ready"}`
+      : (result.meshMethod ? result.meshMethod : "ready");
     if (mode === "difference") updateComparisonSummary(result);
   }
 
@@ -1446,6 +1493,10 @@
       if (result) {
         displayMetrics(result, { mode: "difference" });
         const scale = result.colorScale || { min: -5, max: 5 };
+        const minLabel = $("#bullseyeMinLabel");
+        const maxLabel = $("#bullseyeMaxLabel");
+        if (minLabel) minLabel.textContent = `${Number(scale.min).toFixed(1)} mm`;
+        if (maxLabel) maxLabel.textContent = `${Number(scale.max).toFixed(1)} mm`;
         if (result.meshes) build3DScene(result.meshes, null, {
           meshMode: "difference",
           cmMin: scale.min,

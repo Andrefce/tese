@@ -1,0 +1,18 @@
+# FastAPI + ASGI server
+fastapi>=0.111
+uvicorn[standard]>=0.29
+python-multipart>=0.0.9
+
+# Numeric and medical-image I/O
+numpy>=1.26
+nibabel>=5.2
+
+# Segmentation and geometry utilities
+scipy>=1.11
+scikit-image>=0.22
+
+# SDF model inference (CUDA — use CPU wheel for local dev)
+torch>=2.2
+
+# Google Cloud Storage
+google-cloud-storage>=2.16

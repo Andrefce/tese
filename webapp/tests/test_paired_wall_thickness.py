@@ -104,7 +104,8 @@ def test_difference_mesh_uses_segmentation_solid_when_contours_unavailable(monke
 
     assert response.status_code == 200
     difference = response.get_json()["difference"]
-    assert difference["meshMethod"] == "segmentation_loft_solid"
+    assert difference["meshMethod"] == "segmentation_loft_solid_radial_motion"
+    assert difference["valueLabel"] == "ED→ES radial contraction (mm)"
     assert len(difference["meshes"]["endo"]["vertices"]) > 1000
     assert difference["meshes"]["endo"]["values"]
 
@@ -128,4 +129,5 @@ def test_compare_wall_thickness_uses_es_minus_ed_convention():
     assert difference["metrics"]["meanDeltaWallThicknessMm"] == 2.0
     assert difference["metrics"]["relativeThickeningPct"] == 40.0
     assert difference["aha17Delta"][0]["deltaMm"] == 2.0
-    assert difference["meshes"]["endo"]["values"] == [2.0, 2.0, 2.0]
+    assert difference["valueLabel"] == "ED→ES radial contraction (mm)"
+    assert difference["meshes"]["endo"]["values"] == [0.0, 0.0, 0.0]

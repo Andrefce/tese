@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import io
+import json
 import logging
 import os
 import uuid
+from concurrent.futures import ThreadPoolExecutor as _TpExec
 from pathlib import Path
 from typing import Any
 
 import numpy as np
+import requests as http_requests
 from flask import Flask, jsonify, render_template, request
 from werkzeug.utils import secure_filename
 
@@ -25,9 +29,9 @@ from core.nifti import (
     slice_payload,
 )
 
-# ── SDF model (lazy-loaded) ──
-SDF_MODEL = None
-SDF_CFG = None
+# ── Inference API (Cloud Run service) ──
+INFERENCE_API_URL = os.environ.get("INFERENCE_API_URL", "http://localhost:8080")
+GCS_BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME", "cardiosdf-results")
 
 log = logging.getLogger(__name__)
 
@@ -38,11 +42,22 @@ UPLOAD_ROOT = Path(os.environ.get("ACDC_WEBAPP_UPLOADS", Path(app.instance_path)
 UPLOAD_ROOT.mkdir(parents=True, exist_ok=True)
 
 CASES: dict[str, dict[str, Any]] = {}
+JOBS: dict[str, dict[str, Any]] = {}
 
 ALLOWED_EXTENSIONS = {".nii", ".nii.gz"}
 MAX_CASES = 50
+MAX_JOBS = 200
 
-MODEL_PATH = Path(__file__).parent / "model" / "inr_sdf_combined_fresh_ed_mix_v1_final.ptrom"
+_job_executor = _TpExec(max_workers=4)
+
+
+def _evict_jobs() -> None:
+    """Evict the oldest jobs when the job table is at capacity."""
+    while len(JOBS) >= MAX_JOBS:
+        oldest = next(iter(JOBS))
+        del JOBS[oldest]
+
+
 DEMO_DATA_ROOT = Path(__file__).parent / "demo-data" / "training"
 
 
@@ -154,23 +169,22 @@ def health():
     return jsonify({"ok": True, "cases": len(CASES)})
 
 
-def _load_sdf_model():
-    """Load SDF model once on first use."""
-    global SDF_MODEL, SDF_CFG
-    if SDF_MODEL is not None:
-        return SDF_MODEL, SDF_CFG
-    if not MODEL_PATH.exists():
-        log.warning("SDF model checkpoint not found at %s", MODEL_PATH)
-        return None, None
-    try:
-        from core.sdf_model import load_model
-        log.info("Loading SDF model from %s …", MODEL_PATH)
-        SDF_MODEL, SDF_CFG = load_model(MODEL_PATH)
-        log.info("SDF model loaded (device=%s)", next(SDF_MODEL.parameters()).device)
-        return SDF_MODEL, SDF_CFG
-    except Exception:
-        log.exception("Failed to load SDF model")
-        return None, None
+def _get_inference_auth_headers() -> dict[str, str]:
+    """Get authentication headers for Cloud Run service-to-service calls.
+
+    When running on Cloud Run, uses the metadata server to obtain an
+    identity token.  Locally, returns empty headers (no auth needed).
+    """
+    if os.environ.get("K_SERVICE"):  # running on Cloud Run
+        try:
+            import google.auth.transport.requests
+            import google.oauth2.id_token
+            auth_req = google.auth.transport.requests.Request()
+            token = google.oauth2.id_token.fetch_id_token(auth_req, INFERENCE_API_URL)
+            return {"Authorization": f"Bearer {token}"}
+        except Exception:
+            log.exception("Failed to obtain Cloud Run identity token for %s", INFERENCE_API_URL)
+    return {}
 
 
 def _list_acdc_patients() -> list[Path]:
@@ -534,14 +548,19 @@ def _run_phase_inference(
 
     if sdf_result is not None:
         result = voxel_result
-        result["meshes"] = sdf_result["meshes"]
-        result["meshMethod"] = sdf_result["meshMethod"]
-        result["regionalThickness"] = sdf_result["regionalThickness"]
-        result["aha17"] = sdf_result.get("aha17", [])
+        if "meshes" in sdf_result:
+            result["meshes"] = sdf_result["meshes"]
+            result["meshMethod"] = sdf_result["meshMethod"]
+            result["regionalThickness"] = sdf_result["regionalThickness"]
+            result["aha17"] = sdf_result.get("aha17", [])
+        if "sdfHash" in sdf_result:
+            result["sdfHash"] = sdf_result["sdfHash"]
+            result["sdfResultUrl"] = sdf_result["sdfResultUrl"]
+        sdf_metrics = sdf_result.get("metrics", {})
         for k in ("meanWallThicknessMm", "p95WallThicknessMm",
                   "endoSurfaceAreaCm2", "epiSurfaceAreaCm2"):
-            if sdf_result["metrics"].get(k) is not None:
-                result["metrics"][k] = sdf_result["metrics"][k]
+            if sdf_metrics.get(k) is not None:
+                result["metrics"][k] = sdf_metrics[k]
         result["source"] = f"{source} + SDF model"
     else:
         result = voxel_result
@@ -549,6 +568,123 @@ def _run_phase_inference(
     result["phase"] = phase
     result["frame"] = int(frame)
     return result, seg_volume, mri_data
+
+
+def _run_infer_single_job(
+    job_id: str,
+    case_id: str,
+    phase: str,
+    frame: int,
+    use_sdf: bool,
+) -> None:
+    try:
+        JOBS[job_id]["status"] = "running"
+        case = _get_case(case_id)
+        if case is None:
+            JOBS[job_id] = {"status": "error", "error": "Case not found (may have been evicted)"}
+            return
+        result, _, _ = _run_phase_inference(case, phase, frame, use_sdf)
+        JOBS[job_id] = {"status": "done", "result": result}
+    except ValueError as exc:
+        JOBS[job_id] = {"status": "error", "error": str(exc)}
+    except Exception as exc:
+        log.exception("Background single inference failed for case %s", case_id)
+        JOBS[job_id] = {"status": "error", "error": f"Inference failed: {exc}"}
+
+
+def _run_infer_paired_job(
+    job_id: str,
+    case_id: str,
+    ed_frame: int,
+    es_frame: int,
+    use_sdf: bool,
+) -> None:
+    try:
+        JOBS[job_id]["status"] = "running"
+        case = _get_case(case_id)
+        if case is None:
+            JOBS[job_id] = {"status": "error", "error": "Case not found (may have been evicted)"}
+            return
+
+        with _TpExec(max_workers=2) as pool:
+            fut_ed = pool.submit(_run_phase_inference, case, "ed", ed_frame, use_sdf)
+            fut_es = pool.submit(_run_phase_inference, case, "es", es_frame, use_sdf)
+            ed_result, ed_seg_volume, ed_mri = fut_ed.result()
+            es_result, _, _ = fut_es.result()
+
+        ed_lv = ed_result.get("metrics", {}).get("lvVolumeMl")
+        es_lv = es_result.get("metrics", {}).get("lvVolumeMl")
+        if ed_lv is not None and es_lv is not None:
+            stroke = float(ed_lv) - float(es_lv)
+            ef = stroke / float(ed_lv) * 100.0 if float(ed_lv) > 0 else None
+            for r in (ed_result, es_result):
+                r["metrics"]["edvMl"] = round(float(ed_lv), 2)
+                r["metrics"]["esvMl"] = round(float(es_lv), 2)
+                r["metrics"]["strokeVolumeMl"] = round(stroke, 2)
+                r["metrics"]["ejectionFractionPct"] = round(ef, 1) if ef is not None else None
+
+        difference = compare_wall_thickness_results(
+            ed_result,
+            es_result,
+            ed_seg_volume=ed_seg_volume,
+            spacing=ed_mri["zooms"],
+        )
+        JOBS[job_id] = {
+            "status": "done",
+            "result": {
+                "source": "Paired ED/ES wall-thickness inference",
+                "ed": ed_result,
+                "es": es_result,
+                "difference": difference,
+            },
+        }
+    except ValueError as exc:
+        JOBS[job_id] = {"status": "error", "error": str(exc)}
+    except Exception as exc:
+        log.exception("Background paired inference failed for case %s", case_id)
+        JOBS[job_id] = {"status": "error", "error": f"Paired inference failed: {exc}"}
+
+
+@app.post("/api/case/<case_id>/infer/start")
+def start_infer(case_id: str):
+    case = _get_case(case_id)
+    if case is None:
+        return _json_error("Case not found.", 404)
+    payload = request.get_json(silent=True) or {}
+    frame = int(payload.get("frame", 0))
+    use_sdf = payload.get("useSdfModel", True)
+    phase = payload.get("phase", "ed")
+    _evict_jobs()
+    job_id = uuid.uuid4().hex[:12]
+    JOBS[job_id] = {"status": "pending"}
+    _job_executor.submit(_run_infer_single_job, job_id, case_id, phase, frame, use_sdf)
+    return jsonify({"jobId": job_id})
+
+
+@app.post("/api/case/<case_id>/infer-paired/start")
+def start_infer_paired(case_id: str):
+    case = _get_case(case_id)
+    if case is None:
+        return _json_error("Case not found.", 404)
+    if case.get("mri_es") is None:
+        return _json_error("Load both ED and ES MRI data before running paired wall-thickness inference.", 400)
+    payload = request.get_json(silent=True) or {}
+    use_sdf = payload.get("useSdfModel", True)
+    ed_frame = int(payload.get("edFrame", payload.get("frame", 0)))
+    es_frame = int(payload.get("esFrame", 0))
+    _evict_jobs()
+    job_id = uuid.uuid4().hex[:12]
+    JOBS[job_id] = {"status": "pending"}
+    _job_executor.submit(_run_infer_paired_job, job_id, case_id, ed_frame, es_frame, use_sdf)
+    return jsonify({"jobId": job_id})
+
+
+@app.get("/api/jobs/<job_id>")
+def get_job(job_id: str):
+    job = JOBS.get(job_id)
+    if job is None:
+        return _json_error("Job not found.", 404)
+    return jsonify(job)
 
 
 @app.post("/api/case/<case_id>/infer")
@@ -622,46 +758,76 @@ def infer_paired_case(case_id: str):
 
 
 def _try_sdf_inference(case: dict, seg_volume: np.ndarray, frame: int, phase: str = "ed") -> dict | None:
-    """Attempt SDF model inference. Returns result dict or None on failure."""
-    model, cfg = _load_sdf_model()
-    if model is None:
+    """Call the remote inference API for SDF model inference.
+
+    Returns a dict with meshes, meshMethod, regionalThickness, aha17, and metrics
+    taken directly from the API response.  Also stores sdfHash/sdfResultUrl if
+    present so the frontend can cache-bust.  Returns None on failure.
+    """
+    try:
+        import nibabel as nib
+    except ImportError:
+        log.warning("nibabel not available, cannot serialize segmentation for API")
+        return None
+
+    mri_data, seg_data, _ = _phase_data(case, phase)
+    affine = seg_data.get("affine") if seg_data is not None else None
+    if affine is None:
+        affine = mri_data.get("affine")
+    if affine is None:
+        log.warning("No affine matrix available, skipping SDF inference")
+        return None
+
+    spacing = mri_data["zooms"]
+
+    try:
+        from nibabel.fileholders import FileHolder
+        seg_img = nib.Nifti1Image(seg_volume.astype(np.float32), np.eye(4))
+        buf = io.BytesIO()
+        file_map = seg_img.make_file_map()
+        file_map["image"] = FileHolder(fileobj=buf)
+        file_map["header"] = FileHolder(fileobj=buf)
+        seg_img.to_file_map(file_map)
+        seg_bytes = buf.getvalue()
+    except Exception:
+        log.exception("Failed to serialize segmentation to NIfTI")
         return None
 
     try:
-        from core.sdf_model import extract_contours, predict_sdf_meshes
-
-        mri_data, seg_data, _ = _phase_data(case, phase)
-
-        affine = seg_data.get("affine") if seg_data is not None else None
-        if affine is None:
-            affine = mri_data.get("affine")
-        if affine is None:
-            log.warning("No affine matrix available, skipping SDF inference")
-            return None
-
-        dz = float(mri_data["zooms"][2])
-
-        contours = extract_contours(seg_volume, affine, dz)
-        phase_val = 0.0 if phase == "ed" else 1.0  # ED=0, ES=1
-
-        result = predict_sdf_meshes(
-            model=model,
-            contour_xyz=contours["xyz"],
-            tissue_labels=contours["tissue"],
-            cfg=cfg,
-            phase_val=phase_val,
-            scale=contours["scale"],
-            centroid=contours["centroid"],
-            seg_volume=seg_volume,
-            spacing=mri_data["zooms"],
+        headers = _get_inference_auth_headers()
+        resp = http_requests.post(
+            f"{INFERENCE_API_URL}/infer",
+            files={"segmentation": ("seg.nii", seg_bytes, "application/octet-stream")},
+            data={
+                "affine": json.dumps(np.asarray(affine, dtype=float).tolist()),
+                "spacing": json.dumps([float(v) for v in spacing]),
+                "phase": phase,
+                "frame": str(frame),
+            },
+            headers=headers,
+            timeout=300,
         )
-        log.info("SDF inference OK: endo=%d verts, epi=%d verts",
-                 result["metrics"].get("endoVertices", 0),
-                 result["metrics"].get("epiVertices", 0))
-        return result
-    except Exception:
-        log.exception("SDF inference failed, falling back to voxel-based")
+        resp.raise_for_status()
+        api_result = resp.json()
+    except http_requests.exceptions.Timeout:
+        log.error("Inference API timed out")
         return None
+    except Exception:
+        log.exception("Inference API call failed")
+        return None
+
+    log.info("SDF inference API OK: hash=%s", api_result.get("hash"))
+    out: dict = {"metrics": api_result.get("metrics", {})}
+    # Prefer inline mesh data (returned by the API directly)
+    for key in ("meshes", "meshMethod", "regionalThickness", "aha17"):
+        if key in api_result:
+            out[key] = api_result[key]
+    # Keep GCS URL for optional cache usage by the frontend
+    if "hash" in api_result:
+        out["sdfHash"] = api_result["hash"]
+    if "url" in api_result:
+        out["sdfResultUrl"] = api_result["url"]
+    return out
 
 
 if __name__ == "__main__":

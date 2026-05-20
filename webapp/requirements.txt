@@ -1,5 +1,6 @@
 # Web app server
 Flask>=3.0
+gunicorn>=22.0
 
 # Numeric and medical-image I/O
 numpy>=1.26
@@ -9,8 +10,11 @@ nibabel>=5.2
 scipy>=1.11
 scikit-image>=0.22
 
-# SDF model inference
-torch>=2.2
+# HTTP client (for calling inference API)
+requests>=2.31
+
+# Google Cloud auth (for Cloud Run service-to-service)
+google-auth>=2.29
 
 # Tests
 pytest>=8.0
