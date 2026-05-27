@@ -1,0 +1,706 @@
+% ═══════════════════════════════════════════════════════════════
+% ADICIONAR AO PREÂMBULO DO DOCUMENTO PRINCIPAL:
+%
+% \usepackage{listings}
+% \usepackage{xcolor}
+% \lstset{
+%   basicstyle=\ttfamily\small,
+%   keywordstyle=\color{blue}\bfseries,
+%   commentstyle=\color{gray}\itshape,
+%   stringstyle=\color{orange},
+%   showstringspaces=false,
+%   breaklines=true,
+%   frame=single,
+%   language=Python,
+%   numbers=left,
+%   numberstyle=\tiny\color{gray},
+%   xleftmargin=1.5em,
+%   framexleftmargin=1.5em,
+% }
+% ═══════════════════════════════════════════════════════════════
+
+\section{Implementação em Python}
+\label{sec:implementacao}
+
+Esta secção descreve a implementação prática de cada método em Python,
+assumindo que se dispõe de dois ficheiros de malha separados ---
+endocárdio (\texttt{endo}) e epicárdio (\texttt{epi}) --- carregados
+com a biblioteca \texttt{trimesh}, e que o domínio volumétrico é
+representado por máscaras binárias NumPy para os métodos baseados em
+voxels.
+
+\subsection*{Configuração inicial comum}
+
+O bloco seguinte é partilhado por todos os métodos.
+As malhas são carregadas e as máscaras binárias são obtidas
+a partir das mesmas por voxelização.
+
+\begin{lstlisting}
+import numpy as np
+import trimesh
+from scipy.spatial import cKDTree
+from scipy.ndimage import distance_transform_edt, label, maximum_filter
+
+# ── Carregar malhas ──────────────────────────────────────────────
+endo = trimesh.load("endo.stl")   # superficie interior
+epi  = trimesh.load("epi.stl")    # superficie exterior
+
+P = np.array(endo.vertices)   # (N, 3) pontos do endocardio
+Q = np.array(epi.vertices)    # (M, 3) pontos do epicardio
+N_endo = np.array(endo.vertex_normals)  # normais por vertice
+
+# ── Voxelizacao (para metodos volumetricos) ──────────────────────
+# pitch = resolucao em mm por voxel
+pitch = 1.0
+vol_endo = endo.voxelized(pitch=pitch).matrix   # mascara binaria
+vol_epi  = epi.voxelized(pitch=pitch).matrix
+
+# mascara do miocardio = entre as duas superficies
+# (assumindo que epi envolve endo)
+vol_myo = vol_epi.astype(bool) & ~vol_endo.astype(bool)
+\end{lstlisting}
+
+% ───────────────────────────────────────────────────────────────
+\subsection{Método 1 --- Vizinho Mais Próximo (KD-tree)}
+\label{impl:kdtree}
+% ───────────────────────────────────────────────────────────────
+
+\paragraph{Como funciona.}
+Constrói-se uma KD-tree com os vértices do epicárdio.
+Para cada vértice do endocárdio, a \emph{query} à árvore devolve
+a distância ao ponto mais próximo do epicárdio em tempo
+$O(\log M)$, onde $M$ é o número de vértices do epi.
+
+\begin{lstlisting}
+from scipy.spatial import cKDTree
+
+tree_epi = cKDTree(Q)
+
+# Para cada ponto do endo, distancia ao vizinho mais proximo no epi
+t_kdtree, _ = tree_epi.query(P, workers=-1)  # workers=-1 usa todos os cores
+
+# t_kdtree : array (N,) com a espessura estimada por vertice
+print(f"Espessura media: {t_kdtree.mean():.2f} mm")
+print(f"Espessura min/max: {t_kdtree.min():.2f} / {t_kdtree.max():.2f} mm")
+\end{lstlisting}
+
+\paragraph{Notas de implementação.}
+O parâmetro \texttt{workers=-1} paraleliza automaticamente a query em
+todos os núcleos disponíveis. Para malhas com mais de 100\,000 vértices,
+a diferença de tempo é significativa. O resultado é válido como
+\emph{baseline} mas subestima a espessura no ápex e em zonas curvas.
+
+% ───────────────────────────────────────────────────────────────
+\subsection{Método 2 --- KD-tree Simétrico}
+\label{impl:symkd}
+% ───────────────────────────────────────────────────────────────
+
+\paragraph{Como funciona.}
+Executa-se a query KD-tree nos dois sentidos: endo$\to$epi
+e epi$\to$endo. A diferença entre as médias ($\Delta$) é um
+indicador de qualidade --- se for grande, o método está a
+introduzir enviesamento geométrico.
+
+\begin{lstlisting}
+tree_endo = cKDTree(P)
+tree_epi  = cKDTree(Q)
+
+# Endo -> Epi
+t_endo2epi, _ = tree_epi.query(P, workers=-1)
+
+# Epi -> Endo
+t_epi2endo, _ = tree_endo.query(Q, workers=-1)
+
+delta = abs(t_endo2epi.mean() - t_epi2endo.mean())
+print(f"Delta simetria: {delta:.3f} mm")
+
+if delta < 0.5:
+    print("OK: os dois sentidos concordam.")
+else:
+    print("AVISO: enviesamento geometrico detectado.")
+
+# O valor de espessura usado e a media dos dois sentidos
+t_sym = 0.5 * (t_endo2epi + t_epi2endo[
+    tree_endo.query(P, workers=-1)[1]
+])
+\end{lstlisting}
+
+\paragraph{Notas de implementação.}
+Este método serve principalmente para diagnóstico.
+Se $\Delta > 1$\,mm numa malha cardíaca típica, a qualidade
+da malha deve ser verificada antes de prosseguir.
+
+% ───────────────────────────────────────────────────────────────
+\subsection{Método 3 --- Raios Normais}
+\label{impl:rays}
+% ───────────────────────────────────────────────────────────────
+
+\paragraph{Como funciona.}
+Para cada vértice do endocárdio, lança-se um raio na direção
+da normal à superfície. A intersecção do raio com o epicárdio
+dá a espessura local. O \texttt{trimesh} usa uma estrutura BVH
+(\emph{Bounding Volume Hierarchy}) internamente, tornando o
+processo eficiente mesmo para malhas densas.
+
+\begin{lstlisting}
+import trimesh
+
+# Criador de intersetor BVH sobre o epicardio
+intersector = trimesh.ray.ray_triangle.RayMeshIntersector(epi)
+
+origins    = P                # (N, 3) pontos de partida
+directions = N_endo           # (N, 3) normais do endocardio
+
+# Lancar todos os raios de uma vez
+locations, index_ray, _ = intersector.intersects_location(
+    ray_origins=origins,
+    ray_directions=directions,
+    multiple_hits=False       # apenas o primeiro impacto
+)
+
+# Calcular espessura: distancia do ponto de partida ao impacto
+t_rays = np.full(len(P), np.nan)   # NaN onde o raio falhou
+
+for loc, idx in zip(locations, index_ray):
+    t_rays[idx] = np.linalg.norm(loc - P[idx])
+
+# Tratar raios falhados: preencher com interpolacao dos vizinhos
+failed = np.isnan(t_rays)
+print(f"Raios falhados: {failed.sum()} / {len(P)} "
+      f"({100*failed.mean():.1f}%)")
+
+# Interpolacao simples para raios falhados
+from scipy.spatial import cKDTree
+tree_ok = cKDTree(P[~failed])
+_, nn_idx = tree_ok.query(P[failed])
+t_rays[failed] = t_rays[~failed][nn_idx]
+\end{lstlisting}
+
+\paragraph{Notas de implementação.}
+Uma taxa de raios falhados acima de 5\% indica normais invertidas
+ou gaps na malha do epicárdio. Nesse caso, deve verificar-se a
+orientação das normais com \texttt{trimesh.repair.fix\_normals(epi)}.
+Para malhas muito ruidosas, considere o Método~8 (SDF cone) em vez
+deste.
+
+% ───────────────────────────────────────────────────────────────
+\subsection{Método 4 --- EDT Soma de Fronteiras}
+\label{impl:edt}
+% ───────────────────────────────────────────────────────────────
+
+\paragraph{Como funciona.}
+A \texttt{scipy} calcula a Transformada de Distância Euclidiana
+(EDT) de forma eficiente em 3D. Calculam-se duas EDT --- uma
+a partir da fronteira do endocárdio e outra da fronteira do
+epicárdio --- e somam-se dentro do miocárdio.
+
+\begin{lstlisting}
+from scipy.ndimage import distance_transform_edt
+
+# Fronteiras binarias (True = fronteira, False = interior)
+# A EDT calcula a distancia ao ponto True mais proximo
+# Invertemos: passamos a mascara do interior de cada regiao
+d_endo = distance_transform_edt(~vol_endo) * pitch  # mm
+d_epi  = distance_transform_edt(~vol_epi)  * pitch  # mm
+
+# Espessura em cada voxel do miocardio
+t_edt_vol = (d_endo + d_epi) * vol_myo.astype(float)
+
+# Espessura media no miocardio
+t_edt_mean = t_edt_vol[vol_myo].mean()
+print(f"Espessura media (EDT): {t_edt_mean:.2f} mm")
+
+# Projectar de volta para os vertices do endocardio
+# (convertendo coordenadas do mundo para indices de voxel)
+def world_to_voxel(pts, origin, pitch):
+    return np.round((pts - origin) / pitch).astype(int)
+
+origin = endo.bounds[0]  # canto inferior esquerdo da bounding box
+vox_idx = world_to_voxel(P, origin, pitch)
+vox_idx = np.clip(vox_idx, 0,
+                  np.array(t_edt_vol.shape) - 1)
+
+t_edt = t_edt_vol[vox_idx[:,0], vox_idx[:,1], vox_idx[:,2]]
+\end{lstlisting}
+
+\paragraph{Notas de implementação.}
+O factor \texttt{pitch} converte de voxels para milímetros.
+A resolução da imagem ($\leq 1$\,mm/voxel) é o factor limitante
+da precisão. Para imagens com resolução anisotrópica,
+\texttt{distance\_transform\_edt} aceita o argumento
+\texttt{sampling=(dz, dy, dx)}.
+
+% ───────────────────────────────────────────────────────────────
+\subsection{Método 5 --- EDT Medial (Eixo Medial)}
+\label{impl:medial}
+% ───────────────────────────────────────────────────────────────
+
+\paragraph{Como funciona.}
+O eixo medial corresponde aos máximos locais da EDT dentro do
+miocárdio. Esses pontos de ``crista'' têm pelo menos dois vizinhos
+de fronteira à mesma distância. O valor da EDT nesses pontos é
+aproximadamente metade da espessura local.
+
+\begin{lstlisting}
+from scipy.ndimage import maximum_filter
+
+# EDT dentro do miocardio (distancia a qualquer fronteira)
+d_any = distance_transform_edt(vol_myo) * pitch
+
+# Maximos locais numa vizinhanca 3x3x3
+local_max = maximum_filter(d_any, size=3)
+is_ridge  = (d_any == local_max) & vol_myo & (d_any > 0)
+
+# Espessura no eixo medial
+t_medial_pts = 2 * d_any[is_ridge]
+print(f"Espessura media no eixo medial: {t_medial_pts.mean():.2f} mm")
+print(f"Numero de pontos de crista: {is_ridge.sum()}")
+
+# Visualizacao: coordenadas 3D dos pontos de crista
+origin = endo.bounds[0]
+ridge_coords = np.argwhere(is_ridge) * pitch + origin
+\end{lstlisting}
+
+\paragraph{Notas de implementação.}
+Este método produz poucos pontos e é mais adequado para
+verificação rápida do que para um mapa denso. Para um mapa mais
+denso, usar o Método~4 ou o Método~3.
+
+% ───────────────────────────────────────────────────────────────
+\subsection{Método 6 --- Campo de Laplace}
+\label{impl:laplace}
+% ───────────────────────────────────────────────────────────────
+
+\paragraph{Como funciona.}
+Resolve-se $\nabla^2\psi = 0$ dentro do miocárdio com condições
+de fronteira $\psi=0$ no endocárdio e $\psi=1$ no epicárdio.
+O sistema linear esparso resultante é resolvido com um solver
+iterativo (\texttt{scipy.sparse.linalg}). A espessura local é
+$t \approx 1/|\nabla\psi|$ avaliada em $\psi \approx 0.5$.
+
+\begin{lstlisting}
+import scipy.sparse as sp
+import scipy.sparse.linalg as spla
+
+# Construir o sistema linear para a equacao de Laplace
+# nos voxels do miocardio (stencil de 6 vizinhos em 3D)
+
+shape = vol_myo.shape
+idx_myo = np.argwhere(vol_myo)      # (K, 3) indices dos voxels do myo
+n = len(idx_myo)
+
+# Mapa de indice global para indice no sistema linear
+global_to_local = -np.ones(shape, dtype=int)
+for local_i, gidx in enumerate(idx_myo):
+    global_to_local[tuple(gidx)] = local_i
+
+rows, cols, vals = [], [], []
+b = np.zeros(n)
+
+neighbors = [(1,0,0),(-1,0,0),(0,1,0),(0,-1,0),(0,0,1),(0,0,-1)]
+
+for local_i, (iz, iy, ix) in enumerate(idx_myo):
+    rows.append(local_i); cols.append(local_i); vals.append(6.0)
+
+    for dz, dy, dx in neighbors:
+        nz, ny, nx = iz+dz, iy+dy, ix+dx
+
+        if not (0 <= nz < shape[0] and
+                0 <= ny < shape[1] and
+                0 <= nx < shape[2]):
+            continue
+
+        if vol_endo[nz, ny, nx]:
+            b[local_i] += 0.0   # fronteira endo: psi = 0
+        elif not vol_myo[nz, ny, nx]:
+            # fronteira epi (fora do myo): psi = 1
+            b[local_i] += 1.0
+        else:
+            j = global_to_local[nz, ny, nx]
+            rows.append(local_i); cols.append(j); vals.append(-1.0)
+
+A = sp.csr_matrix((vals, (rows, cols)), shape=(n, n))
+
+# Resolver o sistema (CG = Gradiente Conjugado, rapido para Laplace)
+psi_vec, info = spla.cg(A, b, tol=1e-5, maxiter=5000)
+print(f"Solver convergiu: {info == 0}")
+
+# Reconstruir volume psi
+psi_vol = np.zeros(shape)
+for local_i, gidx in enumerate(idx_myo):
+    psi_vol[tuple(gidx)] = psi_vec[local_i]
+
+# Gradiente e espessura
+dpsi_dz, dpsi_dy, dpsi_dx = np.gradient(psi_vol, pitch)
+grad_mag = np.sqrt(dpsi_dz**2 + dpsi_dy**2 + dpsi_dx**2)
+
+# Evitar divisao por zero
+grad_mag[grad_mag < 1e-6] = np.nan
+t_laplace_vol = 1.0 / grad_mag
+t_laplace_vol[~vol_myo] = np.nan
+
+# Projectar para vertices do endocardio
+origin = endo.bounds[0]
+vox_idx = world_to_voxel(P, origin, pitch)
+vox_idx = np.clip(vox_idx, 0, np.array(shape) - 1)
+t_laplace = t_laplace_vol[vox_idx[:,0],
+                           vox_idx[:,1],
+                           vox_idx[:,2]]
+\end{lstlisting}
+
+\paragraph{Notas de implementação.}
+Para volumes grandes ($>$ 200$^3$ voxels), o solver CG pode ser
+lento. Alternativas mais rápidas incluem o solver
+\texttt{pyamg} (multigrid algébrico) ou reduzir o
+\texttt{pitch} para 2\,mm. O método \texttt{pyezzi}
+(Secção~\ref{impl:yezzi}) é uma alternativa mais eficiente
+com qualidade equivalente.
+
+% ───────────────────────────────────────────────────────────────
+\subsection{Método 7 --- Geodésico / Dijkstra}
+\label{impl:geodesic}
+% ───────────────────────────────────────────────────────────────
+
+\paragraph{Como funciona.}
+Cada voxel do miocárdio é um nó de um grafo. As arestas ligam
+voxels vizinhos (6 ou 26 vizinhança) com pesos iguais à distância
+euclidiana entre centros. O algoritmo de Dijkstra (implementado
+como \emph{Bellman-Ford} esparso no \texttt{scipy}) calcula
+a distância mínima de todos os voxels às fronteiras.
+
+\begin{lstlisting}
+from scipy.sparse.csgraph import dijkstra
+import scipy.sparse as sp
+
+# Construir grafo esparso dos voxels do miocardio
+idx_myo = np.argwhere(vol_myo)
+n = len(idx_myo)
+global_to_local = -np.ones(shape, dtype=int)
+for li, gidx in enumerate(idx_myo):
+    global_to_local[tuple(gidx)] = li
+
+row_g, col_g, w_g = [], [], []
+neighbors_26 = [(dz, dy, dx)
+                for dz in [-1,0,1]
+                for dy in [-1,0,1]
+                for dx in [-1,0,1]
+                if not (dz==dy==dx==0)]
+
+for li, (iz, iy, ix) in enumerate(idx_myo):
+    for dz, dy, dx in neighbors_26:
+        nz, ny, nx = iz+dz, iy+dy, ix+dx
+        if (0 <= nz < shape[0] and
+            0 <= ny < shape[1] and
+            0 <= nx < shape[2] and
+            vol_myo[nz, ny, nx]):
+            lj = global_to_local[nz, ny, nx]
+            dist_vox = np.sqrt(dz**2 + dy**2 + dx**2) * pitch
+            row_g.append(li); col_g.append(lj); w_g.append(dist_vox)
+
+G = sp.csr_matrix((w_g, (row_g, col_g)), shape=(n, n))
+
+# Nos de fronteira endo e epi
+endo_nodes = [global_to_local[tuple(i)]
+              for i in idx_myo
+              if any(vol_endo[tuple(i + np.array(nb))]
+                     for nb in [(1,0,0),(-1,0,0),(0,1,0),
+                                (0,-1,0),(0,0,1),(0,0,-1)]
+                     if 0 <= i[0]+nb[0] < shape[0])]
+
+epi_nodes  = [global_to_local[tuple(i)]
+              for i in idx_myo
+              if not any(vol_myo[tuple(i + np.array(nb))]
+                         for nb in [(1,0,0),(-1,0,0),(0,1,0),
+                                    (0,-1,0),(0,0,1),(0,0,-1)]
+                         if 0 <= i[0]+nb[0] < shape[0])]
+
+# Dijkstra a partir das fronteiras
+d_to_endo = dijkstra(G, indices=endo_nodes).min(axis=0)
+d_to_epi  = dijkstra(G, indices=epi_nodes).min(axis=0)
+
+t_geo_vec = d_to_endo + d_to_epi
+
+# Reconstruir volume
+t_geo_vol = np.zeros(shape)
+for li, gidx in enumerate(idx_myo):
+    t_geo_vol[tuple(gidx)] = t_geo_vec[li]
+\end{lstlisting}
+
+\paragraph{Notas de implementação.}
+A vizinhança de 26 nós (vs.\ 6) reduz o artefacto de
+discretização na diagonal, mas aumenta o custo computacional.
+Para volumes grandes, o Dijkstra esparso do \texttt{scipy} pode
+ser lento; considere usar o Método~4 (EDT) como aproximação.
+
+% ───────────────────────────────────────────────────────────────
+\subsection{Método 8 --- SDF / Cone de Raios}
+\label{impl:sdf}
+% ───────────────────────────────────────────────────────────────
+
+\paragraph{Como funciona.}
+Em vez de um único raio por vértice (Método~3), lançam-se $K$
+raios dentro de um cone de abertura $\alpha$ à volta da normal.
+A mediana das distâncias de impacto é mais robusta a normais
+ruidosas e a triângulos mal orientados.
+
+\begin{lstlisting}
+def cone_rays(normal, K=7, alpha_deg=30.0):
+    """Gera K direccoes dentro de um cone de abertura alpha."""
+    alpha = np.radians(alpha_deg)
+    # Base ortonormal local
+    perp = np.array([1, 0, 0]) if abs(normal[0]) < 0.9 \
+           else np.array([0, 1, 0])
+    u = np.cross(normal, perp); u /= np.linalg.norm(u)
+    v = np.cross(normal, u)
+
+    phi = np.linspace(0, 2*np.pi, K, endpoint=False)
+    dirs = (normal * np.cos(alpha) +
+            np.outer(np.cos(phi), u) * np.sin(alpha) +
+            np.outer(np.sin(phi), v) * np.sin(alpha))
+    return dirs / np.linalg.norm(dirs, axis=1, keepdims=True)
+
+intersector = trimesh.ray.ray_triangle.RayMeshIntersector(epi)
+K = 7
+
+t_sdf = np.full(len(P), np.nan)
+
+for i, (pt, nrm) in enumerate(zip(P, N_endo)):
+    dirs = cone_rays(nrm, K=K, alpha_deg=30)
+    origins_cone = np.tile(pt, (K, 1))
+
+    locs, idx_ray, _ = intersector.intersects_location(
+        ray_origins=origins_cone,
+        ray_directions=dirs,
+        multiple_hits=False
+    )
+
+    if len(locs) == 0:
+        continue
+
+    dists = np.linalg.norm(locs - pt, axis=1)
+    t_sdf[i] = np.median(dists)
+
+# Tratar falhas com interpolacao
+failed = np.isnan(t_sdf)
+if failed.any():
+    tree_ok = cKDTree(P[~failed])
+    _, nn = tree_ok.query(P[failed])
+    t_sdf[failed] = t_sdf[~failed][nn]
+
+print(f"SDF media: {np.nanmean(t_sdf):.2f} mm")
+\end{lstlisting}
+
+\paragraph{Notas de implementação.}
+$K=7$ e $\alpha=30°$ são os valores recomendados pela biblioteca
+CGAL para geometrias semelhantes ao VE. Aumentar $K$ melhora
+a robustez mas aumenta o tempo linear em $K$. Para malhas
+limpas, $K=5$ é suficiente.
+
+% ───────────────────────────────────────────────────────────────
+\subsection{Método 9 --- Correspondência Regularizada}
+\label{impl:reg}
+% ───────────────────────────────────────────────────────────────
+
+\paragraph{Como funciona.}
+Começa com uma estimativa inicial baseada na projeção na normal
+(semelhante ao Método~3 mas usando o KD-tree como aproximação).
+Depois aplica um filtro de suavização iterativo que combina o valor
+local com a média dos vizinhos na malha, produzindo um campo de
+espessura suave e sem saltos.
+
+\begin{lstlisting}
+# ── Passo 1: estimativa inicial ──────────────────────────────────
+tree_epi = cKDTree(Q)
+_, nn_idx = tree_epi.query(P)
+q_nearest = Q[nn_idx]                           # (N, 3)
+
+proj   = np.sum((q_nearest - P) * N_endo, axis=1)  # projecao na normal
+dist   = np.linalg.norm(q_nearest - P, axis=1)
+t0     = np.maximum(proj, dist)                 # estimativa inicial
+
+# ── Passo 2: grafo de adjacencia da malha do endocardio ──────────
+adjacency = {i: set() for i in range(len(P))}
+for face in endo.faces:
+    a, b, c = face
+    adjacency[a].update([b, c])
+    adjacency[b].update([a, c])
+    adjacency[c].update([a, b])
+
+# ── Passo 3: suavizacao iterativa ────────────────────────────────
+alpha  = 0.35
+n_iter = 10
+t_reg  = t0.copy()
+
+for iteration in range(n_iter):
+    t_new = np.zeros_like(t_reg)
+    for i in range(len(P)):
+        nbrs = list(adjacency[i])
+        if nbrs:
+            t_nbr_mean = t_reg[nbrs].mean()
+        else:
+            t_nbr_mean = t_reg[i]
+        t_new[i] = (1 - alpha) * t0[i] + alpha * t_nbr_mean
+    t_reg = t_new
+    if (iteration + 1) % 5 == 0:
+        print(f"  iter {iteration+1}: mean={t_reg.mean():.3f} mm")
+
+print(f"Espessura regularizada media: {t_reg.mean():.2f} mm")
+\end{lstlisting}
+
+\paragraph{Notas de implementação.}
+O parâmetro $\alpha=0.35$ é o valor recomendado para malhas
+cardíacas. Valores de $\alpha$ superiores a 0.6 podem
+sobre-suavizar e esconder zonas de enfarte. O número de iterações
+($n=10$) pode ser aumentado até estabilização (convergência
+tipicamente antes de 20 iterações).
+
+% ───────────────────────────────────────────────────────────────
+\subsection{Método 10 --- Yezzi--Prince (PDE Euleriana)}
+\label{impl:yezzi}
+% ───────────────────────────────────────────────────────────────
+
+\paragraph{Como funciona.}
+Yezzi e Prince~\cite{yezzi2003} propuseram uma formulação PDE
+alternativa à equação de Laplace. Em vez de resolver uma equação,
+resolve-se um par de PDEs guiadas pelo campo vetorial transmural:
+\begin{align}
+  \nabla\psi \cdot \nabla u &= -1, \quad u\big|_{\text{endo}} = 0 \\
+  \nabla\psi \cdot \nabla v &= -1, \quad v\big|_{\text{epi}} = 0
+\end{align}
+A espessura é $t = u + v$, sem necessidade de construir
+trajetórias explícitas. O método é mais estável numericamente
+que o Laplace puro, em especial no ápex e nas zonas de parede
+fina. A implementação Python está disponível no pacote
+\texttt{pyezzi}.
+
+\begin{lstlisting}
+# Instalar: pip install pyezzi
+
+from pyezzi import compute_thickness_cardiac
+
+# vol_endo e vol_epi sao mascaras binarias NumPy (bool)
+# endo = interior (cavidade), epi = exterior (incluindo o myo)
+t_yezzi_vol = compute_thickness_cardiac(
+    endo=vol_endo,
+    epi=vol_epi
+) * pitch  # converter de voxels para mm
+
+# Espessura media
+print(f"Espessura media (Yezzi-Prince): "
+      f"{t_yezzi_vol[vol_myo].mean():.2f} mm")
+
+# Projectar para vertices do endocardio
+origin  = endo.bounds[0]
+vox_idx = world_to_voxel(P, origin, pitch)
+vox_idx = np.clip(vox_idx, 0, np.array(t_yezzi_vol.shape) - 1)
+t_yezzi = t_yezzi_vol[vox_idx[:,0],
+                       vox_idx[:,1],
+                       vox_idx[:,2]]
+\end{lstlisting}
+
+\paragraph{Notas de implementação.}
+O \texttt{pyezzi} aceita máscaras binárias anisotrópicas através
+do argumento \texttt{sampling=(dz, dy, dx)} (em mm), o que é
+útil para dados de MRI com resolução não uniforme nos três eixos.
+É o método recomendado quando se pretende qualidade equivalente
+ao Laplace com menor custo computacional.
+
+% ───────────────────────────────────────────────────────────────
+\subsection{Mapa de Cor 3D e Mapa AHA-17}
+\label{impl:colormap}
+% ───────────────────────────────────────────────────────────────
+
+\paragraph{Como funciona.}
+Após calcular o array de espessura por vértice com qualquer
+dos métodos anteriores, a visualização 3D é obtida mapeando
+os valores para uma escala de cor contínua. O mapa AHA-17
+é obtido agregando os valores por segmento.
+
+\begin{lstlisting}
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+
+# ── Mapa de cor 3D ───────────────────────────────────────────────
+# Usar t_rays, t_sdf, t_yezzi, etc.
+t = t_rays.copy()                    # escolher o metodo
+t = np.nan_to_num(t, nan=np.nanmedian(t))
+
+# Normalizar para [0, 1]
+t_min, t_max = np.percentile(t, [2, 98])   # percentis para robustez
+t_norm = np.clip((t - t_min) / (t_max - t_min), 0, 1)
+
+# Aplicar colormap (ex: 'RdYlGn_r': vermelho=fino, verde=normal)
+cmap   = plt.cm.RdYlGn_r
+colors = (cmap(t_norm)[:, :3] * 255).astype(np.uint8)
+
+# Atribuir cores aos vertices do endocardio
+endo.visual = trimesh.visual.ColorVisuals(
+    mesh=endo,
+    vertex_colors=np.hstack([colors,
+                              255*np.ones((len(P),1), dtype=np.uint8)])
+)
+endo.export("endo_thickness_colormap.ply")   # abrir no MeshLab/Blender
+
+# ── Mapa AHA-17 (bull's-eye) ─────────────────────────────────────
+# Requer: aha_segment[i] = segmento AHA (1..17) de cada vertice i
+# (calculado separadamente com base no eixo longo + pontos RV)
+
+def compute_aha_map(t, aha_segment):
+    """Calcula a espessura media por segmento AHA."""
+    aha_means = {}
+    for seg in range(1, 18):
+        mask = aha_segment == seg
+        if mask.sum() > 0:
+            aha_means[seg] = t[mask].mean()
+        else:
+            aha_means[seg] = np.nan
+    return aha_means
+
+# aha_segment = array (N,) com o segmento de cada vertice
+# aha_map = compute_aha_map(t, aha_segment)
+\end{lstlisting}
+
+% ───────────────────────────────────────────────────────────────
+\subsection{Comparação rápida dos resultados}
+\label{impl:compare}
+% ───────────────────────────────────────────────────────────────
+
+O bloco seguinte agrega todos os métodos numa tabela de comparação,
+útil para incluir na tese como validação cruzada.
+
+\begin{lstlisting}
+methods = {
+    "KD-tree":          t_kdtree,
+    "KD-tree simetrico":t_sym,
+    "Raios normais":    t_rays,
+    "SDF cone":         t_sdf,
+    "Corr. regularizada": t_reg,
+    "Yezzi-Prince":     t_yezzi,
+}
+
+print(f"{'Metodo':<25} {'Media':>8} {'Std':>8} "
+      f"{'Min':>8} {'Max':>8}")
+print("-" * 60)
+for name, t_arr in methods.items():
+    valid = t_arr[~np.isnan(t_arr)]
+    print(f"{name:<25} {valid.mean():>8.2f} {valid.std():>8.2f} "
+          f"{valid.min():>8.2f} {valid.max():>8.2f}")
+\end{lstlisting}
+
+% ───────────────────────────────────────────────────────────────
+\subsection*{Referência}
+% ───────────────────────────────────────────────────────────────
+
+\begin{enumerate}[label={[\arabic*]}, nosep]
+  \item Yezzi, A.J., Prince, J.L. (2003). An Eulerian PDE approach
+        for computing tissue thickness. \emph{IEEE Trans.\ Med.\
+        Imaging}, 22(10):1332–1339.
+        \label{yezzi2003}
+  \item Jones, S.E., Buchbinder, B.R., Aharon, I. (2000).
+        Three-dimensional mapping of cortical thickness using
+        Laplace's equation. \emph{Human Brain Mapping},
+        11(1):12–32.
+  \item Osher, S., Sethian, J.A. (1988). Shape Diameter Function.
+        \emph{CGAL Computational Geometry Algorithms Library}.
+\end{enumerate}
+\end{document}

@@ -43,6 +43,14 @@ app = FastAPI(title="CardioSDF Inference API", version="1.0.0")
 @app.on_event("startup")
 async def startup_load_model():
     global SDF_MODEL, SDF_CFG
+    import torch
+    log.info("CUDA available: %s", torch.cuda.is_available())
+    if torch.cuda.is_available():
+        log.info("GPU device: %s", torch.cuda.get_device_name(0))
+        log.info("CUDA version: %s", torch.version.cuda)
+    else:
+        log.warning("*** CUDA NOT AVAILABLE — inference will be extremely slow on CPU ***")
+
     if not MODEL_PATH.exists():
         log.warning("Model checkpoint not found at %s — inference will fail", MODEL_PATH)
         return

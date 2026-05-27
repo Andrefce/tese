@@ -1,35 +1,36 @@
-# ── Stage 1: Install Python dependencies ──
-FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04 AS base
+# ══════════════════════════════════════════════════════════════════
+# CardioSDF Inference API — Multi-stage build
+# ══════════════════════════════════════════════════════════════════
+
+# ── Stage 1: Install Python dependencies (cached layer) ──
+# pytorch/pytorch already ships CUDA 12.1 + Python 3.11 + torch — no re-download needed
+FROM pytorch/pytorch:2.2.2-cuda12.1-cudnn8-runtime AS deps
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1
-
-# Install Python 3.11
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        python3.11 python3.11-venv python3-pip && \
-    ln -sf /usr/bin/python3.11 /usr/bin/python && \
-    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Install Python dependencies
+# Install only the non-torch dependencies (fast — no 2 GB download)
 COPY requirements.txt .
-RUN uv pip install --system -r requirements.txt
+RUN uv pip install --system \
+        fastapi "uvicorn[standard]" python-multipart \
+        numpy nibabel scipy scikit-image \
+        google-cloud-storage
 
-# ── Stage 2: Copy application code + model ──
+# ── Stage 2: Copy model (separate layer — large but rarely changes) ──
+FROM deps AS model
+COPY model/ model/
+
+# ── Stage 3: Final image with application code ──
+FROM model AS final
+
+# Copy application code (changes most frequently — smallest layer)
 COPY core/ core/
 COPY main.py .
-
-# Copy the model checkpoint into the image.
-# Expects the model file at build context: model/inr_sdf_combined_fresh_ed_mix_v1_final.ptrom
-# If your model is in the parent webapp/model/ folder, build with:
-#   docker build -t cardiosdf-inference -f Dockerfile --build-context model=../model .
-# Or copy the model file into inference-api/model/ before building.
-COPY model/ model/
 
 ENV MODEL_PATH=/app/model/inr_sdf_combined_fresh_ed_mix_v1_final.ptrom \
     GCS_BUCKET_NAME=cardiosdf-results

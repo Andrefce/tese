@@ -1,0 +1,47 @@
+{
+  "analysis_geometry_source": "CardioSDF/INR model checkpoint",
+  "cardiosdf_checkpoint": "/home/andre/Downloads/tese/webapp/model/inr_sdf_combined_fresh_ed_mix_v1_final.ptrom",
+  "cardiosdf_grid_res": 72,
+  "cardiosdf_native_metrics": {
+    "meanWallThicknessMm": 4.76,
+    "p95WallThicknessMm": 6.31,
+    "endoSurfaceAreaCm2": 184.84,
+    "epiSurfaceAreaCm2": 200.02,
+    "gridResolution": 72,
+    "endoVertices": 38250,
+    "epiVertices": 39927
+  },
+  "cardiosdf_mask_diagnostics": {
+    "selected_endo_inside": "f_endo <= 0",
+    "selected_epi_inside": "f_epi <= 0",
+    "sign_selection_score": 1.1099740418558315,
+    "endo_subset_of_epi_fraction": 1.0,
+    "model_lv_voxels": 78287,
+    "model_epi_voxels": 138984,
+    "model_myo_voxels": 60697
+  },
+  "input_segmentation_reference_kdtree_mean_mm": 4.06,
+  "input_segmentation_reference_mc_mean_mm": 4.447,
+  "input_segmentation_reference_mc_p95_mm": 9.111,
+  "method1_kdtree_on_cardiosdf_model_mm": 4.774131774902344,
+  "best_raw_method": "7. Geodesic Dijkstra",
+  "best_raw_method_mean_mm": 5.189576148986816,
+  "reported_method": "Segmentation-calibrated 6. Laplace field",
+  "reported_method_mean_mm": 6.441728591918945,
+  "reported_method_p95_mm": 9.375,
+  "segmentation_calibrated_report_enabled": true,
+  "calibration_base_method": "6. Laplace field",
+  "calibration_min_reference_mm": 1.0,
+  "calibrated_surrogate_shell": "/home/andre/Downloads/tese/webapp/notebooks/outputs/lv_wall_thickness_calibrated_epicardial_surrogate_shell.ply",
+  "notes": [
+    "The ten raw estimators are applied to the CardioSDF-generated 3D model surfaces, not to a segmentation marching-cubes mesh.",
+    "The input segmentation is used to extract model contours, orient AHA-17 anatomy, and validate estimator plausibility.",
+    "The webapp/CardioSDF native KD metric is a nearest-surface lower bound and can underestimate anatomical wall thickness.",
+    "Best raw estimator on this case: 7. Geodesic Dijkstra.",
+    "Reported estimator uses segmentation-calibrated post-processing (Segmentation-calibrated 6. Laplace field); describe it as calibrated post-processing, not pure CardioSDF inference.",
+    "A surrogate epicardial shell expanded along outward normals was exported to /home/andre/Downloads/tese/webapp/notebooks/outputs/lv_wall_thickness_calibrated_epicardial_surrogate_shell.ply."
+  ],
+  "aha_base_slice": 1,
+  "aha_apex_slice": 9,
+  "aha_rv_angle_from_anterior_deg": 90.0
+}

@@ -1,0 +1,11 @@
+method,group,n,mean_mm,median_mm,std_mm,p5_mm,p95_mm,min_mm,max_mm,valid_fraction,runtime_s,warnings
+1. KD-tree,Distance / mesh,38172,4.774,4.923,1.025,2.841,6.316,0.878,7.501,1.0,0.034,
+2. Symmetric KD-tree,Distance / mesh,38172,4.658,4.858,1.093,2.452,6.216,0.878,7.346,1.0,0.068,
+3. Normal rays,Normal / ray,38172,5.237,5.173,1.287,3.453,6.878,1.044,14.942,1.0,2.592,"Raw normal-ray miss fraction is 65.0%; missing vertices were filled from nearest valid model vertices.; Normal rays were evaluated on 6,000/38,172 model vertices for runtime; the field was interpolated over the full CardioSDF surface.; Post-processed 7,676 vertices outside finite [0, 15.0] mm range using nearest valid model-surface values."
+4. EDT boundary sum,Volumetric EDT,38172,4.243,4.284,1.458,1.68,6.571,0.0,7.955,1.0,0.09,
+5. EDT medial axis,Volumetric EDT,38172,2.815,2.641,0.586,2.078,4.156,2.078,7.924,1.0,0.052,
+6. Laplace field,PDE / field,38172,8.603,8.432,3.811,3.324,14.336,1.586,14.992,1.0,4.195,"Post-processed 18,024 vertices outside finite [0, 15.0] mm range using nearest valid model-surface values."
+7. Geodesic Dijkstra,Graph / regularization,38172,5.19,5.195,1.781,2.078,8.311,0.0,11.428,1.0,6.033,"Post-processed 303 vertices outside finite [0, 15.0] mm range using nearest valid model-surface values."
+8. SDF cone rays,Normal / ray,38172,5.858,5.837,1.362,3.856,7.689,1.248,14.993,1.0,6.406,"Cone rays were evaluated on 1,800/38,172 model vertices for runtime; the field was interpolated over the full CardioSDF surface.; Post-processed 8,874 vertices outside finite [0, 15.0] mm range using nearest valid model-surface values."
+9. Regularized correspondence,Graph / regularization,38172,4.774,4.921,1.014,2.875,6.3,1.073,7.433,1.0,8.861,
+10. Yezzi-Prince,PDE / field,38172,6.587,6.925,2.37,2.288,9.945,0.778,14.873,1.0,2.072,"Post-processed 1,028 vertices outside finite [0, 15.0] mm range using nearest valid model-surface values."

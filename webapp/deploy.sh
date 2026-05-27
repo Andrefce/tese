@@ -129,7 +129,9 @@ gcloud run deploy cardiosdf-inference \
   --memory 16Gi \
   --cpu 4 \
   --timeout 300 \
-  --max-instances 3 \
+  --max-instances 2 \
+  --min-instances 1 \
+  --no-cpu-throttling \
   --no-allow-unauthenticated \
   --set-env-vars "GCS_BUCKET_NAME=$BUCKET_NAME"
 

@@ -1,0 +1,23 @@
+# Thesis notebook dependencies for LV wall-thickness method comparison
+# Install with: pip install -r requirements-notebook.txt
+
+-r requirements.txt
+
+# Notebook/runtime
+jupyter>=1.0
+ipykernel>=6.29
+
+# Data tables and plotting
+pandas>=2.1
+matplotlib>=3.8
+
+# Mesh geometry and ray casting
+trimesh>=4.0
+rtree>=1.2
+
+# Neural CardioSDF/INR model checkpoint inference
+torch>=2.2
+
+# Yezzi-Prince tissue-thickness method
+# Required by notebooks/lv_wall_thickness_10_methods.ipynb.
+pyezzi

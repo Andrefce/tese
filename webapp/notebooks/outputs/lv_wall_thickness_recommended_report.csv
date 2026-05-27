@@ -1,0 +1,5 @@
+row,method,n,mean_mm,median_mm,std_mm,p5_mm,p95_mm,min_mm,max_mm
+raw_cardiosdf_webapp_kd,6. Laplace field,38172,8.603,8.432,3.811,3.324,14.336,1.586,14.992
+simple_scalar_resized_wall,Scalar-resized 6. Laplace field,38172,6.455,6.327,2.86,2.494,10.757,1.562,11.249
+reference_from_original_data,"Input-segmentation MC reference, >= 1.0 mm",3336,6.455,6.442,1.955,3.125,9.375,1.562,11.32
+segmentation_calibrated_postprocess,Segmentation-calibrated 6. Laplace field,38172,6.442,6.442,1.931,3.125,9.375,1.562,9.961
