@@ -1,0 +1,105 @@
+\relax 
+\providecommand\babel@aux[2]{}
+\@nameuse{bbl@beforestart}
+\catcode `"\active 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\babel@aux{portuguese}{}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introdução}{1}{section.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Pipeline geral}{1}{subsection.1.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Pipeline geral: da imagem de MRI até ao mapa de espessura AHA-17 [11].}}{2}{figure.caption.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}Vista geral dos 10 métodos}{2}{subsection.1.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Ilustração conceptual dos 10 métodos. Vermelho = endocárdio, azul = epicárdio. Cada painel mostra como o método estima a espessura.}}{3}{figure.caption.2}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:overview}{{2}{3}{Ilustração conceptual dos 10 métodos. Vermelho = endocárdio, azul = epicárdio. Cada painel mostra como o método estima a espessura}{figure.caption.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.3}Notação comum}{3}{subsection.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Método 1 --- Vizinho Mais Próximo (KD-tree)}{4}{section.2}\protected@file@percent }
+\newlabel{sec:kdtree}{{2}{4}{Método 1 --- Vizinho Mais Próximo (KD-tree)}{section.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Ideia}{4}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Matemática}{4}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Propriedade fundamental.}{4}{section*.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Diagrama}{4}{subsection.2.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Cada ponto do endocárdio (vermelho) é ligado ao ponto mais próximo do epicárdio (azul). A seta mostra a distância mínima.}}{4}{figure.caption.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Avaliação}{4}{subsection.2.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Método 2 --- KD-tree Simétrico}{5}{section.3}\protected@file@percent }
+\newlabel{sec:symkd}{{3}{5}{Método 2 --- KD-tree Simétrico}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Ideia}{5}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Matemática}{5}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Diagrama}{5}{subsection.3.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces KD-tree simétrico: setas verdes = endo$\to $epi, setas laranja = epi$\to $endo. Se os dois sentidos dão distâncias muito diferentes, o método deteta inconsistência.}}{5}{figure.caption.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Avaliação}{5}{subsection.3.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Método 3 --- Raios Normais}{6}{section.4}\protected@file@percent }
+\newlabel{sec:rays}{{4}{6}{Método 3 --- Raios Normais}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Ideia}{6}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Matemática}{6}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Tratamento de falhas.}{6}{section*.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Diagrama}{6}{subsection.4.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Raios (laranja) lançados ao longo das normais do endocárdio até ao epicárdio. Os pontos de impacto dão a espessura local.}}{6}{figure.caption.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Avaliação}{6}{subsection.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Método 4 --- EDT Soma de Fronteiras}{7}{section.5}\protected@file@percent }
+\newlabel{sec:edt}{{5}{7}{Método 4 --- EDT Soma de Fronteiras}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Ideia}{7}{subsection.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Matemática}{7}{subsection.5.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Algoritmo.}{7}{section*.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Diagrama}{8}{subsection.5.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Secção transversal da parede. A espessura num voxel é a soma das distâncias ao endocárdio e ao epicárdio.}}{8}{figure.caption.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Avaliação}{8}{subsection.5.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Método 5 --- EDT Medial (Eixo Medial)}{8}{section.6}\protected@file@percent }
+\newlabel{sec:medial}{{6}{8}{Método 5 --- EDT Medial (Eixo Medial)}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Ideia}{8}{subsection.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Matemática}{8}{subsection.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Diagrama}{9}{subsection.6.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces O eixo medial (tracejado) é a linha central do miocárdio. O valor máximo da EDT ($d_{\max }$) nesse eixo dá metade da espessura: $t \approx 2 \cdot d_{\max }$.}}{9}{figure.caption.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Avaliação}{9}{subsection.6.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}Método 6 --- Campo de Laplace}{9}{section.7}\protected@file@percent }
+\newlabel{sec:laplace}{{7}{9}{Método 6 --- Campo de Laplace}{section.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Ideia}{9}{subsection.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Matemática}{9}{subsection.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Discretização (stencil de 6 vizinhos).}{10}{section*.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Interpretação física.}{10}{section*.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Diagrama}{10}{subsection.7.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Campo de Laplace: as linhas tracejadas são isotérmicas ($\psi $ constante). As setas (laranja) seguem o gradiente e dão a direção transmural.}}{10}{figure.caption.13}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.4}Avaliação}{10}{subsection.7.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}Método 7 --- Geodésico / Dijkstra}{11}{section.8}\protected@file@percent }
+\newlabel{sec:geodesic}{{8}{11}{Método 7 --- Geodésico / Dijkstra}{section.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}Ideia}{11}{subsection.8.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}Matemática}{11}{subsection.8.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Vantagem sobre a EDT.}{11}{section*.14}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.3}Diagrama}{12}{subsection.8.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Caminho geodésico (laranja) vs.\ distância euclidiana (tracejado cinza). O caminho geodésico segue o interior do miocárdio, respeitando a topologia da parede.}}{12}{figure.caption.15}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.4}Avaliação}{12}{subsection.8.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9}Método 8 --- Diâmetro de Forma (SDF / Cone de Raios)}{12}{section.9}\protected@file@percent }
+\newlabel{sec:sdf}{{9}{12}{Método 8 --- Diâmetro de Forma (SDF / Cone de Raios)}{section.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1}Ideia}{12}{subsection.9.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.2}Matemática}{12}{subsection.9.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Parâmetros recomendados.}{13}{section*.16}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.3}Diagrama}{13}{subsection.9.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Cone de raios (laranja) lançado a partir de um ponto do endocárdio. A mediana das distâncias de interseção dá a espessura.}}{13}{figure.caption.17}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.4}Avaliação}{13}{subsection.9.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {10}Método 9 --- Correspondência Regularizada}{14}{section.10}\protected@file@percent }
+\newlabel{sec:registration}{{10}{14}{Método 9 --- Correspondência Regularizada}{section.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1}Ideia}{14}{subsection.10.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.2}Matemática}{14}{subsection.10.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Passo 1 --- Estimativa inicial.}{14}{section*.18}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Passo 2 --- Suavização iterativa Laplaciana [9].}{14}{section*.19}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Convergência.}{14}{section*.20}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.3}Diagrama}{15}{subsection.10.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Esquerda: estimativa inicial $t_i^{(0)}$ com setas ruidosas. Direita: após suavização iterativa ($\alpha =0.35$), as setas tornam-se regulares e o campo de espessura fica contínuo.}}{15}{figure.caption.21}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4}Avaliação}{15}{subsection.10.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {11}Método 10 --- Yezzi--Prince (PDE Euleriana)}{15}{section.11}\protected@file@percent }
+\newlabel{sec:yezzi}{{11}{15}{Método 10 --- Yezzi--Prince (PDE Euleriana)}{section.11}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.1}Ideia}{15}{subsection.11.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.2}Matemática}{16}{subsection.11.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Vantagem sobre o Laplace puro.}{16}{section*.22}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Implementação.}{16}{section*.23}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.3}Diagrama}{16}{subsection.11.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces Método Yezzi--Prince: o campo $u$ (verde) mede a distância transmural ao endocárdio; o campo $v$ (violeta) mede a distância ao epicárdio. A espessura local é $t(x) = u(x) + v(x)$, sem necessidade de divisão por $|\nabla \psi |$. As linhas pontilhadas são iso-$\psi $.}}{16}{figure.caption.24}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {11.4}Avaliação}{16}{subsection.11.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {12}Comportamento no Ápex}{17}{section.12}\protected@file@percent }
+\newlabel{sec:apex}{{12}{17}{Comportamento no Ápex}{section.12}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces Comportamento dos 9 métodos na zona do ápex (secção 2D). Vermelho = endocárdio, azul = epicárdio. Cada painel mostra como o método estima a espessura na zona de maior curvatura.}}{17}{figure.caption.25}\protected@file@percent }
+\newlabel{fig:apex2d}{{13}{17}{Comportamento dos 9 métodos na zona do ápex (secção 2D). Vermelho = endocárdio, azul = epicárdio. Cada painel mostra como o método estima a espessura na zona de maior curvatura}{figure.caption.25}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces Vista 3D dos métodos no ápex de um modelo elipsoidal do VE. Vermelho = endocárdio (transparente), azul = epicárdio (transparente). Cada painel mostra as setas/campo de um método diferente.}}{18}{figure.caption.26}\protected@file@percent }
+\newlabel{fig:apex3d}{{14}{18}{Vista 3D dos métodos no ápex de um modelo elipsoidal do VE. Vermelho = endocárdio (transparente), azul = epicárdio (transparente). Cada painel mostra as setas/campo de um método diferente}{figure.caption.26}{}}
+\gdef \@abspage@last{19}

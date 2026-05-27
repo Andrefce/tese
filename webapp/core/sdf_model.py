@@ -432,6 +432,72 @@ def _snap_mesh_to_contours(
     return verts
 
 
+def _reference_wall_thickness_from_segmentation(
+    seg_volume: np.ndarray,
+    spacing: tuple[float, float, float],
+) -> float | None:
+    """Compute reference mean wall thickness from the input segmentation using EDT.
+
+    This provides a ground-truth physical measurement to calibrate the model.
+    Uses EDT boundary sum (Method 4): t(x) = D_endo(x) + D_epi(x) in the myocardium.
+    """
+    try:
+        from scipy.ndimage import distance_transform_edt
+    except ImportError:
+        return None
+
+    labels = np.rint(seg_volume).astype(np.int16)
+    lv_mask = labels == LBL_LV
+    myo_mask = labels == LBL_MYO
+    epi_mask = lv_mask | myo_mask
+
+    if not myo_mask.any() or not lv_mask.any():
+        return None
+
+    # EDT from endocardial boundary (distance from each myo voxel to nearest LV voxel)
+    d_endo: np.ndarray = distance_transform_edt(~lv_mask, sampling=spacing)  # type: ignore[assignment]
+    # EDT from epicardial boundary (distance from each myo voxel to nearest outside-epi voxel)
+    d_epi: np.ndarray = distance_transform_edt(epi_mask, sampling=spacing)  # type: ignore[assignment]
+
+    # Wall thickness in the myocardium
+    wt = (d_endo + d_epi)[myo_mask]
+    wt = wt[np.isfinite(wt) & (wt > 0.5)]  # exclude trivial boundary voxels
+
+    if wt.size < 10:
+        return None
+
+    return float(np.mean(wt))
+
+
+def _calibrate_wall_thickness(
+    wall_values: np.ndarray,
+    seg_volume: np.ndarray | None,
+    spacing: tuple[float, float, float] | None,
+) -> tuple[np.ndarray, float]:
+    """Calibrate model wall thickness against segmentation reference.
+
+    Returns (calibrated_values, calibration_factor).
+    Factor > 1 means the model was underestimating.
+    """
+    if seg_volume is None or spacing is None:
+        return wall_values, 1.0
+
+    ref_mean = _reference_wall_thickness_from_segmentation(seg_volume, spacing)
+    if ref_mean is None or ref_mean < 1.0:
+        return wall_values, 1.0
+
+    model_mean = float(np.nanmean(wall_values[np.isfinite(wall_values)]))
+    if model_mean < 0.5:
+        return wall_values, 1.0
+
+    factor = ref_mean / model_mean
+    # Clamp factor to avoid extreme corrections (0.5x to 3.0x)
+    factor = float(np.clip(factor, 0.5, 3.0))
+
+    calibrated = wall_values * factor
+    return calibrated.astype(np.float32), factor
+
+
 @torch.no_grad()
 def predict_sdf_meshes(
     model: SDFNetwork,
@@ -490,17 +556,26 @@ def predict_sdf_meshes(
 
     # Wall thickness (endo→epi nearest distance in mm)
     wall_values = None
+    calibration_factor = 1.0
     if len(endo_verts_mm) > 0 and len(epi_verts_mm) > 0:
         dists, _ = cKDTree(epi_verts_mm).query(endo_verts_mm, k=1, workers=-1)
         wall_values = np.asarray(dists, dtype=np.float32)
-        wall_values = wall_values[np.isfinite(wall_values)] if wall_values is not None else None
+        finite_mask = np.isfinite(wall_values)
+        if not finite_mask.all():
+            wall_values[~finite_mask] = np.nan
+
+        # Calibrate against the input segmentation's physical wall thickness
+        if wall_values is not None and seg_volume is not None and spacing is not None:
+            wall_values, calibration_factor = _calibrate_wall_thickness(
+                wall_values, seg_volume, spacing
+            )
 
     wall_for_mesh = None
     if wall_values is not None and len(wall_values) == len(endo_verts_mm):
         wall_for_mesh = wall_values
 
-    wall_mean = float(np.mean(wall_values)) if wall_values is not None and wall_values.size else None
-    wall_p95 = float(np.percentile(wall_values, 95)) if wall_values is not None and wall_values.size else None
+    wall_mean = float(np.nanmean(wall_values)) if wall_values is not None and wall_values.size else None
+    wall_p95 = float(np.nanpercentile(wall_values, 95)) if wall_values is not None and wall_values.size else None
 
     # Mesh area
     endo_area = _mesh_area_cm2(endo_verts_mm, endo_faces) if len(endo_verts_mm) > 0 else None
@@ -519,6 +594,7 @@ def predict_sdf_meshes(
     metrics = {
         "meanWallThicknessMm": round(wall_mean, 2) if wall_mean is not None else None,
         "p95WallThicknessMm": round(wall_p95, 2) if wall_p95 is not None else None,
+        "calibrationFactor": round(calibration_factor, 3),
         "endoSurfaceAreaCm2": round(endo_area, 2) if endo_area is not None else None,
         "epiSurfaceAreaCm2": round(epi_area, 2) if epi_area is not None else None,
         "gridResolution": grid_res,

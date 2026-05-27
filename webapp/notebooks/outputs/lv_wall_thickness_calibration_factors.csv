@@ -1,5 +1,5 @@
 quantity,method,mean_mm,p95_mm,scale_vs_raw
-raw_native_webapp_kd,6. Laplace field,8.602677345275879,14.335870742797852,1.0
-simple_scalar_resize,Scalar-resized 6. Laplace field,6.4552483558654785,10.757262229919434,0.7503738403320312
-quantile_calibrated_report,Segmentation-calibrated 6. Laplace field,6.441728591918945,9.375,0.7488051056861877
-original_data_reference_used_for_calibration,Segmentation MC reference >= 1.0 mm,6.45522403717041,9.375,0.7503738403320312
+raw_native_webapp_kd,6. Laplace field,3.7521908283233643,10.575465202331543,1.0
+simple_scalar_resize,Scalar-resized 6. Laplace field,6.103959083557129,15.0,1.7203879356384277
+quantile_calibrated_report,Segmentation-calibrated 6. Laplace field,6.364655494689941,9.375,1.6962504386901855
+original_data_reference_used_for_calibration,Segmentation MC reference >= 1.0 mm,6.45522403717041,9.375,1.7203879356384277
