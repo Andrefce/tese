@@ -1,0 +1,175 @@
+% ============================================================
+%  Master's Thesis — ISTA-IUL
+%  Compile with: latexmk -pdf main.tex
+%  See thesis-build references at .github/skills/ista-tese-mestrado
+% ============================================================
+
+\documentclass[12pt, reqno, twoside, openany]{amsbook}
+
+% --- Encoding & language -------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english,portuguese]{babel}
+
+% --- Math ----------------------------------------------------
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+
+% --- Layout --------------------------------------------------
+\usepackage[a4paper, margin=2.5cm]{geometry}
+\usepackage[onehalfspacing]{setspace}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{chngcntr}
+
+% --- Graphics & typography -----------------------------------
+\usepackage{graphicx}
+\graphicspath{{images/}}
+\usepackage{eurosym}
+\usepackage{enumitem}
+\usepackage{etoolbox}
+\usepackage{booktabs}
+\usepackage[expansion=false]{microtype}
+\usepackage{csquotes}
+\usepackage{xcolor}
+
+% --- Code listings (for CS theses) ---------------------------
+\usepackage{listings}
+\lstdefinestyle{thesisCode}{
+  basicstyle       = \ttfamily\small,
+  keywordstyle     = \color{blue}\bfseries,
+  commentstyle     = \color{gray}\itshape,
+  stringstyle      = \color{purple},
+  numbers          = left,
+  numberstyle      = \tiny\color{gray},
+  numbersep        = 8pt,
+  frame            = single,
+  breaklines       = true,
+  showstringspaces = false,
+  tabsize          = 2,
+  captionpos       = b,
+}
+\lstset{style=thesisCode}
+
+% --- Bibliography (biblatex + biber) -------------------------
+\usepackage[
+  backend     = biber,
+  style       = ieee,        % TODO: confirm citation style (ieee / apa / acm / numeric / authoryear)
+  sorting     = none,
+  maxbibnames = 99,
+  giveninits  = true,
+  url         = false,
+  doi         = true,
+  isbn        = false,
+]{biblatex}
+\addbibresource{bibliography/references.bib}
+
+% --- Cross-references (load AFTER hyperref) ------------------
+\usepackage[hidelinks]{hyperref}
+\usepackage[noabbrev, capitalise]{cleveref}
+
+% --- PDF metadata --------------------------------------------
+\hypersetup{
+  pdftitle    = {Title of the Thesis},          % TODO: thesis title
+  pdfauthor   = {Author Full Name},             % TODO: author
+  pdfsubject  = {Master's Thesis, ISTA-IUL},
+  pdfkeywords = {keyword1, keyword2, keyword3}, % TODO: keywords
+}
+
+% --- Section style (template default) ------------------------
+\makeatletter
+  \def\section{\@startsection{section}{1}%
+    \z@{.5\linespacing\@plus.7\linespacing}{.25\linespacing}%
+    {\normalfont\bfseries\flushleft}}
+  \def\subsection{\@startsection{subsection}{2}%
+    \z@{.5\linespacing\@plus.7\linespacing}{.25\linespacing}%
+    {\normalfont\bfseries\flushleft}}
+\makeatother
+
+% --- Numbering scopes ----------------------------------------
+\numberwithin{equation}{chapter}
+\numberwithin{section}{chapter}
+\numberwithin{figure}{chapter}
+\numberwithin{table}{chapter}
+
+% --- Theorem-like environments -------------------------------
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[chapter]
+\newtheorem{example}{Example}[chapter]
+
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}[chapter]
+
+% --- Dedication environment (from template) ------------------
+\newenvironment{dedication}
+  {\thispagestyle{empty}\vspace*{\stretch{1}}\itshape\raggedleft}
+  {\par\vspace{\stretch{3}}}
+
+% --- Page headers & footers ----------------------------------
+\fancyhead{}
+\fancyfoot{}
+\pagestyle{fancy}
+\fancyfoot[LE,RO]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\makeatletter
+\def\ps@plain{\ps@empty
+  \def\@evenfoot{\normalfont\scriptsize\rlap{\thepage}\hfil}%
+  \def\@oddfoot{\normalfont\scriptsize\hfil\llap{\thepage}}%
+}
+\makeatother
+
+% --- Hyphenation overrides -----------------------------------
+\hyphenation{}
+
+% ============================================================
+\begin{document}
+
+\frontmatter
+\addtocontents{toc}{\setcounter{tocdepth}{2}}
+
+\input{frontmatter/cover}
+\input{frontmatter/dedication}
+
+\setcounter{page}{1}
+\pagenumbering{roman}
+
+\input{frontmatter/acknowledgments}
+\input{frontmatter/resumo}
+\input{frontmatter/abstract}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+% ============================================================
+\mainmatter
+
+\setcounter{page}{1}
+\pagenumbering{arabic}
+
+\input{chapters/01-introduction}
+\input{chapters/02-literature-review}
+\input{chapters/03-methodology}
+\input{chapters/04-results}
+\input{chapters/05-conclusions}
+
+% ============================================================
+\backmatter
+
+\renewcommand{\bibname}{References}
+\printbibliography[heading=bibintoc, title={References}]
+
+\appendix
+\input{appendices/appendix-a}
+
+\end{document}
