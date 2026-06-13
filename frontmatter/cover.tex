@@ -1,42 +1,70 @@
 % ============================================================
 % !TeX root = ../main.tex
-%  Cover page — ISTA-IUL Master's Thesis
+%  Cover pages — ISTA-IUL Master's Thesis (official ISCTE layout)
+%  Page 1: Iscte main logo            (images/logo.png)
+%  Page 2: Department (school) logo   (images/logo-dept.png)
+%  Page 3: Month / Year               (standalone)
 % ============================================================
+
+% Brand colour for the separator line (ISCTE navy blue)
+\definecolor{iscteline}{HTML}{2B2D7C}
+
+% --- Reusable cover-page macro -------------------------------
+% #1 = path to the logo image file
+\newcommand{\istaCoverPage}[1]{%
+  \thispagestyle{empty}%
+  \begin{flushleft}
+
+    % --- Logo (top-left, ~3 cm tall) ------------------------
+    \IfFileExists{#1}{%
+      \includegraphics[height=3cm]{#1}%
+    }{%
+      \rule{0pt}{3cm}% placeholder if logo missing
+    }%
+    \par\vspace{0.4cm}
+
+    % --- Thin horizontal separator line (ISCTE navy) --------
+    \noindent{\color{iscteline}\rule{\textwidth}{1pt}}
+    \par\vspace{4.5cm}
+
+    % --- Title block ----------------------------------------
+    {\LARGE\bfseries Title of the Thesis}\par\vspace{0.4cm}      % TODO: thesis title
+    {\large Optional Subtitle of the Thesis}\par\vspace{2.5cm}   % TODO: subtitle or delete
+
+    % --- Author ---------------------------------------------
+    {\large Author Full Name}\par\vspace{2.5cm}                  % TODO: author
+
+    % --- Degree ---------------------------------------------
+    {\normalsize Master in}\par\vspace{0.2cm}
+    {\large\bfseries Programme Name}\par\vspace{1.5cm}           % TODO: exact programme name
+
+    % --- Supervisor(s) --------------------------------------
+    {\normalsize Supervisor:}\par
+    {\normalsize Prof.\ Supervisor Name, PhD,}\par               % TODO: supervisor
+    {\normalsize Position, Department,}\par
+    {\normalsize Iscte – Instituto Universit\'ario de Lisboa}\par
+    \vspace{0.6cm}
+
+    % --- Co-supervisor (delete block if not applicable) -----
+    {\normalsize Co-Supervisor:}\par
+    {\normalsize Prof.\ Co-Supervisor Name, PhD,}\par            % TODO: co-supervisor
+    {\normalsize Position, Department,}\par
+    {\normalsize Institution}\par
+
+    \vfill
+
+  \end{flushleft}
+  \clearpage
+}
+
+% --- Emit the two cover pages --------------------------------
+\istaCoverPage{images/logo.png}        % first cover: main Iscte logo
+\istaCoverPage{images/logo-dept.png}   % second cover: department logo
+
+% --- Standalone date page -----------------------------------
 \thispagestyle{empty}
-\begin{center}
-
-  % --- Logo (place file at images/ista-logo.pdf) -------------
-  \vspace*{1cm}
-  \IfFileExists{images/ista-logo.pdf}{%
-    \includegraphics[width=0.45\textwidth]{ista-logo}\\[2cm]
-  }{%
-    \vspace*{2.5cm}
-  }
-  % TODO: add the official ISTA-IUL logo at images/ista-logo.pdf
-
-  % --- Title -------------------------------------------------
-  {\LARGE\bfseries Title of the Thesis}\\[0.5cm]      % TODO: thesis title
-  {\large Optional Subtitle of the Thesis}\\[2cm]     % TODO: subtitle or remove
-
-  % --- Author ------------------------------------------------
-  {\large Author Full Name}\\[2cm]                    % TODO: author
-
-  % --- Degree ------------------------------------------------
-  {\normalsize Master's Thesis in}\\[0.3cm]
-  {\large\bfseries Programme Name}\\[2cm]             % TODO: exact programme name
-
-  % --- Supervisors -------------------------------------------
-  {\normalsize Supervisor:}\\
-  {\normalsize Prof.\ Supervisor Name, PhD}\\         % TODO: supervisor
-  {\normalsize Institution / Department}\\[0.5cm]     % TODO: affiliation
-
-  {\normalsize Co-Supervisor:}\\
-  {\normalsize Prof.\ Co-Supervisor Name, PhD}\\      % TODO: co-supervisor or delete block
-  {\normalsize Institution / Department}\\[2cm]
-
-  % --- Date --------------------------------------------------
-  {\normalsize Month, Year}                           % TODO: submission month/year
-
+\begin{flushleft}
   \vfill
-\end{center}
+  {\normalsize Month, Year}                                    % TODO: submission month/year
+\end{flushleft}
 \clearpage
