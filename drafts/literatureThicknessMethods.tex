@@ -1,0 +1,790 @@
+\documentclass[a4paper,12pt]{article}
+
+% ── Codificação e língua ──
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+
+% ── Pacotes ──
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+% (diagramas gerados como PNG via matplotlib — sem TikZ, excepto Método 10)
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, decorations.markings, patterns}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{enumitem}
+
+\title{\textbf{Métodos de Medição da Espessura\\da Parede do Miocárdio}\\[0.5em]
+\large Comparação de Abordagens para o Ventrículo Esquerdo}
+\author{Documento de apoio à tese}
+
+\begin{document}
+\maketitle
+
+% ═══════════════════════════════════════════════════════════════
+\section{Introdução}
+% ═══════════════════════════════════════════════════════════════
+
+A espessura da parede do miocárdio do ventrículo esquerdo (VE) é um indicador
+clínico importante. Paredes demasiado finas podem indicar enfarte; paredes
+demasiado grossas podem indicar hipertrofia. A medição é feita a partir de
+segmentações de ressonância magnética cardíaca (MRI) [10], onde existem duas
+superfícies de interesse:
+
+\begin{itemize}[nosep]
+  \item \textbf{Endocárdio} --- fronteira interior (entre o sangue e o músculo).
+  \item \textbf{Epicárdio} --- fronteira exterior (entre o músculo e o
+        pericárdio/gordura).
+\end{itemize}
+
+A ``espessura'' é, intuitivamente, a distância entre essas duas superfícies.
+O problema é que existem muitas formas de definir e calcular essa distância.
+Este documento apresenta dez métodos, desde os mais simples até aos mais
+sofisticados, com a matemática essencial e a opinião sobre cada um.
+
+\subsection{Pipeline geral}
+
+O fluxo de trabalho para medir a espessura é sempre o mesmo,
+independentemente do método escolhido:
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{diagrama_pipeline.png}
+\caption{Pipeline geral: da imagem de MRI até ao mapa de espessura AHA-17 [11].}
+\end{figure}
+
+\subsection{Vista geral dos 10 métodos}
+
+A Figura~\ref{fig:overview} mostra um diagrama conceptual de cada método,
+aplicado a uma secção simplificada do ventrículo esquerdo.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{metodos_ilustracoes.png}
+\caption{Ilustração conceptual dos 10 métodos. Vermelho = endocárdio,
+azul = epicárdio. Cada painel mostra como o método estima a espessura.}
+\label{fig:overview}
+\end{figure}
+
+\subsection{Notação comum}
+
+Em toda a discussão seguinte, usa-se a notação:
+\begin{itemize}[nosep]
+  \item $\mathbf{P} = \{p_i\}_{i=1}^N$ --- vértices da malha do endocárdio ($N$ pontos).
+  \item $\mathbf{Q} = \{q_j\}_{j=1}^M$ --- vértices da malha do epicárdio ($M$ pontos).
+  \item $\hat{n}_i$ --- normal unitária dirigida para o exterior em cada $p_i$.
+  \item $\Omega_{\text{myo}} = \Omega_{\text{epi}} \setminus \Omega_{\text{endo}}$ --- domínio volumétrico do miocárdio.
+  \item $V$ --- número total de voxels no miocárdio.
+  \item $F$ --- número de triângulos na malha do epicárdio.
+\end{itemize}
+
+% ═══════════════════════════════════════════════════════════════
+\section{Método 1 --- Vizinho Mais Próximo (KD-tree)}
+\label{sec:kdtree}
+% ═══════════════════════════════════════════════════════════════
+
+\subsection{Ideia}
+Para cada ponto $p_i$ no endocárdio, procura-se o ponto mais próximo $q_j$ no
+epicárdio. A espessura é simplesmente a distância euclidiana entre eles.
+
+\subsection{Matemática}
+\begin{equation}
+  t_i = \min_{j=1,\ldots,M} \left\| p_i - q_j \right\|_2
+\end{equation}
+
+A estrutura de dados \textbf{KD-tree} [5] organiza os $M$ pontos do epicárdio
+numa árvore binária em $\mathbb{R}^3$, particionando o espaço por
+hiperplanos alternados nos eixos $x$, $y$, $z$. Cada pesquisa de vizinho
+mais próximo custa $O(\log M)$; para todos os $N$ vértices do endocárdio,
+o custo total é $O(N \log M)$.
+
+\paragraph{Propriedade fundamental.}
+O resultado é uma \emph{cota inferior} da espessura real:
+\begin{equation}
+  t_i^{\text{KD}} \leq t_i^{\text{real}} \quad \forall\, i
+\end{equation}
+porque a distância mínima ignora a direção transmural --- pode ligar pontos
+que estão ``ao lado'' em vez de ``frente a frente''.
+
+\subsection{Diagrama}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.4\textwidth]{diagrama_m1_kdtree.png}
+\caption{Cada ponto do endocárdio (vermelho) é ligado ao ponto mais próximo do
+epicárdio (azul). A seta mostra a distância mínima.}
+\end{figure}
+
+\subsection{Avaliação}
+\begin{itemize}[nosep]
+  \item[\textbf{+}] Muito rápido ($<$~1\,ms para malhas típicas).
+  \item[\textbf{+}] Simples de implementar (SciPy já tem \texttt{cKDTree}).
+  \item[\textbf{--}] Não respeita a direção anatómica --- a seta pode ir
+        ``de lado'' em vez de atravessar a parede.
+  \item[\textbf{--}] Subestima a espessura em zonas curvas.
+\end{itemize}
+
+\noindent\textbf{Opinião:} É o método mais simples e serve como \emph{baseline}.
+Bom para uma primeira estimativa rápida, mas não é o mais correto
+anatomicamente.
+
+% ═══════════════════════════════════════════════════════════════
+\section{Método 2 --- KD-tree Simétrico}
+\label{sec:symkd}
+% ═══════════════════════════════════════════════════════════════
+
+\subsection{Ideia}
+Extensão do método anterior: calcula-se a distância do endo para o epi
+\emph{e} do epi para o endo. Se as duas médias forem muito diferentes,
+é sinal de que a geometria está a ``enganar'' o método.
+
+\subsection{Matemática}
+\begin{align}
+  t_i^{\text{endo}\to\text{epi}} &= \min_{j=1}^M \|p_i - q_j\|_2 \\
+  t_j^{\text{epi}\to\text{endo}} &= \min_{i=1}^N \|q_j - p_i\|_2 \\
+  \Delta &= \left| \overline{t}^{\,\text{endo}\to\text{epi}}
+               - \overline{t}^{\,\text{epi}\to\text{endo}} \right|
+\end{align}
+
+Se $\Delta \approx 0$, os dois sentidos concordam. Se $\Delta$ é grande
+($> 1$\,mm para malhas cardíacas típicas), o método do vizinho mais
+próximo está a introduzir enviesamento geométrico.
+
+Para obter uma estimativa combinada, usa-se:
+\begin{equation}
+  t_i^{\text{sym}} = \frac{1}{2}\left(
+    t_i^{\text{endo}\to\text{epi}} +
+    t_{\text{nn}(i)}^{\text{epi}\to\text{endo}}
+  \right)
+\end{equation}
+onde $\text{nn}(i)$ é o índice do vizinho mais próximo de $p_i$ no
+epicárdio. A complexidade total é $O((N+M)\log\max(N,M))$.
+
+\subsection{Diagrama}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.4\textwidth]{diagrama_m2_symkd.png}
+\caption{KD-tree simétrico: setas verdes = endo$\to$epi, setas laranja =
+epi$\to$endo. Se os dois sentidos dão distâncias muito diferentes, o método
+deteta inconsistência.}
+\end{figure}
+
+\subsection{Avaliação}
+\begin{itemize}[nosep]
+  \item[\textbf{+}] Deteta inconsistências do KD-tree simples.
+  \item[\textbf{--}] Não corrige o problema --- apenas o diagnostica.
+\end{itemize}
+
+\noindent\textbf{Opinião:} Útil como ferramenta de diagnóstico, mas não como
+método de medição final.
+
+% ═══════════════════════════════════════════════════════════════
+\section{Método 3 --- Raios Normais}
+\label{sec:rays}
+% ═══════════════════════════════════════════════════════════════
+
+\subsection{Ideia}
+Em cada ponto do endocárdio, calcula-se a \textbf{normal à superfície}
+(a direção perpendicular à parede). Depois lança-se um ``raio'' nessa
+direção e mede-se onde é que o raio bate no epicárdio.
+
+\subsection{Matemática}
+O raio parte do ponto $p_i$ na direção da normal $\hat{n}_i$:
+\begin{equation}
+  r(s) = p_i + s\,\hat{n}_i, \quad s > 0
+\end{equation}
+
+A espessura é o menor $s$ positivo para o qual o raio intersecta a
+superfície do epicárdio:
+\begin{equation}
+  t_i = \min\{s > 0 : r(s) \in \partial\Omega_{\text{epi}}\}
+\end{equation}
+
+A interseção raio-triângulo usa o algoritmo de \textbf{Möller--Trumbore}
+[3] (1997), que resolve o sistema:
+\begin{equation}
+  p_i + s\,\hat{n}_i = (1-u-v)\,v_0 + u\,v_1 + v\,v_2
+\end{equation}
+onde $v_0, v_1, v_2$ são os vértices de um triângulo do epicárdio e
+$u, v \geq 0$, $u+v \leq 1$ garantem que o ponto de impacto está
+dentro do triângulo. A aceleração por \textbf{BVH} (\emph{Bounding
+Volume Hierarchy}) reduz cada pesquisa de $O(F)$ para $O(\log F)$.
+
+\paragraph{Tratamento de falhas.}
+Raios que não intersectam o epicárdio (normais invertidas, buracos na
+malha) são preenchidos por interpolação do vizinho mais próximo com
+impacto válido. Uma taxa de falha $> 5\%$ indica problemas na malha.
+
+\subsection{Diagrama}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.4\textwidth]{diagrama_m3_raios.png}
+\caption{Raios (laranja) lançados ao longo das normais
+do endocárdio até ao epicárdio. Os pontos de impacto dão a espessura local.}
+\end{figure}
+
+\subsection{Avaliação}
+\begin{itemize}[nosep]
+  \item[\textbf{+}] Respeita a direção local da parede (mede ``através'').
+  \item[\textbf{+}] Dá valores por vértice (mapas de espessura detalhados).
+  \item[\textbf{--}] Sensível à qualidade da malha (normais ruidosas).
+  \item[\textbf{--}] Raios podem falhar (não bater no epicárdio).
+\end{itemize}
+
+\noindent\textbf{Opinião:} O melhor método prático baseado em malha.
+Anatomicamente mais correto que o KD-tree. Com \texttt{trimesh}
+e aceleração BVH, continua rápido.
+
+% ═══════════════════════════════════════════════════════════════
+\section{Método 4 --- EDT Soma de Fronteiras}
+\label{sec:edt}
+% ═══════════════════════════════════════════════════════════════
+
+\subsection{Ideia}
+A \textbf{Transformada de Distância Euclidiana} (EDT) calcula, para cada voxel
+de uma imagem, a distância ao pixel de fronteira mais próximo.
+Calculam-se duas EDT: uma a partir do endocárdio e outra a partir do
+epicárdio. A soma das duas dá uma estimativa da espessura local.
+
+\subsection{Matemática}
+Definem-se dois campos de distância:
+\begin{align}
+  D_{\text{endo}}(x) &= \min_{y \in \partial\Omega_{\text{endo}}} \|x - y\|_2 \\
+  D_{\text{epi}}(x) &= \min_{y \in \partial\Omega_{\text{epi}}} \|x - y\|_2
+\end{align}
+
+A espessura em qualquer voxel $x \in \Omega_{\text{myo}}$ é:
+\begin{equation}
+  t(x) = D_{\text{endo}}(x) + D_{\text{epi}}(x)
+\end{equation}
+
+Para paredes planas e paralelas, esta soma é \emph{exactamente} a
+espessura real. Para geometrias curvas, é uma aproximação que
+sobrestima ligeiramente.
+
+\paragraph{Algoritmo.}
+A EDT é calculada pelo algoritmo de \textbf{Saito--Toriwaki} [6] em
+tempo $O(V)$, onde $V$ é o número de voxels. Para imagens com
+resolução anisotrópica (e.g.\ MRI cardíaca com slices mais grossos),
+o parâmetro \texttt{sampling=(dz, dy, dx)} converte distâncias
+de voxels para milímetros.
+
+\subsection{Diagrama}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{diagrama_m4_edt.png}
+\caption{Secção transversal da parede. A espessura num voxel é a soma das
+distâncias ao endocárdio e ao epicárdio.}
+\end{figure}
+
+\subsection{Avaliação}
+\begin{itemize}[nosep]
+  \item[\textbf{+}] Robusto e fácil de calcular.
+  \item[\textbf{+}] Funciona diretamente em volumes (não precisa de malha).
+  \item[\textbf{--}] Limitado pela resolução dos voxels.
+  \item[\textbf{--}] Sobrestima a espessura em zonas muito curvas.
+\end{itemize}
+
+\noindent\textbf{Opinião:} Boa estimativa volumétrica. Ideal quando não se
+tem malhas. A resolução da imagem é o fator limitante.
+
+% ═══════════════════════════════════════════════════════════════
+\section{Método 5 --- EDT Medial (Eixo Medial)}
+\label{sec:medial}
+% ═══════════════════════════════════════════════════════════════
+
+\subsection{Ideia}
+O \textbf{eixo medial} [7] de uma forma é a linha central --- o conjunto de
+pontos que têm pelo menos dois pontos de fronteira mais próximos à mesma
+distância. No meio da parede do miocárdio, o valor máximo da EDT
+corresponde aproximadamente a metade da espessura local.
+
+\subsection{Matemática}
+O eixo medial é definido como o conjunto de máximos locais do campo
+de distância dentro do miocárdio:
+\begin{equation}
+  \mathcal{M} = \{x \in \Omega_{\text{myo}} : D(x) = \max_{y \in \mathcal{N}_{3\times3\times3}(x)} D(y),\; D(x) > 0\}
+\end{equation}
+
+onde $D(x) = \text{EDT}(\Omega_{\text{myo}})$ é a distância de $x$ à
+fronteira mais próxima (endo ou epi). Nos pontos de crista, a espessura
+é:
+\begin{equation}
+  t_{\text{medial}} = 2 \cdot D(x), \quad x \in \mathcal{M}
+\end{equation}
+
+O factor 2 resulta de que, por definição, o eixo medial está
+equidistante das duas fronteiras.
+
+\subsection{Diagrama}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.4\textwidth]{diagrama_m5_medial.png}
+\caption{O eixo medial (tracejado) é a linha central do miocárdio.
+O valor máximo da EDT ($d_{\max}$) nesse eixo dá metade da espessura:
+$t \approx 2 \cdot d_{\max}$.}
+\end{figure}
+
+\subsection{Avaliação}
+\begin{itemize}[nosep]
+  \item[\textbf{+}] Insensível à curvatura das superfícies.
+  \item[\textbf{+}] Dá uma estimativa no ``meio'' da parede.
+  \item[\textbf{--}] Muito aproximado --- poucos pontos de crista.
+  \item[\textbf{--}] Não dá um valor por vértice do endocárdio.
+\end{itemize}
+
+\noindent\textbf{Opinião:} Útil como verificação rápida, mas demasiado
+grosseiro para um mapa de espessura detalhado. Funciona melhor em formas
+simples.
+
+% ═══════════════════════════════════════════════════════════════
+\section{Método 6 --- Campo de Laplace}
+\label{sec:laplace}
+% ═══════════════════════════════════════════════════════════════
+
+\subsection{Ideia}
+Imagina-se que o endocárdio está a uma ``temperatura'' de 0 e o epicárdio
+a uma ``temperatura'' de 1. Resolve-se a equação de Laplace (difusão de
+calor em estado estacionário) dentro do miocárdio. As linhas de fluxo
+(isotérmicas) vão do endo ao epi de forma suave. O comprimento dessas
+linhas dá a espessura transmural.
+
+\subsection{Matemática}
+Resolver no domínio do miocárdio $\Omega_{\text{myo}}$:
+\begin{equation}
+  \nabla^2 \psi = 0 \quad \text{em } \Omega_{\text{myo}}
+\end{equation}
+com condições de fronteira de Dirichlet:
+\begin{align}
+  \psi\big|_{\partial\Omega_{\text{endo}}} &= 0 \\
+  \psi\big|_{\partial\Omega_{\text{epi}}} &= 1
+\end{align}
+
+A solução $\psi(x) \in [0, 1]$ é um campo escalar suave cujas
+iso-superfícies são \emph{nested} entre endo e epi. O gradiente
+$\nabla\psi$ indica a direção transmural. A espessura local é:
+\begin{equation}
+  t(x) = \frac{1}{|\nabla \psi(x)|}
+\end{equation}
+
+\paragraph{Discretização (stencil de 6 vizinhos).}
+Em 3D, o Laplaciano discreto no voxel $i$ com vizinhos $j \in \mathcal{N}_6(i)$ é:
+\begin{equation}
+  \nabla^2 \psi_i \approx \sum_{j \in \mathcal{N}_6(i)} (\psi_j - \psi_i) = 0
+  \quad \Longrightarrow \quad
+  6\psi_i - \sum_{j} \psi_j = b_i
+\end{equation}
+onde $b_i$ incorpora as condições de fronteira (0 para vizinhos no
+endocárdio, 1 para vizinhos no epicárdio). O sistema esparso
+$A\psi = b$ é resolvido pelo método do \textbf{Gradiente Conjugado}
+(CG) com complexidade $O(V \cdot k)$, onde $k$ é o número de iterações
+até convergência (tipicamente $k < 5000$).
+
+\paragraph{Interpretação física.}
+As linhas de campo ($\nabla\psi$) são as trajectórias que vão do
+endocárdio ao epicárdio sem se cruzarem --- propriedade garantida pela
+unicidade da solução do Laplace [2]. Isto faz deste o método
+\textbf{gold standard} para espessura transmural curva.
+
+\subsection{Diagrama}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.4\textwidth]{diagrama_m6_laplace.png}
+\caption{Campo de Laplace: as linhas tracejadas são isotérmicas ($\psi$
+constante). As setas (laranja) seguem o gradiente e dão a direção
+transmural.}
+\end{figure}
+
+\subsection{Avaliação}
+\begin{itemize}[nosep]
+  \item[\textbf{+}] O método mais correto anatomicamente.
+  \item[\textbf{+}] As linhas de fluxo não se cruzam (campo suave).
+  \item[\textbf{+}] Usado em artigos de referência [2] (Jones et al., 2000).
+  \item[\textbf{--}] Computacionalmente caro (resolver sistema linear).
+  \item[\textbf{--}] Precisa de boa discretização do volume.
+\end{itemize}
+
+\noindent\textbf{Opinião:} O \textbf{melhor método conceptualmente}.
+É a referência ``gold standard'' na literatura para espessura transmural.
+O único inconveniente é o custo computacional, que pode ser elevado para
+volumes grandes.
+
+% ═══════════════════════════════════════════════════════════════
+\section{Método 7 --- Geodésico / Dijkstra}
+\label{sec:geodesic}
+% ═══════════════════════════════════════════════════════════════
+
+\subsection{Ideia}
+Em vez de medir distâncias em linha reta, mede-se o \textbf{caminho mais
+curto} que passa \emph{dentro} do miocárdio. Constrói-se um grafo onde
+cada voxel do miocárdio é um nó, ligado aos seus vizinhos. Usa-se o
+algoritmo de Dijkstra para calcular a distância geodésica ao endocárdio
+e ao epicárdio.
+
+\subsection{Matemática}
+Constrói-se um grafo $G = (V, E)$ onde cada voxel do miocárdio é um nó.
+As arestas ligam vizinhos numa vizinhança de 26 (incluindo diagonais),
+com pesos:
+\begin{equation}
+  w(x, y) = \|x - y\|_2 \cdot \text{pitch}
+  \quad \text{(em mm)}
+\end{equation}
+
+A espessura num voxel $x$ é a soma das distâncias geodésicas às duas
+fronteiras:
+\begin{equation}
+  t(x) = d_G(x, \partial\Omega_{\text{endo}}) + d_G(x, \partial\Omega_{\text{epi}})
+\end{equation}
+
+onde:
+\begin{equation}
+  d_G(x, \Gamma) = \min_{\gamma: \Gamma \to x} \sum_{e \in \gamma} w(e)
+\end{equation}
+é o caminho mais curto de $x$ à fronteira $\Gamma$, calculado pelo
+algoritmo de \textbf{Dijkstra} [8] em tempo $O(V \log V)$.
+
+\paragraph{Vantagem sobre a EDT.}
+A vizinhança de 26 vizinhos (vs.\ 6 na EDT) reduz artefactos de
+discretização na diagonal. Além disso, o caminho geodésico nunca
+``corta'' por fora do miocárdio, ao contrário da distância euclidiana
+que pode atravessar tecido não-miocárdico em geometrias complexas.
+
+\subsection{Diagrama}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.4\textwidth]{diagrama_m7_geodesic.png}
+\caption{Caminho geodésico (laranja) vs.\ distância euclidiana (tracejado
+cinza). O caminho geodésico segue o interior do miocárdio, respeitando
+a topologia da parede.}
+\end{figure}
+
+\subsection{Avaliação}
+\begin{itemize}[nosep]
+  \item[\textbf{+}] Respeita a topologia do miocárdio.
+  \item[\textbf{+}] Não ``corta'' por fora da parede.
+  \item[\textbf{--}] Discretização em grafo de voxels introduz erros.
+  \item[\textbf{--}] Mais lento que EDT (Dijkstra em grafos grandes).
+\end{itemize}
+
+\noindent\textbf{Opinião:} Interessante como alternativa volumétrica ao
+Laplace. Na prática, o EDT soma-de-fronteiras dá resultados semelhantes
+com menos custo. Útil quando a topologia é complexa.
+
+% ═══════════════════════════════════════════════════════════════
+\section{Método 8 --- Diâmetro de Forma (SDF / Cone de Raios)}
+\label{sec:sdf}
+% ═══════════════════════════════════════════════════════════════
+
+\subsection{Ideia}
+Inspirado na \emph{Shape Diameter Function} (SDF) da biblioteca CGAL [4].
+Em vez de lançar um único raio, lança-se um \textbf{cone de raios}
+(normalmente 7 raios) à volta da normal. A espessura é a \textbf{mediana}
+das distâncias medidas, o que torna o resultado mais robusto a ruído.
+
+\subsection{Matemática}
+Para cada vértice $p_i$ do endocárdio, constrói-se uma base ortonormal
+local $(\hat{n}_i, \hat{u}_i, \hat{v}_i)$, onde:
+\begin{equation}
+  \hat{u}_i = \frac{\hat{n}_i \times \hat{e}}{\|\hat{n}_i \times \hat{e}\|},
+  \qquad
+  \hat{v}_i = \hat{n}_i \times \hat{u}_i
+\end{equation}
+com $\hat{e}$ um vetor auxiliar não-paralelo a $\hat{n}_i$.
+
+Geram-se $K$ direções uniformemente distribuídas num cone de
+semi-ângulo $\alpha$:
+\begin{equation}
+  \hat{d}_k = \hat{n}_i \cos\alpha
+    + (\hat{u}_i\cos\phi_k + \hat{v}_i\sin\phi_k)\sin\alpha,
+  \qquad \phi_k = \frac{2\pi k}{K}
+\end{equation}
+
+Cada raio $r_k(s) = p_i + s\,\hat{d}_k$ é lançado contra o epicárdio.
+A espessura é a \textbf{mediana} das distâncias de impacto:
+\begin{equation}
+  t_i^{\text{SDF}} = \text{mediana}\left\{\|p_i - h_k\|_2 :\;
+    h_k = p_i + s_k\hat{d}_k,\; s_k > 0\right\}
+\end{equation}
+
+\paragraph{Parâmetros recomendados.}
+$K = 7$ raios e $\alpha = 30°$ são os valores recomendados pela
+biblioteca CGAL [4] para geometrias cardíacas. A complexidade é
+$O(NK \log F)$ com aceleração BVH.
+
+\subsection{Diagrama}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{diagrama_m8_sdf.png}
+\caption{Cone de raios (laranja) lançado a partir de um ponto do endocárdio.
+A mediana das distâncias de interseção dá a espessura.}
+\end{figure}
+
+\subsection{Avaliação}
+\begin{itemize}[nosep]
+  \item[\textbf{+}] Robusto a ruído nas normais (vários raios).
+  \item[\textbf{+}] Usa a mediana (resiste a \emph{outliers}).
+  \item[\textbf{--}] Mais lento (múltiplos raios por vértice).
+  \item[\textbf{--}] Abertura do cone é um parâmetro a ajustar.
+\end{itemize}
+
+\noindent\textbf{Opinião:} Boa alternativa ao raio normal único.
+A robustez extra justifica o custo em malhas ruidosas. É o método
+usado em segmentação de malhas 3D (CGAL [4]).
+
+% ═══════════════════════════════════════════════════════════════
+\section{Método 9 --- Correspondência Regularizada}
+\label{sec:registration}
+% ═══════════════════════════════════════════════════════════════
+
+\subsection{Ideia}
+Combina a projeção na normal com a distância ao vizinho mais próximo, e
+depois aplica uma \textbf{suavização iterativa} nos vizinhos da malha.
+Isto produz um campo de espessura suave, sem saltos bruscos.
+
+\subsection{Matemática}
+
+\paragraph{Passo 1 --- Estimativa inicial.}
+Para cada vértice $p_i$ do endocárdio, seja $q_{\text{nn}(i)}$ o vizinho
+mais próximo no epicárdio. A estimativa inicial combina a projeção na
+normal com a distância euclidiana:
+\begin{equation}
+  t_i^{(0)} = \max\left(
+    \langle q_{\text{nn}(i)} - p_i,\; \hat{n}_i \rangle, \;
+    \|p_i - q_{\text{nn}(i)}\|_2
+  \right)
+\end{equation}
+
+\paragraph{Passo 2 --- Suavização iterativa Laplaciana [9].}
+Usando o grafo de adjacência da malha triangular do endocárdio,
+em cada iteração $k$:
+\begin{equation}
+  t_i^{(k+1)} = (1-\alpha)\,t_i^{(0)} + \alpha \cdot
+    \frac{1}{|\mathcal{N}(i)|}\sum_{j \in \mathcal{N}(i)} t_j^{(k)}
+\end{equation}
+
+onde $\mathcal{N}(i)$ são os vértices vizinhos de $i$ na malha
+triangular e $\alpha = 0.35$ é o peso de suavização.
+
+\paragraph{Convergência.}
+O processo converge tipicamente em $n \leq 20$ iterações. A
+complexidade por iteração é $O(N)$. Valores de $\alpha > 0.6$ podem
+sobre-suavizar e esconder zonas patológicas (enfarte, fibrose).
+O termo $(1-\alpha)\,t_i^{(0)}$ ancora a solução à estimativa
+geométrica, evitando que a suavização derive sem limites.
+
+\subsection{Diagrama}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{diagrama_m9_registration.png}
+\caption{Esquerda: estimativa inicial $t_i^{(0)}$ com setas ruidosas.
+Direita: após suavização iterativa ($\alpha=0.35$), as setas tornam-se
+regulares e o campo de espessura fica contínuo.}
+\end{figure}
+
+\subsection{Avaliação}
+\begin{itemize}[nosep]
+  \item[\textbf{+}] Resultados suaves e sem saltos.
+  \item[\textbf{+}] Combina informação geométrica (normal + distância).
+  \item[\textbf{--}] Pode sobre-suavizar detalhes reais.
+  \item[\textbf{--}] Resultado depende do número de iterações e de $\alpha$.
+\end{itemize}
+
+\noindent\textbf{Opinião:} Bom para visualização (mapas suaves). Pode
+esconder variações reais da espessura se o parâmetro de suavização
+for demasiado alto. Útil como pós-processamento.
+
+% ═══════════════════════════════════════════════════════════════
+\section{Método 10 --- Yezzi--Prince (PDE Euleriana)}
+\label{sec:yezzi}
+% ═══════════════════════════════════════════════════════════════
+
+\subsection{Ideia}
+Yezzi e Prince [1] (2003) propuseram uma formulação alternativa à equação de
+Laplace. Em vez de calcular $t = 1/|\nabla\psi|$ (que requer diferenciação
+numérica propensa a ruído), resolvem-se \textbf{dois} problemas de
+transporte guiados pelo campo $\nabla\psi$, cuja soma dá directamente
+a espessura sem necessidade de construir trajectórias explícitas.
+
+\subsection{Matemática}
+Dado o campo $\psi$ do Laplace (Secção~\ref{sec:laplace}), resolvem-se:
+\begin{align}
+  \nabla\psi \cdot \nabla u &= -1, \quad u\big|_{\partial\Omega_{\text{endo}}} = 0 \\
+  \nabla\psi \cdot \nabla v &= -1, \quad v\big|_{\partial\Omega_{\text{epi}}} = 0
+\end{align}
+
+O campo $u(x)$ mede a ``distância transmural'' de $x$ ao endocárdio ao
+longo das linhas de fluxo de $\nabla\psi$; o campo $v(x)$ mede a
+distância ao epicárdio. A espessura em qualquer ponto é simplesmente:
+\begin{equation}
+  t(x) = u(x) + v(x)
+\end{equation}
+
+\paragraph{Vantagem sobre o Laplace puro.}
+No Método~6, $t = 1/|\nabla\psi|$ amplifica erros numéricos onde
+$|\nabla\psi|$ é pequeno (ápex, paredes finas). Yezzi--Prince evita
+esta divisão e produz resultados mais estáveis nestas zonas críticas.
+
+\paragraph{Implementação.}
+A resolução é análoga à do Laplace (sistema esparso + solver iterativo),
+mas com um lado direito não-nulo. O pacote Python \texttt{pyezzi} aceita
+máscaras binárias com resolução anisotrópica via \texttt{sampling=(dz,
+dy, dx)}.
+
+\subsection{Diagrama}
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[>=Stealth, thick, scale=0.95]
+  % --- Endocardio (curva vermelha) ---
+  \draw[red, very thick] (0,0) .. controls (0.3,1.5) and (0.5,3) .. (0.8,4.5)
+    node[above left, black, font=\small] {Endo ($\psi=0$)};
+  % --- Epicardio (curva azul) ---
+  \draw[blue, very thick] (4,0) .. controls (3.7,1.5) and (3.5,3) .. (3.2,4.5)
+    node[above right, black, font=\small] {Epi ($\psi=1$)};
+  % --- Miocardio shading ---
+  \fill[gray!15] (0,0) .. controls (0.3,1.5) and (0.5,3) .. (0.8,4.5)
+    -- (3.2,4.5) .. controls (3.5,3) and (3.7,1.5) .. (4,0) -- cycle;
+  % --- Streamline (trajectoria de nabla psi) ---
+  \draw[orange, thick, dashed,
+    decoration={markings, mark=at position 0.5 with {\arrow{>}}},
+    postaction={decorate}]
+    (0.4,2.2) .. controls (1.2,2.4) and (2.5,2.5) .. (3.55,2.3);
+  % --- Ponto x no meio ---
+  \filldraw[black] (2.0,2.4) circle (2pt) node[above, font=\small] {$x$};
+  % --- u(x): distancia ao endo ---
+  \draw[green!60!black, very thick, <->]
+    (0.4,1.6) -- (2.0,1.8)
+    node[midway, below, font=\small] {$u(x)$};
+  % --- v(x): distancia ao epi ---
+  \draw[violet, very thick, <->]
+    (2.0,1.8) -- (3.55,1.7)
+    node[midway, below, font=\small] {$v(x)$};
+  % --- Espessura total ---
+  \draw[black, thick, |<->|]
+    (0.4,0.6) -- (3.55,0.6)
+    node[midway, below, font=\small] {$t = u + v$};
+  % --- Label nabla psi ---
+  \node[orange, font=\small] at (2.0,3.0) {$\nabla\psi$};
+  % --- Isotermicas (linhas de psi constante) ---
+  \draw[gray, thin, densely dotted] (1.0,0.1) .. controls (1.1,1.5) and (1.2,3) .. (1.3,4.4);
+  \draw[gray, thin, densely dotted] (2.0,0.1) .. controls (2.0,1.5) and (2.0,3) .. (2.0,4.4);
+  \draw[gray, thin, densely dotted] (3.0,0.1) .. controls (2.9,1.5) and (2.8,3) .. (2.7,4.4);
+  % --- Labels psi ---
+  \node[gray, font=\scriptsize] at (1.0,-0.3) {$\psi{=}0.25$};
+  \node[gray, font=\scriptsize] at (2.0,-0.3) {$\psi{=}0.5$};
+  \node[gray, font=\scriptsize] at (3.0,-0.3) {$\psi{=}0.75$};
+\end{tikzpicture}
+\caption{Método Yezzi--Prince: o campo $u$ (verde) mede a distância transmural ao
+endocárdio; o campo $v$ (violeta) mede a distância ao epicárdio. A espessura
+local é $t(x) = u(x) + v(x)$, sem necessidade de divisão por
+$|\nabla\psi|$. As linhas pontilhadas são iso-$\psi$.}
+\end{figure}
+
+\subsection{Avaliação}
+\begin{itemize}[nosep]
+  \item[\textbf{+}] Numericamente mais estável que $1/|\nabla\psi|$.
+  \item[\textbf{+}] Não requer integração de trajectórias.
+  \item[\textbf{+}] Qualidade equivalente ao Laplace com menor sensibilidade numérica.
+  \item[\textbf{--}] Requer o campo $\psi$ como input (depende do Laplace).
+  \item[\textbf{--}] Pacote \texttt{pyezzi} menos difundido.
+\end{itemize}
+
+\noindent\textbf{Opinião:} É o método recomendado quando se pretende qualidade
+equivalente ao Laplace com maior estabilidade numérica, especialmente no
+ápex e em paredes finas ($< 5$\,mm).
+
+% ═══════════════════════════════════════════════════════════════
+\section{Comportamento no Ápex}
+\label{sec:apex}
+% ═══════════════════════════════════════════════════════════════
+
+O ápex (ponta inferior) do ventrículo esquerdo é a zona com maior
+curvatura. É aqui que os métodos mais se distinguem, porque a
+direção ``através da parede'' difere muito da direção ``ao ponto
+mais próximo''. A Figura~\ref{fig:apex2d} compara os 9 métodos
+nesta zona crítica.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{apex_all_methods_2d.png}
+\caption{Comportamento dos 9 métodos na zona do ápex (secção 2D).
+Vermelho = endocárdio, azul = epicárdio. Cada painel mostra como o
+método estima a espessura na zona de maior curvatura.}
+\label{fig:apex2d}
+\end{figure}
+
+\noindent\textbf{Observações principais:}
+\begin{itemize}[nosep]
+  \item O \textbf{KD-tree} (painel 1) falha claramente: as setas vão
+        ``de lado'' em vez de atravessar a parede.
+  \item Os \textbf{raios normais} (painel 3) medem corretamente
+        perpendicular à superfície.
+  \item O \textbf{EDT} (painel 4) produz um campo contínuo que
+        sobrestima ligeiramente nas zonas curvas.
+  \item O \textbf{campo de Laplace} (painel 6) produz linhas de fluxo
+        suaves que não se cruzam.
+  \item O \textbf{SDF / cone de raios} (painel 8) usa a mediana de
+        vários raios, tornando-o robusto a erros individuais.
+\end{itemize}
+
+A Figura~\ref{fig:apex3d} mostra a mesma comparação em 3D, num
+modelo elipsoidal do ventrículo.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{apex_3d_all_methods.png}
+\caption{Vista 3D dos métodos no ápex de um modelo elipsoidal do VE.
+Vermelho = endocárdio (transparente), azul = epicárdio (transparente).
+Cada painel mostra as setas/campo de um método diferente.}
+\label{fig:apex3d}
+\end{figure}
+
+\subsection*{Referências}
+
+\begin{enumerate}[label={[\arabic*]}, nosep]
+  \item Yezzi, A.J., Prince, J.L. (2003). An Eulerian PDE approach
+        for computing tissue thickness. \emph{IEEE Trans.\ Med.\
+        Imaging}, 22(10):1332--1339.
+  \item Jones, S.E., Buchbinder, B.R., Aharon, I. (2000).
+        Three-dimensional mapping of cortical thickness using
+        Laplace's equation. \emph{Human Brain Mapping}, 11(1):12--32.
+  \item Möller, T., Trumbore, B. (1997). Fast, minimum storage
+        ray-triangle intersection. \emph{J.\ Graphics Tools},
+        2(1):21--28.
+  \item Shapira, L., Shamir, A., Cohen-Or, D. (2008). Consistent
+        mesh partitioning and skeletonisation using the shape
+        diameter function. \emph{The Visual Computer}, 24(4):249--259.
+        (CGAL implementation.)
+  \item Bentley, J.L. (1975). Multidimensional binary search trees
+        used for associative searching. \emph{Communications of the
+        ACM}, 18(9):509--517.
+  \item Saito, T., Toriwaki, J.I. (1994). New algorithms for
+        Euclidean distance transformation of an $n$-dimensional
+        digitized picture with applications. \emph{Pattern
+        Recognition}, 27(11):1551--1565.
+  \item Blum, H. (1967). A transformation for extracting new
+        descriptors of shape. In \emph{Models for the Perception
+        of Speech and Visual Form}, MIT Press, pp.\ 362--380.
+  \item Dijkstra, E.W. (1959). A note on two problems in connexion
+        with graphs. \emph{Numerische Mathematik}, 1(1):269--271.
+  \item Taubin, G. (1995). A signal processing approach to fair
+        surface design. In \emph{Proc.\ SIGGRAPH '95}, pp.\ 351--358.
+        (Laplacian mesh smoothing.)
+  \item Petersen, S.E. et al.\ (2017). Reference ranges for cardiac
+        structure and function using cardiovascular magnetic
+        resonance (CMR). \emph{J.\ Cardiovasc.\ Magn.\ Reson.},
+        19:18.
+  \item Cerqueira, M.D. et al.\ (2002). Standardized myocardial
+        segmentation and nomenclature for tomographic imaging of
+        the heart (AHA 17-segment model). \emph{Circulation},
+        105(4):539--542.
+  \item Bernard, O. et al.\ (2018). Deep learning techniques for
+        automatic MRI cardiac multi-structures segmentation and
+        diagnosis (ACDC challenge). \emph{IEEE Trans.\ Med.\
+        Imaging}, 37(11):2514--2525.
+\end{enumerate}
+
+\end{document}

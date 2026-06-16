@@ -1,0 +1,759 @@
+\documentclass[12pt,a4paper]{report}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{setspace}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage[table]{xcolor}
+
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, shadows.blur, backgrounds}
+
+% Define custom colors
+\definecolor{boxbg}{RGB}{245, 247, 250}
+\definecolor{boxborder}{RGB}{100, 116, 139}
+\definecolor{accentblue}{RGB}{59, 130, 246}
+\tikzstyle{process} = [
+    rectangle, 
+    rounded corners=4pt,
+    minimum width=11cm, 
+    minimum height=1.2cm, 
+    text width=8cm,
+    align=center,
+    draw=boxborder,
+    line width=0.8pt,
+    fill=boxbg,
+    font=\small,
+    blur shadow={shadow blur steps=5, shadow xshift=0pt, shadow yshift=-2pt, shadow blur radius=3pt}
+]
+
+\tikzstyle{arrow} = [
+    -{Stealth[length=4mm, width=3mm]},
+    line width=1.5pt,
+    color=accentblue
+]
+
+
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+\usepackage{biblatex}
+\addbibresource{referencias.bib}
+
+\usepackage{csquotes}
+
+\geometry{
+left=3cm,
+right=2cm,
+top=3cm,
+bottom=2cm
+}
+
+\onehalfspacing
+
+\title{Revisão de Literatura sobre \\ \textbf{Reconstrução 3D do Ventrículo Esquerdo a partir de Contornos 2D de MRI usando SSM e Graph Neural Networks}}
+\author{Nome do Autor}
+\date{Ano}
+
+\begin{document}
+
+\begin{titlepage}
+\centering
+\vspace*{3cm}
+
+{\Large ISCTE - Instituto Universitário de Lisboa \par}
+\vspace{1cm}
+
+{\Large Mestrado \par}
+
+{\Large Inteligência Artificial \par}
+\vspace{3cm}
+
+{\bfseries\Large Revisão de Literatura\par}
+\vspace{1cm}
+
+{\bfseries\Large Reconstrução 3D do Ventrículo Esquerdo e Cálculo da Espessura da Parede Miocárdica\par}
+\vspace{3cm}
+
+{\large André Eusébio\par}
+{\large 127600\par}
+\vfill
+
+{\large Orientador: \\ Prof. Dr. João Pedro Oliveira\par}
+
+\end{titlepage}
+
+% -------------------------
+% Resumo
+% -------------------------
+\chapter*{Resumo}
+
+Este relatório apresenta uma revisão de literatura no contexto da reconstrução tridimensional do ventrículo esquerdo (VE) a partir de exames de ressonância magnética cardíaca (MRI).
+
+A presente tese não aborda o problema da segmentação. Assume-se que os contornos bidimensionais do endocárdio e epicárdio já se encontram disponíveis, resultantes de segmentações previamente realizadas em dados de MRI.
+
+O foco do trabalho consiste em utilizar exclusivamente estes contornos 2D como entrada para um modelo baseado em \textit{Graph Neural Networks} (GNNs), treinado no espaço de um Modelo Estatístico de Forma (\textit{Statistical Shape Model} – SSM) do ventrículo esquerdo. O objetivo é reconstruir diretamente a \textit{mesh} tridimensional completa do VE de forma anatomicamente plausível e, a partir desta, permitir o cálculo contínua da espessura da parede miocárdica.
+
+Esta abordagem explora o conhecimento anatómico capturado pelo SSM como \textit{prior} geométrico, permitindo a reconstrução coerente da geometria tridimensional do VE mesmo quando apenas informação bidimensional limitada está disponível.
+
+\vspace*{\fill}
+
+\noindent\textbf{Palavras-chave:} ventrículo esquerdo; MRI cardíaca; contornos 2D; modelos estatísticos de forma; \textit{Graph Neural Networks}; reconstrução 3D.
+
+
+\tableofcontents
+\newpage
+
+% -------------------------
+% Introdução
+% -------------------------
+\chapter{Introdução}
+
+A reconstrução tridimensional do ventrículo esquerdo (VE) a partir de imagens de ressonância magnética (MRI) é fundamental para a obtenção de métricas clínicas relevantes, tais como o volume ventricular, a fração de ejeção e a espessura da parede miocárdica.
+
+Tradicionalmente, esta reconstrução é realizada a partir de segmentações bidimensionais seguidas de interpolação geométrica entre cortes. Embora estes métodos sejam amplamente utilizados, não incorporam explicitamente o conhecimento sobre a variabilidade anatómica real do ventrículo esquerdo, podendo originar geometrias pouco plausíveis, especialmente quando o número de cortes é reduzido ou a sua distribuição espacial é irregular.
+
+Os \textbf{Modelos Estatísticos de Forma} (\textit{Statistical Shape Models} – SSM), construídos a partir de grandes populações, capturam essa variabilidade anatómica através de \textit{meshes} tridimensionais com correspondência ponto-a-ponto entre indivíduos. Estes modelos permitem descrever o espaço de formas plausíveis do VE, constituindo um \textbf{prior geométrico} extremamente valioso para problemas de reconstrução.
+
+Nesta tese é proposta uma abordagem onde se parte diretamente dos contornos bidimensionais do VE, assumindo que estes já foram obtidos através de segmentações existentes em dados de MRI. A partir destes contornos, pretende-se reconstruir diretamente a \textit{mesh} tridimensional no espaço do SSM, recorrendo a \textbf{Graph Neural Networks} (GNNs), capazes de operar sobre representações geométricas em grafo e preservar a estrutura topológica da anatomia.
+
+% -------------------------
+% Motivação
+% -------------------------
+\section{Motivação}
+
+A maioria dos métodos de reconstrução tridimensional do VE baseia-se em interpolação geométrica entre cortes segmentados. Mesmo quando as segmentações apresentam elevada qualidade, a reconstrução resultante:
+
+\begin{itemize}
+    \item Não garante formas anatomicamente plausíveis;
+    \item Não explora o conhecimento prévio existente sobre a variabilidade da anatomia cardíaca;
+    \item Degrada-se significativamente quando o número de cortes é reduzido.
+\end{itemize}
+
+A disponibilidade de SSMs permite utilizar este conhecimento anatómico como \textbf{prior geométrico}, possibilitando reconstruções realistas mesmo a partir de informação bidimensional limitada.
+
+Assim, esta tese foca-se exclusivamente na etapa de reconstrução geométrica, assumindo contornos já segmentados, e investigando como estes podem ser utilizados para inferir a \textit{mesh} tridimensional completa do VE e estimar de forma coerente a espessura da parede miocárdica.
+
+% -------------------------
+% Objetivos
+% -------------------------
+\section{Objetivos da Tese}
+
+Os principais objetivos desta tese são:
+
+\begin{itemize}
+    \item Gerar cortes bidimensionais sintéticos a partir das \textit{meshes} do SSM, simulando cortes reais de MRI;
+    \item Construir um \textit{dataset} sintético com variabilidade anatómica biomecanicamente plausível;
+    \item Treinar uma GNN capaz de aprender a reconstruir a \textit{mesh} 3D completa a partir de contornos 2D;
+    \item Validar a abordagem com contornos reais provenientes de MRI já segmentadas (dataset ACDC);
+    \item Avaliar a capacidade de generalização do modelo com diferentes números de cortes disponíveis;
+    \item Estimar a espessura da parede miocárdica a partir das \textit{meshes} reconstruídas.
+\end{itemize}
+
+
+% -------------------------
+% Metodologia da Revisão
+% -------------------------
+\chapter{Metodologia da Revisão de Literatura}
+
+A revisão de literatura foi conduzida de forma \textbf{sistemática, orientada por objetivos e seletiva}, com o propósito de identificar e analisar criticamente o estado da arte nas áreas de reconstrução tridimensional cardíaca, modelos estatísticos de forma e aplicação de \textit{Graph Neural Networks} (GNNs) a \textit{meshes} médicas.
+
+Em vez de uma revisão exaustiva e indiferenciada, adotou-se uma abordagem focada, privilegiando trabalhos metodologicamente sólidos, relevantes para o ventrículo esquerdo (VE) e diretamente relacionados com a problemática central desta tese: a reconstrução de \textit{meshes} tridimensionais anatomicamente plausíveis a partir de informação bidimensional limitada.
+
+\section{Bases de Dados Consultadas}
+
+A pesquisa bibliográfica foi realizada nas seguintes bases de dados científicas, selecionadas pela sua relevância e abrangência temática:
+
+\begin{itemize}
+    \item \textbf{Scopus} — base de dados multidisciplinar de elevado impacto;
+    \item \textbf{PubMed} — principal fonte de literatura biomédica e imagiologia cardíaca;
+    \item \textbf{IEEE Xplore} — métodos computacionais, \textit{machine learning} e Graph Neural Networks;
+    \item \textbf{Google Scholar} — pesquisa complementar para identificação de artigos recentes, \textit{preprints} e análise de citações cruzadas.
+\end{itemize}
+
+\section{Período Temporal}
+
+A revisão incidiu sobre publicações entre \textbf{2000 e 2026}, abrangendo tanto os primeiros métodos clássicos de reconstrução tridimensional do ventrículo esquerdo, como interpolação entre cortes e modelação paramétrica, como as abordagens mais recentes baseadas em \textit{deep learning}, modelos estatísticos de forma populacionais (por exemplo, UK Biobank) e a aplicação de Graph Neural Networks a dados geométricos e \textit{meshes} médicas.
+
+Trabalhos anteriores a 2000 foram considerados apenas quando essenciais para o enquadramento teórico ou histórico do desenvolvimento dos modelos estatísticos de forma e das técnicas de reconstrução tridimensional cardíaca.
+
+\section{Queries Utilizadas}
+
+As \textit{queries} foram definidas de modo a cobrir explicitamente as três dimensões centrais da revisão: reconstrução cardíaca, modelos estatísticos de forma e Graph Neural Networks aplicadas a \textit{meshes}. As principais \textit{queries} utilizadas foram:
+
+\begin{itemize}
+    \item \texttt{"cardiac MRI" AND "left ventricle" AND "3D reconstruction"}
+    \item \texttt{"statistical shape model" AND "left ventricle"}
+    \item \texttt{"mesh reconstruction" AND "medical imaging"}
+    \item \texttt{"graph neural network" AND "mesh"}
+\end{itemize}
+
+Estas \textit{queries} foram pontualmente adaptadas à sintaxe específica de cada base de dados, de forma a maximizar a relevância dos resultados obtidos.
+
+\section{Critérios de Inclusão e Exclusão}
+
+A seleção dos artigos foi orientada por critérios explícitos de inclusão e exclusão, com o objetivo de garantir relevância temática e qualidade metodológica.
+
+\noindent\textbf{Critérios de inclusão:}
+\begin{itemize}
+    \item Estudos sobre reconstrução tridimensional do ventrículo esquerdo (VE) a partir de imagens de ressonância magnética cardíaca;
+    \item Trabalhos que utilizam ou discutem modelos estatísticos de forma (SSM) do VE;
+    \item Métodos baseados em \textit{meshes} e/ou Graph Neural Networks (GNN) aplicados a dados cardíacos ou anatómicos.
+\end{itemize}
+
+\noindent\textbf{Critérios de exclusão:}
+\begin{itemize}
+    \item Estudos focados exclusivamente em segmentação, sem reconstrução tridimensional;
+    \item Trabalhos sem aplicação direta ao ventrículo esquerdo;
+    \item Artigos sem descrição metodológica suficiente ou sem validação experimental.
+\end{itemize}
+
+\section{Resultados da Pesquisa e Processo de Seleção}
+
+A aplicação inicial das \textit{queries} nas quatro bases de dados resultou num total de \textbf{95 artigos}. Após a remoção de duplicados e de estudos claramente fora do âmbito da revisão, permaneceram \textbf{60 artigos} considerados potencialmente relevantes.
+
+Numa fase subsequente, procedeu-se à leitura dos \textit{abstracts} destes artigos, avaliando-se a sua relevância temática, o rigor metodológico e a sua aplicabilidade ao problema da reconstrução tridimensional do ventrículo esquerdo. Esta triagem permitiu excluir estudos redundantes ou apenas marginalmente relacionados com os objetivos da tese.
+
+Como resultado deste processo seletivo, \textbf{10 a 12 artigos} foram considerados suficientemente relevantes para leitura completa (\textit{full-text review}) e análise detalhada. Estes trabalhos representam contribuições-chave e abordagens complementares que fundamentam o enquadramento teórico e metodológico da solução proposta.
+
+\begin{table}[h!]
+\centering
+\caption{Resumo da triagem de artigos na revisão de literatura}
+\rowcolors{2}{gray!15}{white}
+\begin{tabular}{p{8cm} c}
+\hline
+\rowcolor{gray!30}
+\textbf{Etapa} & \textbf{Número de Artigos} \\
+\hline
+Busca inicial nas bases de dados (\textit{Scopus}, \textit{PubMed}, \textit{IEEE Xplore}, \textit{Google Scholar}) & 95 \\
+Remoção de duplicados e artigos fora do âmbito & 60 \\
+Leitura de \textit{abstracts} & 60 \\
+Artigos selecionados para leitura completa (\textit{full-text review}) & 10 a 12 \\
+\hline
+\end{tabular}
+\end{table}
+
+\bigskip
+
+\noindent\textbf{Descrição das etapas:}
+\begin{itemize}
+    \item \textbf{Busca inicial:} aplicação das \textit{queries} em cada base de dados para identificar artigos relevantes;
+    \item \textbf{Remoção de duplicados:} eliminação de artigos repetidos e estudos fora do âmbito da revisão;
+    \item \textbf{Leitura de \textit{abstracts}:} avaliação preliminar da relevância, metodologia e contributo científico;
+    \item \textbf{Leitura completa (\textit{full-text review}):} análise aprofundada dos artigos selecionados, com síntese crítica dos métodos, resultados e limitações no contexto da reconstrução 3D do VE.
+\end{itemize}
+
+
+% -------------------------
+% Revisão de Literatura
+% -------------------------
+\chapter{Revisão de Literatura}
+
+\section{Reconstrução 3D a partir de MRI segmentada}
+
+\subsection*{Contexto e Objetivo}
+A reconstrução tridimensional do ventrículo esquerdo (VE) a partir de imagens de MRI é fundamental para cálculos clínicos precisos, como volumes ventriculares, fração de ejeção e espessura da parede miocárdica. Tradicionalmente, a reconstrução 3D dependia de segmentações manuais ou automáticas de cortes bidimensionais (\textit{short-axis} e \textit{long-axis}) e de interpolação geométrica para gerar um \textit{mesh} 3D do VE.
+
+\subsection*{Métodos Tradicionais}
+\begin{itemize}
+    \item \textbf{Interpolação entre cortes} — técnicas como \textit{linear interpolation} ou \textit{shape-based interpolation} conectam contornos endocárdicos e epicárdicos \parencite{mahmoudzadeh-2013, lopez-perez-2015}.
+    \item \textbf{Modelos paramétricos} — ajuste de cilindros ou elipsóides para modelar a forma geral do VE \parencite{roohi-2012}.
+    \item \textbf{Reconstrução baseada em múltiplos cortes} — fusão de cortes \textit{short-axis} e \textit{long-axis} usando splines ou deformações livres \parencite{ferrante-2017}.
+\end{itemize}
+
+\subsection*{Aplicação ao Trabalho Atual}
+Nesta tese, os contornos 2D já segmentados são usados como entrada para uma Graph Neural Network (GNN) que reconstrói diretamente o \textit{mesh} 3D do VE no espaço do SSM do UK Biobank, eliminando a necessidade de interpolação tradicional e incorporando um prior anatômico populacional.
+
+\subsection*{Trabalhos Relacionados Recentes}
+\begin{itemize}
+    \item \parencite{wang-2018} – geração de \textit{meshes} 3D a partir de imagens 2D usando rede convolucional sobre grafos.
+    \item \parencite{nakao2021, nakao2022} – reconstrução deformável de órgãos a partir de projeções 2D usando GNN.
+    \item \parencite{wijesinghe-2024} – reconstrução volumétrica de órgãos a partir de projeções 2D únicas em espaço latente de \textit{mesh}.
+\end{itemize}
+
+\section{Modelos Estatísticos de Forma do VE}
+
+\subsection*{Contexto e Objetivo}
+Modelos estatísticos de forma (SSM) capturam a variabilidade anatómica do ventrículo esquerdo (VE) a partir de uma população de exemplos, fornecendo um \textbf{prior geométrico} que garante reconstruções plausíveis mesmo quando os dados disponíveis são incompletos, ruidosos ou parciais. Em vez de tratar cada malha de forma isolada, o SSM descreve a forma cardíaca como pertencente a uma família estatística bem definida, permitindo gerar, comparar e analisar geometrias de forma consistente entre indivíduos. \parencite{bai-2015,demarvao2014,pilgram-2005}
+
+Na prática, um SSM é construído a partir de malhas segmentadas e alinhadas entre si, onde se assegura correspondência anatómica entre pontos equivalentes. A variabilidade dominante da população é então resumida num espaço de baixa dimensão, no qual novas formas podem ser geradas como combinações plausíveis dessa variabilidade. A qualidade do modelo depende fortemente da consistência das segmentações, do alinhamento entre sujeitos e da diversidade anatómica presente no conjunto de treino. \parencite{roohi-2012,pilgram-2005}
+
+\subsection*{SSM do UK Biobank}
+O SSM utilizado neste trabalho é disponibilizado pelo UK Digital Heart Project (\url{https://github.com/UK-Digital-Heart-Project/Statistical-Shape-Model}). Baseado em mais de 1000 imagens de MRI de indivíduos saudáveis, este modelo constitui uma das maiores referências populacionais de forma cardíaca atualmente disponíveis. \parencite{bai-2015,demarvao2014}
+
+Este SSM permite:
+\begin{itemize}
+    \item Amostragem de formas anatómicas plausíveis dentro da variabilidade populacional observada;
+    \item Reconstrução de \textit{meshes} 3D completos a partir de contornos ou informações parciais;
+    \item Estimativa contínua e consistente de métricas clínicas, incluindo volumes, massa ventricular e espessura da parede;
+    \item Normalização geométrica que facilita a comparação entre sujeitos.
+\end{itemize}
+
+Para além do seu uso direto em reconstrução, o SSM é uma ferramenta particularmente útil para \textbf{geração de dados sintéticos}. Através da amostragem controlada do espaço do modelo, é possível gerar grandes quantidades de malhas anatómicas realistas, que podem ser usadas para:
+\begin{itemize}
+    \item \textit{Data augmentation} no treino de modelos de aprendizagem automática;
+    \item Simulação do processo de aquisição de imagem (por exemplo, geração de cortes MRI sintéticos com diferentes espaçamentos, ruído e artefatos);
+    \item Estudos de sensibilidade e validação de algoritmos sob variações anatómicas controladas.
+\end{itemize}
+Esta capacidade é particularmente relevante em contextos onde dados anotados são escassos, permitindo criar pares sintéticos imagem–malha para treino supervisionado. \parencite{bai-2015,zakeri-2022}
+
+Em pipelines modernos que combinam SSM com Graph Neural Networks (GNNs), o modelo estatístico pode ser utilizado tanto como \textit{prior} anatômico que regulariza a reconstrução, como espaço latente onde a rede aprende a regressar diretamente os parâmetros que definem a malha final. Esta integração melhora a robustez anatómica da reconstrução e reduz erros locais que surgiriam em abordagens puramente baseadas em interpolação ou ajuste geométrico direto. \parencite{nakao2021,nakao2022,banerjee-2021,wijesinghe-2024}
+
+Referências principais: \parencite{bai-2015,demarvao2014}.
+
+
+\subsection*{Aplicação ao Trabalho Atual}
+O SSM fornece o espaço latente no qual a GNN aprende a mapear contornos 2D para vértices do \textit{mesh} 3D do VE, garantindo coerência anatómica e permitindo cálculo contínuo da espessura da parede.
+
+\section{Graph Neural Networks em \textit{meshes} médicas}
+
+\subsection*{Contexto e Objetivo}
+As \textit{Graph Neural Networks} (GNNs) permitem trabalhar diretamente sobre estruturas não-euclidianas, como grafos e \textit{meshes}, onde a informação está organizada em vértices e arestas em vez de grelhas regulares de píxeis. Esta capacidade torna-as particularmente adequadas para problemas de reconstrução e análise de superfícies anatómicas, onde a geometria e a conectividade espacial entre pontos são fundamentais.
+
+Ao contrário das redes convolucionais tradicionais, que assumem uma estrutura regular dos dados, as GNNs conseguem capturar relações espaciais intrínsecas entre vértices de um \textit{mesh}, preservando a topologia da superfície. Por esta razão, têm sido cada vez mais utilizadas na reconstrução de \textit{meshes} 3D a partir de informação 2D, como cortes, projeções ou contornos segmentados.
+
+\subsection*{Métodos recentes}
+Vários trabalhos recentes demonstram a eficácia de GNNs aplicadas a \textit{meshes} e reconstrução geométrica:
+
+\begin{itemize}
+    \item \parencite{hanocka2019} introduzem o MeshCNN, uma arquitetura que realiza convoluções diretamente sobre as arestas de \textit{meshes}, explorando a sua estrutura topológica.
+    
+    \item \parencite{nakao2021,nakao2022} propõem abordagens de reconstrução deformável de órgãos 3D a partir de projeções 2D, utilizando grafos para representar modelos anatómicos e aprender deformações coerentes.
+    
+    \item \parencite{wijesinghe-2024} apresentam um \textit{pipeline} de reconstrução volumétrica de órgãos a partir de uma única projeção 2D, operando num espaço latente de \textit{mesh} através de GNNs.
+\end{itemize}
+
+Estes trabalhos evidenciam como a representação em grafo permite modelar deformações anatómicas complexas de forma mais natural do que representações puramente baseadas em píxeis ou voxels.
+
+\subsection*{Aplicação ao Trabalho Atual}
+No presente trabalho, os contornos endocárdicos e epicárdicos segmentados são convertidos numa representação em grafo, onde cada contorno é modelado como um conjunto ordenado de vértices com coordenada espacial associada (incluindo a posição ao longo do eixo longitudinal do ventrículo).
+
+Esta representação preserva a estrutura geométrica dos cortes e permite que a GNN aprenda as relações espaciais entre contornos em diferentes posições ao longo do ventrículo. A rede aprende, assim, a inferir o \textit{mesh} tridimensional completo do VE a partir desta informação parcial, integrando o \textit{prior} anatómico fornecido pelo SSM do UK Biobank.
+
+Como resultado, obtém-se uma reconstrução 3D coerente do ventrículo esquerdo, sobre a qual é possível calcular de forma contínua métricas clínicas, como a espessura da parede, volumes e outras propriedades geométricas.
+
+\section{Cálculo da Espessura da Parede do VE}
+
+\subsection*{Contexto e Objetivo}
+A espessura da parede miocárdica é uma métrica clínica fundamental para a avaliação de hipertrofia, remodelação ventricular e alterações estruturais do ventrículo esquerdo. Tradicionalmente, esta medida é estimada diretamente a partir das segmentações dos contornos endocárdico e epicárdico em cortes 2D de MRI, medindo a distância entre ambos ao longo do miocárdio. \parencite{prasad-2009,lopez-perez-2015}
+
+Com a disponibilidade de reconstruções tridimensionais, o cálculo da espessura deixa de estar limitado ao plano do corte e passa a poder ser analisado de forma contínua em toda a superfície do ventrículo.
+
+\subsection*{Métodos gerais de cálculo}
+Existem várias abordagens consolidadas para calcular a espessura a partir de superfícies segmentadas ou malhas 3D reconstruídas:
+
+\begin{itemize}
+    \item \textbf{Distância ponto-a-superfície:} para cada ponto do endocárdio procura-se o ponto mais próximo na superfície epicárdica. É simples e eficiente, mas pode ser sensível a ruído e a irregularidades locais. \parencite{prasad-2009}
+    
+    \item \textbf{Medição ao longo de uma direção transmural aproximada:} a espessura é medida segundo uma direção aproximadamente transversal à parede (por exemplo, a normal da superfície), produzindo previsões mais alinhadas com a orientação fisiológica do miocárdio. \parencite{lopez-perez-2015,roohi-2012}
+    
+    \item \textbf{Métodos baseados em campos transmural contínuos:} em vez de medir distâncias pontuais, constrói-se um campo suave entre as superfícies endocárdica e epicárdica que define trajetórias coerentes ao longo das quais a espessura é medida. Estes métodos produzem mapas de espessura mais estáveis e fisiologicamente consistentes. \parencite{mahmoudzadeh-2013,lopez-perez-2015}
+    
+    \item \textbf{Abordagens em voxel:} quando se trabalha diretamente no volume da imagem, a espessura pode ser estimada através de transformadas de distância e operações morfológicas, sendo particularmente adequadas para \textit{pipelines} baseados em imagem. \parencite{mahmoudzadeh-2013}
+\end{itemize}
+
+Após o cálculo local da espessura, é comum agregar os resultados em regiões clínicas padronizadas (por exemplo, os segmentos AHA) e produzir mapas contínuos da parede para análise e visualização. \parencite{prasad-2009}
+
+\subsection*{Aplicação ao Trabalho Atual}
+No \textit{mesh} 3D do ventrículo esquerdo reconstruído pela GNN no espaço do SSM do UK Biobank, a espessura da parede é calculada diretamente sobre as superfícies endocárdica e epicárdica reconstruídas. Esta abordagem apresenta várias vantagens:
+
+\begin{itemize}
+    \item A geometria suave e anatomicamente coerente fornecida pelo SSM reduz artefactos locais que afetariam medições diretas em cortes 2D;
+    \item A análise deixa de estar limitada aos planos de aquisição da MRI, permitindo uma previsão contínua em toda a superfície ventricular;
+    \item A utilização do SSM possibilita a geração de malhas sintéticas para validar a robustez do método de cálculo da espessura sob variações anatómicas controladas.
+\end{itemize}
+
+Desta forma, a combinação GNN + SSM não só melhora a reconstrução tridimensional do VE, como também fornece uma base geométrica estável para a estimativa reprodutível e clinicamente consistente da espessura da parede. \parencite{bai-2015,demarvao2014}
+
+
+\section{Lacunas Identificadas na Literatura}
+
+A análise crítica da literatura permitiu identificar várias lacunas relevantes que motivam o desenvolvimento da abordagem proposta nesta tese:
+
+\begin{itemize}
+    \item \textbf{Dependência excessiva de interpolação geométrica:} muitos métodos tradicionais de reconstrução tridimensional baseiam-se em interpolação entre cortes segmentados, sem incorporar explicitamente conhecimento anatómico populacional, podendo originar geometrias não fisiológicas quando os dados são escassos ou irregularmente distribuídos.
+    
+    \item \textbf{Integração limitada entre SSM e aprendizagem profunda:} apesar do uso consolidado de modelos estatísticos de forma como \textit{priors} geométricos, poucos trabalhos exploram a sua integração explícita com modelos de \textit{deep learning}, em particular Graph Neural Networks, para reconstrução direta de \textit{meshes} tridimensionais.
+    
+    \item \textbf{Escassez de abordagens baseadas exclusivamente em contornos 2D:} a maioria dos métodos de aprendizagem profunda opera diretamente sobre imagens ou volumes completos, sendo raros os trabalhos que utilizam apenas contornos bidimensionais como entrada para reconstrução 3D.
+    
+    \item \textbf{Avaliação limitada da robustez com informação parcial:} poucos estudos analisam sistematicamente o desempenho da reconstrução tridimensional quando o número de cortes disponíveis é reduzido, situação frequente em protocolos clínicos reais.
+    
+    \item \textbf{Cálculo da espessura ainda dependente de cortes 2D:} mesmo quando a reconstrução 3D é realizada, a estimativa da espessura da parede miocárdica permanece muitas vezes limitada ao plano dos cortes, não explorando plenamente o potencial das \textit{meshes} tridimensionais.
+\end{itemize}
+
+Estas lacunas evidenciam a necessidade de um pipeline que integre explicitamente um \textbf{prior anatómico estatístico}, seja capaz de reconstruir \textit{meshes} 3D plausíveis a partir de contornos 2D e permita o cálculo contínuo e coerente da espessura da parede miocárdica, motivando diretamente a abordagem desenvolvida nesta tese.
+
+\chapter{Discussão}
+
+Ao contrário dos métodos tradicionais focados em interpolação geométrica (\textit{splines}, \textit{linear interpolation}), esta tese concentra-se exclusivamente na reconstrução do \textit{mesh} 3D do ventrículo esquerdo (VE) a partir de contornos 2D previamente segmentados, utilizando um \textbf{Statistical Shape Model (SSM)} como \textbf{prior geométrico aprendido}.
+
+Esta abordagem desloca o foco da interpolação puramente geométrica para uma reconstrução guiada por conhecimento anatómico estatístico, permitindo obter \textit{meshes} tridimensionais coerentes mesmo quando a informação disponível é parcial ou escassa.
+
+\section{Pipeline Proposto}
+
+O pipeline desenvolvido nesta tese é composto pelas seguintes etapas:
+
+\begin{enumerate}
+    \item \textbf{Utilização do SSM do UK Biobank}
+
+    A partir do \textit{Statistical Shape Model} do VE disponibilizado pelo UK Digital Heart Project (\url{https://github.com/UK-Digital-Heart-Project/Statistical-Shape-Model}), são amostrados \textit{meshes} sintéticos que capturam a variabilidade anatómica populacional \parencite{bai-2015,demarvao2014}.
+
+    \textit{Razão de escolha:} o SSM garante reconstruções anatomicamente plausíveis e fornece um \textbf{prior geométrico consistente}, fundamental quando a entrada é incompleta.
+
+    \item \textbf{Geração de um dataset sintético com variâncias biomecanicamente plausíveis}
+
+    O SSM permite gerar novas formas do VE através da variação controlada dos seus modos principais de variação. Estas variações correspondem a alterações reais observadas na população, tais como:
+
+    \begin{itemize}
+        \item Dilatação ou contração global do ventrículo;
+        \item Variações na espessura relativa da parede;
+        \item Alterações na geometria basal e apical;
+        \item Assimetrias fisiológicas entre diferentes regiões do VE.
+    \end{itemize}
+
+    Ao restringir a amostragem a intervalos estatisticamente plausíveis dos modos do SSM, garante-se que as formas geradas permanecem \textbf{biomecanicamente realistas}, evitando geometrias não fisiológicas.
+
+    \textit{Razão de escolha:} permite criar um grande conjunto de dados com diversidade anatómica controlada, essencial para o treino supervisionado da GNN e para estudar a robustez do modelo face a diferentes morfologias.
+
+    \item \textbf{Slicing das \textit{meshes} ao longo do eixo longitudinal (Z)}
+
+    Cada \textit{mesh} sintético é cortado em fatias ao longo do eixo Z, gerando contornos 2D do endocárdio e epicárdio.
+
+    \textit{Razão de escolha:} simula diretamente os cortes de MRI reais, garantindo que os dados usados no treino têm a mesma natureza da entrada real do modelo.
+
+    \item \textbf{Construção do grafo para a GNN}
+
+    Cada ponto de um contorno 2D é representado como um nó num grafo, com \textit{features} geométricas associadas:
+    \[
+    \mathbf{x}_i = [x_i, y_i, z_i, r_i, t_i],
+    \]
+    onde \(x_i, y_i, z_i\) são coordenadas espaciais, \(r_i\) representa a distância relativa ao centro do corte e \(t_i\) identifica se o ponto pertence ao endocárdio ou epicárdio.
+
+    As arestas são definidas através de:
+    \begin{itemize}
+        \item \textit{k-nearest neighbors} (k-NN) no plano XY dentro da mesma fatia;
+        \item Ligações entre fatias adjacentes ao longo do eixo Z.
+    \end{itemize}
+    
+\begin{center}
+    \includegraphics[width=0.7\textwidth]{Sem título.png}
+\end{center}
+
+    \textit{Razão de escolha:} preserva a conectividade local e a continuidade tridimensional, facilitando a aprendizagem da geometria correta.
+
+    \item \textbf{Treino da Graph Neural Network}
+
+    A GNN recebe os nós e arestas construídas e aprende a prever as posições 3D dos vértices do \textit{mesh} completo do VE.
+
+    \textit{Razão de escolha:} permite a reconstrução direta do \textit{mesh} tridimensional a partir de contornos parciais, integrando implicitamente o \textit{prior} anatómico do SSM.
+
+    \item \textbf{Cálculo contínuo da espessura da parede}
+
+    Para cada ponto endocárdico é identificado o ponto epicárdico mais próximo, gerando um mapa contínuo de espessura sobre toda a superfície do \textit{mesh}.
+
+    \textit{Razão de escolha:} permite obter uma métrica clínica relevante de forma coerente em toda a geometria tridimensional.
+\end{enumerate}
+
+\begin{center}
+\begin{tikzpicture}[node distance=0.8cm, process/.style={rectangle, draw, rounded corners=2mm, minimum height=1cm, text width=10cm, align=center}, arrow/.style={->, thick}]
+
+% Nodes
+\node (ssm) [process] {
+    \textbf{UK Biobank SSM of LV}\\[2pt]
+    {\footnotesize\textit{Statistical Shape Model}}
+};
+
+\node (generate) [process, below=of ssm] {
+    \textbf{Generate Synthetic Meshes}\\[2pt]
+    $\bullet$ Sample shapes in SSM\\
+    $\bullet$ Ensure anatomical variability
+};
+
+\node (slice) [process, below=of generate] {
+    \textbf{Slice Meshes Along Z-axis}\\[2pt]
+    $\bullet$ Extract 2D contours (endocardium \& epicardium)
+};
+
+\node (subsample) [process, below=of slice] {
+    \textbf{Subsample Slices for Different Protocols}\\[2pt]
+    $\bullet$ Simulate MRI with 10, 7, 4, 2 slices\\
+    $\bullet$ Evaluate reconstruction with sparse data
+};
+
+\node (graph) [process, below=of subsample, minimum height=2.2cm] {
+    \textbf{Create Graph Dataset}\\[2pt]
+    \textit{Node features:} $x, y, z$, radius $r$, contour type (endo/epi)\\
+    \textit{Edge construction:} k-NN in XY + adjacency in Z
+};
+
+\node (gnn) [process, below=of graph, minimum height=1.8cm] {
+    \textbf{Graph Neural Network}\\[2pt]
+    $\bullet$ Input: 2D contour nodes + connectivity\\
+    $\bullet$ Architecture: message passing layers\\
+    $\bullet$ Output: predicted 3D vertex positions
+};
+
+\node (mesh) [process, below=of gnn] {
+    \textbf{Reconstructed 3D Mesh of Left Ventricle}
+};
+
+\node (thickness) [process, below=of mesh, minimum height=1.8cm] {
+    \textbf{Compute Wall Thickness}\\[2pt]
+    $\bullet$ Minimum distance between endocardium and epicardium vertices\\
+    $\bullet$ Generate continuous thickness map
+};
+
+% Arrows
+\draw [arrow] (ssm) -- (generate);
+\draw [arrow] (generate) -- (slice);
+\draw [arrow] (slice) -- (subsample);
+\draw [arrow] (subsample) -- (graph);
+\draw [arrow] (graph) -- (gnn);
+\draw [arrow] (gnn) -- (mesh);
+\draw [arrow] (mesh) -- (thickness);
+
+% Step numbers
+\foreach \i/\node in {1/ssm, 2/generate, 3/slice, 4/subsample, 5/graph, 6/gnn, 7/mesh, 8/thickness} {
+    \node[circle, fill=accentblue, text=white, font=\tiny\bfseries, 
+          minimum size=5mm, inner sep=0pt] at (\node.north west) [xshift=8mm, yshift=-3mm] {\i};
+}
+
+\end{tikzpicture}
+\end{center}
+
+
+\section{Comparação com Pipelines Tradicionais}
+
+\begin{itemize}
+    \item \textbf{Interpolação entre cortes} – simples, mas propensa a erros em regiões com poucos cortes ou alterações complexas da forma.
+    \item \textbf{Modelos paramétricos} – rápidos, mas pouco flexíveis para anatomias variantes.
+    \item \textbf{Redes CNN 3D} – eficazes com volumes completos, mas exigem muitos dados e não exploram explicitamente o \textit{prior} anatómico.
+    \item \textbf{SSM + GNN (pipeline proposto)} – garante coerência anatómica, reconstrói \textit{meshes} com poucas fatias e permite cálculo contínuo de métricas clínicas.
+\end{itemize}
+
+\section{Vantagens do Pipeline Proposto}
+
+\begin{itemize}
+    \item Integração explícita de um \textbf{prior estatístico anatómico};
+    \item Capacidade de reconstrução com \textbf{informação parcial};
+    \item Produção direta de um \textit{mesh} 3D contínuo;
+    \item Cálculo coerente da \textbf{espessura da parede} em toda a superfície;
+    \item Potencial generalização para outras estruturas anatómicas.
+\end{itemize}
+
+\section{Limitações e Desafios}
+
+\begin{itemize}
+    \item Dependência de contornos segmentados de elevada qualidade;
+    \item Necessidade de geração de dados sintéticos variados para treino;
+    \item Transferência do modelo treinado em dados sintéticos para dados reais requer validação cuidada.
+\end{itemize}
+
+\section{Validação em Dados Reais e Avaliação da Generalização}
+
+O modelo treinado é aplicado a dados reais do dataset \textbf{ACDC} (\textit{Automated Cardiac Diagnosis Challenge}), utilizando os contornos segmentados disponíveis.
+
+\subsection*{Validação qualitativa do \textit{mesh}}
+
+Não existem atualmente \textit{datasets open source} que disponibilizem simultaneamente contornos 2D e o \textit{mesh} 3D correspondente como \textit{ground truth}. Assim, não é possível realizar uma validação geométrica direta do \textit{mesh} reconstruído.
+
+A avaliação da reconstrução é feita de forma \textbf{qualitativa}, analisando:
+
+\begin{itemize}
+    \item Coerência anatómica global da forma do VE;
+    \item Suavidade da superfície reconstruída;
+    \item Ausência de deformações não fisiológicas;
+    \item Consistência entre cortes consecutivos.
+\end{itemize}
+
+\subsection*{Validação quantitativa indireta através da espessura da parede}
+
+Embora o \textit{mesh} não possa ser validado diretamente, a \textbf{espessura da parede} pode ser medida:
+
+\begin{itemize}
+    \item diretamente nas segmentações 2D do ACDC;
+    \item no \textit{mesh} reconstruído pela GNN.
+\end{itemize}
+
+A comparação entre estas medidas permite uma \textbf{validação quantitativa indireta} da qualidade da reconstrução tridimensional.
+
+\subsection*{Avaliação da generalização com diferentes números de cortes}
+
+Para avaliar a robustez do modelo, são realizados testes variando o número de cortes fornecidos como entrada:
+
+\begin{itemize}
+    \item Todos os cortes disponíveis;
+    \item Apenas 10 cortes;
+    \item Apenas 5 cortes;
+    \item Cortes não uniformemente espaçados.
+\end{itemize}
+
+Esta análise permite estudar a capacidade do modelo em reconstruir geometrias plausíveis mesmo com informação limitada, evidenciando o papel fundamental do \textit{prior} do SSM na compensação da falta de dados.
+
+% -------------------------
+% Conclusão
+% -------------------------
+\chapter{Conclusão}
+
+Esta revisão de literatura mostrou que os métodos tradicionais de reconstrução tridimensional do ventrículo esquerdo dependem sobretudo da \textit{interpolação entre cortes 2D}, o que pode conduzir a reconstruções pouco realistas quando a informação disponível é limitada. Verificou-se também que os \textit{Modelos Estatísticos de Forma} permitem incorporar conhecimento anatómico prévio, garantindo geometrias mais plausíveis.
+\\
+
+As \textit{Graph Neural Networks} revelam-se adequadas para reconstruir meshes 3D a partir de contornos 2D, preservando a estrutura geométrica do ventrículo. No entanto, a literatura ainda apresenta poucas abordagens que integrem estes modelos de forma explícita.
+\\
+
+Neste contexto, a abordagem proposta nesta tese combina um \textit{modelo estatístico de forma} com uma \textit{GNN} para reconstruir diretamente o ventrículo esquerdo em 3D e permitir o cálculo contínuo da espessura da parede miocárdica, respondendo às principais limitações identificadas na literatura.
+
+
+
+\printbibliography
+
+
+\end{document}
+
+
+\documentclass[12pt,a4paper]{report}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{setspace}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage[table]{xcolor}
+\usepackage{csquotes}
+
+% --- Bibliography Setup ---
+\usepackage[backend=biber, style=numeric]{biblatex}
+\addbibresource{referencias.bib}
+
+% --- TikZ Setup ---
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, shadows.blur, backgrounds}
+
+\definecolor{boxbg}{RGB}{245, 247, 250}
+\definecolor{boxborder}{RGB}{100, 116, 139}
+\definecolor{accentblue}{RGB}{59, 130, 246}
+
+\tikzset{
+    process/.style={
+        rectangle, 
+        rounded corners=4pt,
+        minimum width=10cm, 
+        minimum height=1.2cm, 
+        text width=9cm,
+        align=center,
+        draw=boxborder,
+        line width=0.8pt,
+        fill=boxbg,
+        font=\small,
+        blur shadow={shadow blur steps=5, shadow xshift=0pt, shadow yshift=-2pt, shadow blur radius=3pt}
+    },
+    arrow/.style={
+        -{Stealth[length=4mm, width=3mm]},
+        line width=1.5pt,
+        color=accentblue
+    }
+}
+
+\geometry{left=3cm, right=2cm, top=3cm, bottom=2cm}
+\onehalfspacing
+
+\begin{document}
+
+% -------------------------
+% Title Page
+% -------------------------
+\begin{titlepage}
+\centering
+\vspace*{2cm}
+{\Large ISCTE - Instituto Universitário de Lisboa \par}
+\vspace{1cm}
+{\Large Master's Degree in Artificial Intelligence \par}
+\vspace{3cm}
+{\bfseries\Large Literature Review\par}
+\vspace{1cm}
+{\bfseries\Large 3D Reconstruction of the Left Ventricle and Myocardial Wall Thickness Calculation\par}
+\vfill
+{\large André Eusébio (127600)\par}
+\vspace{1cm}
+{\large Supervisor: Prof. Dr. João Pedro Oliveira\par}
+\vspace{2cm}
+{\large 2026 \par}
+\end{titlepage}
+
+% -------------------------
+% Acronyms
+% -------------------------
+\chapter*{List of Acronyms}
+\addcontentsline{toc}{chapter}{List of Acronyms}
+\begin{description}
+    \item[ACDC] Automated Cardiac Diagnosis Challenge
+    \item[GNN] Graph Neural Network
+    \item[LV] Left Ventricle
+    \item[MRI] Magnetic Resonance Imaging
+    \item[SSM] Statistical Shape Model
+\end{description}
+
+\tableofcontents
+\newpage
+
+% -------------------------
+% Literature Review
+% -------------------------
+\chapter{Literature Review}
+
+\section{Introduction}
+This review explores the literature surrounding the three-dimensional reconstruction of the left ventricle (LV) from cardiac magnetic resonance imaging (MRI). The current research landscape often assumes that two-dimensional contours of the endocardium and epicardium are already available from prior segmentations \parencite{bai-2015, demarvao2014}. Recent studies focus on utilizing these 2D contours as direct input for models based on Graph Neural Networks (GNNs), trained within the space of a Statistical Shape Model (SSM) of the left ventricle \parencite{wang-2018}. The primary objective of these approaches is to reconstruct the complete 3D mesh of the LV in an anatomically plausible manner, which then allows for the continuous calculation of myocardial wall thickness.
+
+\section{3D Reconstruction from Segmented MRI}
+The 3D reconstruction of the LV from MRI is essential for accurate clinical calculations. Traditionally, this relied on manual or automatic segmentations of 2D slices and geometric interpolation to generate a 3D mesh. Traditional methods included linear or shape-based interpolation \parencite{mahmoudzadeh-2013, lopez-perez-2015}, parametric models fitting cylinders or ellipsoids \parencite{roohi-2012}, and multi-slice reconstruction fusing slices using splines or free-form deformations \parencite{ferrante-2017}. More recently, the literature demonstrates that 2D contours can be used as input for GNNs that directly reconstruct the 3D LV mesh within an SSM space, eliminating traditional interpolation \parencite{wang-2018}.
+
+\section{Statistical Shape Models of the LV}
+SSMs capture the anatomical variability of the LV from a population, providing a geometric prior that ensures plausible reconstructions even when data is incomplete or noisy \parencite{pilgram-2005}. Built from segmented and aligned meshes with anatomical point correspondence, the dominant population variability is summarized in a low-dimensional space. A prominent example is the UK Biobank SSM, based on over 1000 MRI images of healthy individuals \parencite{bai-2015, demarvao2014}. Beyond direct reconstruction, SSMs are highly valuable for generating synthetic data for data augmentation in machine learning \parencite{zakeri-2022}.
+
+\section{Graph Neural Networks on Medical Meshes}
+GNNs operate directly on non-Euclidean structures like graphs and meshes, where information is organized in vertices and edges. This makes them highly suitable for reconstructing anatomical surfaces where geometry and spatial connectivity are crucial. Recent methodologies include MeshCNN for convolutions directly on mesh edges \parencite{hanocka2019} and graph-based deformable 3D organ reconstruction \parencite{nakao2021, nakao2022, wijesinghe-2024}.
+
+\section{LV Wall Thickness Calculation}
+Myocardial wall thickness is a key clinical metric for evaluating hypertrophy. Traditionally estimated from 2D MRI slices \parencite{prasad-2009, lopez-perez-2015}, the availability of 3D reconstructions allows this measurement to be analyzed continuously. Established calculation methods include point-to-surface distance \parencite{prasad-2009}, measurement along an approximate transmural direction \parencite{roohi-2012}, and continuous transmural fields \parencite{mahmoudzadeh-2013}.
+
+\section{Current Pipeline Trends}
+The current trend focuses on pipelines that reconstruct 3D LV meshes from segmented 2D contours using an SSM as a learned geometric prior. The process generally follows the workflow illustrated below:
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=1.1cm]
+    \node (ssm) [process] {\textbf{UK Biobank SSM of LV}};
+    \node (generate) [process, below=of ssm] {\textbf{Generate Synthetic Meshes}};
+    \node (slice) [process, below=of generate] {\textbf{Slice Meshes Along Z-axis}};
+    \node (graph) [process, below=of slice] {\textbf{Create Graph Dataset}};
+    \node (gnn) [process, below=of graph] {\textbf{Graph Neural Network (GNN)}};
+    \node (mesh) [process, below=of gnn] {\textbf{Reconstructed 3D Mesh}};
+    \node (thickness) [process, below=of mesh] {\textbf{Compute Continuous Wall Thickness}};
+
+    \draw [arrow] (ssm) -- (generate);
+    \draw [arrow] (generate) -- (slice);
+    \draw [arrow] (slice) -- (graph);
+    \draw [arrow] (graph) -- (gnn);
+    \draw [arrow] (gnn) -- (mesh);
+    \draw [arrow] (mesh) -- (thickness);
+\end{tikzpicture}
+\caption{Workflow of a modern 3D LV reconstruction pipeline using SSMs and GNNs.}
+\end{figure}
+
+\section{Conclusion}
+This review showed that combining SSMs with GNNs addresses the limitations of traditional interpolation. By incorporating a statistical prior, these models ensure anatomical coherence even with sparse input data, providing a robust foundation for clinical thickness analysis.
+
+\printbibliography
+
+\end{document}

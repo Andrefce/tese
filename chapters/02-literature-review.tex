@@ -5,33 +5,245 @@
 \chapter{Literature Review}
 \label{ch:literature-review}
 
-\noindent This chapter surveys the existing literature relevant to the
-problem addressed in this thesis.
+\noindent This chapter surveys the existing literature relevant to left-ventricle
+reconstruction from short-axis cardiac MRI. We focus on three connected themes: the
+problem of reconstructing the left ventricle from short-axis magnetic
+resonance images, the use of statistical shape models to regularize cardiac
+geometry, and point-based implicit representations that reconstruct smooth
+surfaces from sparse contour observations.
 
 \section{Background}
 \label{sec:background}
 \noindent
-% TODO: introduce the fundamental concepts the reader needs to follow the
-% rest of the thesis.
+Short-axis cardiac magnetic resonance imaging is widely used because it offers
+clear anatomical contrast and standardized coverage of the left ventricle, but
+the imaging geometry remains fundamentally slice-based rather than volumetric
+\parencite{petitjean2011segmentationreview,cerqueira2002segmentation}. This
+creates a reconstruction problem: the left ventricle must be inferred in three
+dimensions from a stack of two-dimensional contours or partial surfaces, and the
+quality of the result depends on how well the method can interpolate between
+slices while preserving global shape and local wall geometry
+\parencite{heimann2009ssmreview}.
+
+The literature on cardiac shape analysis makes a consistent distinction between
+methods that learn a compact representation of shape and methods that directly
+operate on image or mesh topology. Compact representations are attractive
+because they reduce the effect of noise and missing data, but they also impose a
+limited deformation space. Direct methods are more expressive, but they tend to
+require more data and stronger inductive bias to remain anatomically plausible
+\parencite{suinesiaputra2014collaborative,bai2015biventricularatlas,heimann2009ssmreview}.
+
+\begin{figure}[t]
+\centering
+\fbox{\begin{minipage}{0.92\linewidth}
+\centering
+\begin{tabular}{c}
+Training left-ventricle meshes from cardiac MRI \\
+$\downarrow$ \\
+Rigid and non-rigid alignment \\
+$\downarrow$ \\
+Mean shape and principal modes of variation \\
+$\downarrow$ \\
+Sampling or fitting of anatomically plausible surfaces
+\end{tabular}
+\end{minipage}}
+\caption{Schematic of a statistical shape model for the left ventricle. The goal is to compress a population of aligned meshes into a low-dimensional shape space that can later be sampled or fitted to new data.}
+\label{fig:ssm-schematic}
+\end{figure}
+
+Statistical shape models are therefore a natural bridge between the imaging
+problem and the downstream geometric analysis. In the cardiac setting, they are
+used to encode variation across subjects, to regularize segmentation, and to
+derive measurements such as ventricular volume or wall thickness
+\parencite{heimann2009ssmreview,suinesiaputra2018infarctchallenge}.
 
 \section{Related Work}
 \label{sec:related-work}
 \noindent
-% TODO: group related approaches into subsections and discuss strengths and
-% limitations. Cite using \textcite{key} or \parencite{key}.
+The literature falls into three families. Early work
+on left-ventricle reconstruction focused on interpolation and parametric
+surface fitting, later work emphasized statistical shape models, and more recent
+approaches adopt point-set encoders and implicit surface representations to
+model geometry at continuous resolution \parencite{heimann2009ssmreview,
+petitjean2011segmentationreview,qi2017pointnet,deepsdf2019,
+occupancynetworks2019,tancik2020fourierfeatures}.
 
-\subsection{Approach Family A}
-\label{subsec:family-a}
-\noindent
-% TODO: describe the first family of approaches and cite representative work.
+\begin{table}[t]
+\caption{Representative method families for left-ventricle reconstruction and wall-thickness analysis.}
+\label{tab:method-families}
+\centering
+\begin{tabular}{p{0.22\textwidth} p{0.28\textwidth} p{0.22\textwidth} p{0.22\textwidth}}
+\toprule
+Family & Core idea & Strengths & Limitations \\
+\midrule
+Interpolation and parametric fitting & Infer the 3D surface from stacked slices or from a low-dimensional analytic shape prior \parencite{petitjean2011segmentationreview,heimann2009ssmreview}. & Simple, fast, and easy to interpret. & Sensitive to sparse coverage and may oversmooth local morphology. \\
+Statistical shape models & Learn a population shape space and fit it to new cases \parencite{cootes1995asm,heimann2009ssmreview,bai2015biventricularatlas}. & Strong anatomical prior and robust to missing information. & Limited by the training population and by the linearity of the latent space. \\
+Point-based and implicit representation learning & Encode unordered point clouds with a permutation-invariant encoder and recover the surface as a continuous level set \parencite{qi2017pointnet,deepsdf2019,occupancynetworks2019,tancik2020fourierfeatures}. & Handles sparse or irregular samples and supports sub-voxel surface detail. & Depends on a good sampling strategy and on an implicit decoder that is stable to train. \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\subsection{Approach Family B}
-\label{subsec:family-b}
+\subsection{Interpolation and classical shape fitting}
 \noindent
-% TODO: describe the second family of approaches.
+Classical reconstruction methods usually begin with a set of segmented SAX
+slices and then interpolate between them or fit a parametric model to the
+observed contours. Reviews of cardiac segmentation note that such methods are
+attractive because they are computationally simple, but their performance is
+limited by the absence of direct information between slices, especially near the
+apex and base of the ventricle \parencite{petitjean2011segmentationreview,
+heimann2009ssmreview}. In practice, these methods tend to encode geometric
+assumptions explicitly, so their accuracy depends on how closely those
+assumptions match the anatomy of the patient being reconstructed
+\parencite{heimann2009ssmreview}.
+
+The main advantage of this family is interpretability. When a reconstruction is
+driven by interpolation or by a low-order geometric prior, failures are easier
+to inspect and debug than in a purely learned pipeline. The main drawback is
+that the model does not learn a rich data-driven representation of cardiac
+variation, so it may underfit subjects whose ventricle geometry departs from the
+training assumptions \parencite{heimann2009ssmreview,bai2015biventricularatlas}.
+
+\subsection{Statistical shape models}
+\noindent
+Statistical shape models provide a compact representation of anatomical
+variation by aligning a training set of meshes or contours and then learning the
+dominant modes of variation, typically through principal component analysis
+\parencite{cootes1995asm,heimann2009ssmreview}. For the left ventricle, this
+framework is especially useful because it can absorb missing slices, suppress
+segmentation noise, and constrain the reconstructed surface to remain within a
+plausible cardiac manifold \parencite{suinesiaputra2014collaborative}.
+
+Cardiac-specific studies have shown that statistical atlases and shape models can
+be built from large cohorts and used to study normal variation, disease-related
+remodelling, and motion patterns \parencite{medrano2014lvshapevariation,
+bai2015biventricularatlas,khalafvand2018lvflowssm}. In particular, the left
+ventricle does not vary only by size; it also varies by eccentricity, curvature,
+and regional deformation, which makes the choice of shape basis important for
+later measurements \parencite{medrano2014lvshapevariation,
+suinesiaputra2018infarctchallenge}.
+
+The main limitation of a linear statistical model is that it compresses the
+population into a low-dimensional subspace. This is useful when the goal is
+regularization, but it can become restrictive when the anatomy is complex or
+when the input slices are sparse \parencite{heimann2009ssmreview,bai2015biventricularatlas}.
+
+\subsection{Point-based and implicit representation learning}
+\noindent
+PointNet introduced a simple but effective idea for unordered geometric data:
+an encoder can consume a point set directly if the architecture is permutation
+invariant and aggregates local features into a global latent code
+\parencite{qi2017pointnet}. This matches the implemented notebook pipeline,
+which starts from
+contour-derived point samples and learns a latent shape description before
+decoding geometry.
+
+The decoder side of the model belongs to the implicit surface family. DeepSDF
+represents a shape as the zero level set of a learned signed-distance function,
+which makes completion from partial input and shape interpolation natural
+\parencite{deepsdf2019}. Occupancy Networks use a closely related idea, but
+predict occupancy instead of signed distance; the common point is that the
+surface is reconstructed as a continuous decision boundary rather than as a
+fixed polygonal template \parencite{occupancynetworks2019}.
+
+The inspected training notebook clarifies the implemented practical direction.
+The model is explicitly phase-conditioned and predicts
+paired endocardial and epicardial signed-distance fields with a coupled
+parameterization that preserves positive wall thickness by construction. In the
+same implementation, Fourier feature mappings and SDF-oriented losses
+concentrate supervision on surface fidelity, gradient regularity, and
+off-surface consistency, while mesh extraction is performed from the zero level
+set with marching cubes. This design is consistent with implicit SDF
+reconstruction literature
+\parencite{qi2017pointnet,deepsdf2019,occupancynetworks2019,tancik2020fourierfeatures}.
+
+\begin{figure}[t]
+\centering
+\fbox{\begin{minipage}{0.92\linewidth}
+\centering
+\begin{tabular}{c}
+SAX contour points, tissue labels, and cardiac phase indicator \\
+$\downarrow$ \\
+Point-set encoder to latent code \\
+$\downarrow$ \\
+Implicit SDF decoder with coupled endocardial and epicardial outputs \\
+$\downarrow$ \\
+SDF-supervised training with surface, regularity, and thickness constraints \\
+$\downarrow$ \\
+Zero-level mesh extraction and downstream thickness analysis
+\end{tabular}
+\end{minipage}}
+\caption{Placeholder schematic of the phase-conditioned implicit SDF reconstruction pipeline aligned with the training notebook implementation.}
+\label{fig:phase-conditioned-sdf-placeholder}
+\end{figure}
+
+Fourier feature mappings are relevant because they mitigate the spectral bias of
+plain multilayer perceptrons and help them fit high-frequency geometric detail
+\parencite{tancik2020fourierfeatures}. In practice, this matters when the model
+must preserve thin walls, sharp curvature changes, or small local variations in
+the reconstructed ventricle surface.
+
+In the implemented pipeline, the key point is the combination of a
+PointNet-style encoder with an implicit SDF decoder. That combination is more
+consistent with the actual notebooks because it learns a compact latent code
+from unordered samples and decodes a continuous surface that can be
+interrogated at arbitrary resolution
+\parencite{qi2017pointnet,deepsdf2019,tancik2020fourierfeatures}.
+
+\subsection{Wall-thickness analysis}
+\noindent
+Wall thickness is a clinically meaningful quantity because it reflects cardiac
+remodelling and myocardial health, and it is typically measured as the distance
+between endocardial and epicardial surfaces or through equivalent geometric
+constructs \parencite{grossman1974wallthickness,cerqueira2002segmentation}.
+Recent MRI studies continue to treat wall thickness as a sensitive marker of
+myocardial structure and tissue properties \parencite{huelnhagen2017t2wallthickness}.
+
+The literature therefore links the reconstruction problem to a downstream
+measurement problem. A method that reconstructs the left ventricle more
+faithfully will usually yield more stable thickness estimates, whereas a method
+that over-smooths the surface can attenuate local thickness variation
+\parencite{grossman1974wallthickness,huelnhagen2017t2wallthickness}. This is why
+wall-thickness estimation cannot be treated as a detached post-processing step:
+it depends on the geometric fidelity of the reconstructed surface itself
+\parencite{cerqueira2002segmentation,medrano2014lvshapevariation}.
+
+\begin{figure}[t]
+\centering
+\fbox{\begin{minipage}{0.92\linewidth}
+\centering
+\begin{tabular}{c}
+Reconstructed endocardial and epicardial implicit surfaces \\
+$\downarrow$ \\
+Sampling or querying paired surface points \\
+$\downarrow$ \\
+Distance-based wall-thickness map generation \\
+$\downarrow$ \\
+Global and regional thickness statistics for evaluation
+\end{tabular}
+\end{minipage}}
+\caption{Placeholder diagram for the wall-thickness analysis workflow from paired ventricular surfaces.}
+\label{fig:thickness-workflow-placeholder}
+\end{figure}
 
 \section{Summary and Research Gap}
 \label{sec:research-gap}
 \noindent
-% TODO: identify what current approaches do not address and how this thesis
-% positions itself relative to them.
+The reviewed literature shows a clear progression. Classical interpolation and
+parametric fitting methods are simple but limited. Statistical shape models add
+a strong anatomical prior and are well suited to cardiac anatomy, but they are
+restricted by the learned latent space. Point-based implicit methods offer
+continuous surface modelling from sparse observations, yet they require careful
+sampling and regularization to remain anatomically stable
+\parencite{heimann2009ssmreview,bai2015biventricularatlas,qi2017pointnet,
+deepsdf2019,tancik2020fourierfeatures}.
+
+The identified gap is the combination of these strengths in a
+single pipeline. Existing studies usually emphasize either population-level
+shape priors or generic implicit reconstruction, but less often a unified
+workflow that starts from sparse SAX contours, conditions reconstruction on
+cardiac phase, and preserves downstream thickness consistency as part of model
+design \parencite{suinesiaputra2018infarctchallenge,grossman1974wallthickness,
+huelnhagen2017t2wallthickness,qi2017pointnet,deepsdf2019}. The remaining chapters
+describe a pipeline that combines statistical shape modelling,
+PointNet-style encoding, phase-conditioned implicit SDF decoding, and
+wall-thickness-oriented evaluation.
