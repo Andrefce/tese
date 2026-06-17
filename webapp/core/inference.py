@@ -172,7 +172,51 @@ def _surface_mesh(
 def _nearest_wall_thickness(
     endo_vertices: np.ndarray,
     epi_vertices: np.ndarray,
+    lv_mask: np.ndarray | None = None,
+    epi_mask: np.ndarray | None = None,
+    spacing: tuple[float, float, float] | None = None,
 ) -> np.ndarray | None:
+    """Compute per-vertex wall thickness using EDT boundary sum when masks are available.
+
+    Falls back to KD-tree (endo→epi distance) if masks are not provided.
+    """
+    # Preferred: EDT boundary sum on segmentation masks
+    if lv_mask is not None and epi_mask is not None and spacing is not None:
+        ndimage = _optional_ndimage()
+        if ndimage is not None:
+            from scipy.ndimage import distance_transform_edt
+            myo_mask = epi_mask & ~lv_mask
+            if myo_mask.any() and lv_mask.any():
+                d_endo = distance_transform_edt(~lv_mask, sampling=spacing)
+                d_epi = distance_transform_edt(epi_mask, sampling=spacing)
+                wt_field = d_endo + d_epi
+
+                # Sample at endo vertex positions (vertices are in physical mm coords)
+                # Convert vertex positions to voxel indices
+                sp = np.asarray(spacing, dtype=np.float64)
+                endo_vox = (endo_vertices.astype(np.float64) / sp)
+                # Clip to valid range
+                for d in range(3):
+                    endo_vox[:, d] = np.clip(endo_vox[:, d], 0, lv_mask.shape[d] - 1)
+                endo_idx = np.rint(endo_vox).astype(np.int32)
+
+                # For vertices inside myocardium, read wt_field directly
+                # For vertices on the boundary, find nearest myocardium voxel
+                cKDTree = _optional_ckdtree()
+                myo_idx = np.argwhere(myo_mask)
+                if cKDTree is not None and len(myo_idx) >= 10:
+                    myo_pts = myo_idx.astype(np.float64) * sp
+                    tree = cKDTree(myo_pts)
+                    endo_pts_mm = endo_vox * sp
+                    _, nn_idx = tree.query(endo_pts_mm, k=1, workers=-1)
+                    nn_vox = myo_idx[nn_idx]
+                    values = wt_field[nn_vox[:, 0], nn_vox[:, 1], nn_vox[:, 2]].astype(np.float32)
+                    values[values < 0.5] = np.nan
+                    values[values > 25.0] = np.nan
+                    if np.isfinite(values).sum() >= 10:
+                        return values
+
+    # Fallback: KD-tree (endo→epi distance)
     if len(endo_vertices) == 0 or len(epi_vertices) == 0:
         return None
     cKDTree = _optional_ckdtree()
@@ -711,7 +755,7 @@ def analyse_segmentation(
 
     endo_vertices, endo_faces, mesh_method = _surface_mesh(lv_mask, spacing)
     epi_vertices, epi_faces, epi_method = _surface_mesh(epi_mask, spacing, shell=1.18)
-    wall_values = _nearest_wall_thickness(endo_vertices, epi_vertices)
+    wall_values = _nearest_wall_thickness(endo_vertices, epi_vertices, lv_mask, epi_mask, spacing)
     wall_for_mesh = None
     if wall_values is not None and len(wall_values) == len(endo_vertices):
         wall_for_mesh = wall_values

@@ -11,6 +11,7 @@ from typing import Any
 
 import numpy as np
 import requests as http_requests
+from asgiref.wsgi import WsgiToAsgi
 from flask import Flask, jsonify, render_template, request
 from werkzeug.utils import secure_filename
 
@@ -36,6 +37,7 @@ GCS_BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME", "cardiosdf-results")
 log = logging.getLogger(__name__)
 
 app = Flask(__name__)
+flask_app = app
 app.config["MAX_CONTENT_LENGTH"] = 512 * 1024 * 1024  # 512 MB
 
 UPLOAD_ROOT = Path(os.environ.get("ACDC_WEBAPP_UPLOADS", Path(app.instance_path) / "uploads"))
@@ -47,6 +49,10 @@ JOBS: dict[str, dict[str, Any]] = {}
 ALLOWED_EXTENSIONS = {".nii", ".nii.gz"}
 MAX_CASES = 50
 MAX_JOBS = 200
+
+# Global SDF model (loaded lazily on first inference)
+_SDF_MODEL = None
+_SDF_CFG = None
 
 _job_executor = _TpExec(max_workers=4)
 
@@ -758,17 +764,13 @@ def infer_paired_case(case_id: str):
 
 
 def _try_sdf_inference(case: dict, seg_volume: np.ndarray, frame: int, phase: str = "ed") -> dict | None:
-    """Call the remote inference API for SDF model inference.
+    """Run local SDF model inference.
 
-    Returns a dict with meshes, meshMethod, regionalThickness, aha17, and metrics
-    taken directly from the API response.  Also stores sdfHash/sdfResultUrl if
-    present so the frontend can cache-bust.  Returns None on failure.
+    Loads the model on first call, then runs extract_contours + predict_sdf_meshes.
+    Returns a dict with meshes, meshMethod, regionalThickness, aha17, and metrics.
+    Returns None on failure.
     """
-    try:
-        import nibabel as nib
-    except ImportError:
-        log.warning("nibabel not available, cannot serialize segmentation for API")
-        return None
+    global _SDF_MODEL, _SDF_CFG
 
     mri_data, seg_data, _ = _phase_data(case, phase)
     affine = seg_data.get("affine") if seg_data is not None else None
@@ -781,57 +783,52 @@ def _try_sdf_inference(case: dict, seg_volume: np.ndarray, frame: int, phase: st
     spacing = mri_data["zooms"]
 
     try:
-        from nibabel.fileholders import FileHolder
-        seg_img = nib.Nifti1Image(seg_volume.astype(np.float32), np.eye(4))
-        buf = io.BytesIO()
-        file_map = seg_img.make_file_map()
-        file_map["image"] = FileHolder(fileobj=buf)
-        file_map["header"] = FileHolder(fileobj=buf)
-        seg_img.to_file_map(file_map)
-        seg_bytes = buf.getvalue()
-    except Exception:
-        log.exception("Failed to serialize segmentation to NIfTI")
+        from core.sdf_model import load_model, extract_contours, predict_sdf_meshes
+    except ImportError:
+        log.warning("SDF model module not available")
         return None
+
+    # Load model on first use
+    if _SDF_MODEL is None:
+        model_path = Path(__file__).parent / "model" / "inr_sdf_combined_fresh_ed_mix_v1_final.ptrom"
+        if not model_path.exists():
+            log.warning("Model checkpoint not found at %s", model_path)
+            return None
+        log.info("Loading SDF model from %s …", model_path)
+        try:
+            _SDF_MODEL, _SDF_CFG = load_model(model_path)
+            log.info("SDF model loaded successfully")
+        except Exception:
+            log.exception("Failed to load SDF model")
+            return None
 
     try:
-        headers = _get_inference_auth_headers()
-        resp = http_requests.post(
-            f"{INFERENCE_API_URL}/infer",
-            files={"segmentation": ("seg.nii", seg_bytes, "application/octet-stream")},
-            data={
-                "affine": json.dumps(np.asarray(affine, dtype=float).tolist()),
-                "spacing": json.dumps([float(v) for v in spacing]),
-                "phase": phase,
-                "frame": str(frame),
-            },
-            headers=headers,
-            timeout=300,
-        )
-        resp.raise_for_status()
-        api_result = resp.json()
-    except http_requests.exceptions.Timeout:
-        log.error("Inference API timed out")
-        return None
-    except Exception:
-        log.exception("Inference API call failed")
-        return None
+        dz = float(spacing[2])
+        contours = extract_contours(seg_volume, np.asarray(affine, dtype=np.float32), dz)
+        phase_val = 0.0 if phase == "ed" else 1.0
 
-    log.info("SDF inference API OK: hash=%s", api_result.get("hash"))
-    out: dict = {"metrics": api_result.get("metrics", {})}
-    # Prefer inline mesh data (returned by the API directly)
-    for key in ("meshes", "meshMethod", "regionalThickness", "aha17"):
-        if key in api_result:
-            out[key] = api_result[key]
-    # Keep GCS URL for optional cache usage by the frontend
-    if "hash" in api_result:
-        out["sdfHash"] = api_result["hash"]
-    if "url" in api_result:
-        out["sdfResultUrl"] = api_result["url"]
-    return out
+        result = predict_sdf_meshes(
+            model=_SDF_MODEL,
+            contour_xyz=contours["xyz"],
+            tissue_labels=contours["tissue"],
+            cfg=_SDF_CFG,
+            phase_val=phase_val,
+            scale=contours["scale"],
+            centroid=contours["centroid"],
+            seg_volume=seg_volume,
+            spacing=spacing,
+        )
+        return result
+    except Exception:
+        log.exception("Local SDF inference failed")
+        return None
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     port = int(os.environ.get("PORT", "8009"))
-    app.run(host="127.0.0.1", port=port, debug=True)
+    flask_app.run(host="127.0.0.1", port=port, debug=True)
+
+# Export an ASGI app under the conventional name so `uvicorn app:app` works.
+app = WsgiToAsgi(flask_app)
 

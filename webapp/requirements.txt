@@ -1,6 +1,7 @@
 # Web app server
 Flask>=3.0
 gunicorn>=22.0
+asgiref>=3.8
 
 # Numeric and medical-image I/O
 numpy>=1.26
