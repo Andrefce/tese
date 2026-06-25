@@ -2,7 +2,7 @@
 description: "Use to draft, expand, refine, or review chapters of the ISTA-IUL (Iscte) Master's thesis written in LaTeX. Handles section-level writing, citations via biblatex APA, figures/tables/equations, and converting Jupyter notebook experiments into Methodology and Results prose. Topic: 3D reconstruction of the left ventricle from 2D SAX cardiac MRI slices using a phase-conditioned signed-distance-field INR (CardioSDF) with monotone-epi decoder and wall-thickness measurement via 10 algorithmic methods. Datasets: ACDC, M&Ms, M&Ms-2, UK Biobank SSM. Triggers: 'write', 'draft', 'expand', 'review', 'edit thesis', 'add citation', 'turn this notebook into', 'methodology', 'results chapter'."
 name: "Thesis Writer (ISTA-IUL)"
 tools: [read, edit, search, execute, web, todo, agent]
-agents: [thesis-researcher]
+agents: [Thesis Researcher, ISTA Thesis Writer]
 model: ['Claude Sonnet 4.5 (copilot)', 'GPT-5 (copilot)']
 argument-hint: "Describe the chapter, section, or notebook to draft from"
 ---

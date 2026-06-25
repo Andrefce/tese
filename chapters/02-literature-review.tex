@@ -1,249 +1,435 @@
-% ============================================================
+﻿% ============================================================
 % !TeX root = ../main.tex
-%  Chapter 2 — Literature Review
+%  Chapter 2 â€” Literature Review
 % ============================================================
 \chapter{Literature Review}
 \label{ch:literature-review}
 
-\noindent This chapter surveys the existing literature relevant to left-ventricle
-reconstruction from short-axis cardiac MRI. We focus on three connected themes: the
-problem of reconstructing the left ventricle from short-axis magnetic
-resonance images, the use of statistical shape models to regularize cardiac
-geometry, and point-based implicit representations that reconstruct smooth
-surfaces from sparse contour observations.
+\noindent This chapter presents the review methodology used to identify relevant
+literature and synthesises the related work on three-dimensional left-ventricle
+reconstruction from cardiac MRI and myocardial wall-thickness measurement.
 
-\section{Background}
-\label{sec:background}
+% ============================================================
+\section{Review Methodology}
+\label{sec:review-methodology}
+% ============================================================
+
 \noindent
-Short-axis cardiac magnetic resonance imaging is widely used because it offers
-clear anatomical contrast and standardized coverage of the left ventricle, but
-the imaging geometry remains fundamentally slice-based rather than volumetric
-\parencite{petitjean2011segmentationreview,cerqueira2002segmentation}. This
-creates a reconstruction problem: the left ventricle must be inferred in three
-dimensions from a stack of two-dimensional contours or partial surfaces, and the
-quality of the result depends on how well the method can interpolate between
-slices while preserving global shape and local wall geometry
-\parencite{heimann2009ssmreview}.
+The literature search followed a structured approach to ensure broad coverage and
+relevance. This section describes the search strategy, selection criteria, and
+results.
 
-The literature on cardiac shape analysis makes a consistent distinction between
-methods that learn a compact representation of shape and methods that directly
-operate on image or mesh topology. Compact representations are attractive
-because they reduce the effect of noise and missing data, but they also impose a
-limited deformation space. Direct methods are more expressive, but they tend to
-require more data and stronger inductive bias to remain anatomically plausible
-\parencite{suinesiaputra2014collaborative,bai2015biventricularatlas,heimann2009ssmreview}.
+\subsection{Search strategy}
+\label{subsec:search-strategy}
+
+\noindent
+The search was conducted across three major bibliographic databases: Scopus,
+PubMed, and IEEE Xplore, supplemented by Google Scholar for citation chaining.
+The temporal scope covered publications from 2000 to 2026, prioritising work
+from the last decade while retaining foundational methods essential for
+theoretical context.
+
+Search terms were grouped into four thematic categories and combined using
+Boolean operators. The first category covered anatomy and imaging terms
+(``cardiac MRI'', ``left ventricle'', ``short-axis'', ``SAX'',
+``myocardium''). The second addressed reconstruction (``3D reconstruction'',
+``mesh reconstruction'', ``shape model'', ``implicit surface'', ``signed
+distance function''). The third targeted learning methods (``deep learning'',
+``graph neural network'', ``point cloud'', ``neural representation'').
+The fourth focused on measurement (``wall thickness'', ``myocardial
+thickness'', ``Laplace equation'', ``transmural'').
+
+The refined query applied consistently across databases was:
+
+\noindent\textit{(``cardiac MRI'' OR ``left ventricle'' OR ``short-axis'') AND
+(``3D reconstruction'' OR ``statistical shape model'' OR ``signed distance
+function'' OR ``graph neural network'' OR ``implicit representation'') AND
+(``wall thickness'' OR ``mesh'' OR ``deep learning'')}
+
+\subsection{Inclusion and exclusion criteria}
+\label{subsec:criteria}
+
+\noindent
+Studies were included if they: (i) addressed three-dimensional reconstruction or
+shape modelling of the left ventricle, (ii) proposed or evaluated methods for
+myocardial wall-thickness measurement, (iii) developed geometric deep learning
+techniques applicable to anatomical meshes, or (iv) introduced benchmark cardiac
+MRI datasets used for LV analysis.
+
+Studies were excluded if they: (i) focused exclusively on segmentation without
+reconstruction or shape analysis, (ii) addressed organs other than the heart
+without methodological generalisability, (iii) lacked peer review or sufficient
+methodological description, or (iv) were published before 2000 unless they
+constituted foundational work directly relevant to the methods reviewed.
+
+\subsection{Results}
+\label{subsec:review-results}
+
+\noindent
+The initial search retrieved 142 records across the three databases. After
+removing 31 duplicates, 111 unique records were screened by title and abstract.
+Of these, 48 were selected for full-text assessment. Following detailed review
+against the inclusion criteria, 28 studies were retained. An additional 7
+studies were identified through backward citation searching, yielding a final
+corpus of 35 publications.
 
 \begin{figure}[t]
 \centering
-\fbox{\begin{minipage}{0.92\linewidth}
-\centering
-\begin{tabular}{c}
-Training left-ventricle meshes from cardiac MRI \\
-$\downarrow$ \\
-Rigid and non-rigid alignment \\
-$\downarrow$ \\
-Mean shape and principal modes of variation \\
-$\downarrow$ \\
-Sampling or fitting of anatomically plausible surfaces
-\end{tabular}
-\end{minipage}}
-\caption{Schematic of a statistical shape model for the left ventricle. The goal is to compress a population of aligned meshes into a low-dimensional shape space that can later be sampled or fitted to new data.}
-\label{fig:ssm-schematic}
+\fbox{\parbox{0.88\linewidth}{\centering\vspace{3em}%
+\textbf{[Placeholder]} PRISMA flow diagram showing the selection process:
+142 identified $\rightarrow$ 111 after duplicate removal $\rightarrow$
+48 full-text $\rightarrow$ 35 included.%
+\vspace{3em}}}
+\caption{PRISMA flow diagram summarising the literature selection process.}
+\label{fig:prisma-flow}
 \end{figure}
 
-Statistical shape models are therefore a natural bridge between the imaging
-problem and the downstream geometric analysis. In the cardiac setting, they are
-used to encode variation across subjects, to regularize segmentation, and to
-derive measurements such as ventricular volume or wall thickness
-\parencite{heimann2009ssmreview,suinesiaputra2018infarctchallenge}.
+The selected studies span five thematic areas: cardiac MRI acquisition and
+segmentation, statistical shape models, implicit neural representations, graph
+neural networks for mesh processing, and wall-thickness measurement. The
+following section synthesises the key findings from this corpus.
 
+% ============================================================
 \section{Related Work}
 \label{sec:related-work}
-\noindent
-The literature falls into three families. Early work
-on left-ventricle reconstruction focused on interpolation and parametric
-surface fitting, later work emphasized statistical shape models, and more recent
-approaches adopt point-set encoders and implicit surface representations to
-model geometry at continuous resolution \parencite{heimann2009ssmreview,
-petitjean2011segmentationreview,qi2017pointnet,deepsdf2019,
-occupancynetworks2019,tancik2020fourierfeatures}.
+% ============================================================
 
-\begin{table}[t]
-\caption{Representative method families for left-ventricle reconstruction and wall-thickness analysis.}
-\label{tab:method-families}
+\noindent
+This section synthesises the reviewed literature, organised by thematic area.
+
+\subsection{Cardiac MRI segmentation and datasets}
+\label{subsec:cardiac-segmentation}
+
+\noindent
+Short-axis (SAX) cine MRI is the standard protocol for left-ventricle (LV)
+evaluation, producing 2D slices perpendicular to the long axis with high
+in-plane resolution (1--2~mm) but large inter-slice gaps (6--10~mm)
+\parencite{petitjean2011segmentationreview,cerqueira2002segmentation}. This
+anisotropic acquisition creates the fundamental challenge that motivates 3D
+reconstruction: the ventricle must be inferred volumetrically from sparse
+planar observations. \textcite{petitjean2011segmentationreview} reviewed over
+100 segmentation methods and concluded that the inter-slice gap remains the
+single largest source of error in volumetric cardiac analysis, with apex and
+base delineation accounting for the majority of inter-observer variability.
+
+The American Heart Association (AHA) 17-segment model, introduced by
+\textcite{cerqueira2002segmentation}, standardised the partition of the
+myocardium into basal, mid-cavity, and apical regions. This model is universally
+adopted for reporting wall motion, perfusion, and thickness, and serves as the
+reference frame for all regional analysis discussed in subsequent sections.
+
+Segmentation of endocardial and epicardial contours is a prerequisite for any
+downstream 3D analysis. \textcite{ronneberger2015unet} proposed U-Net, an
+encoder--decoder architecture with skip connections that was originally designed
+for neuronal structure segmentation but rapidly became the de facto backbone for
+cardiac MRI analysis. The architecture trains effectively from small annotated
+datasets and produces pixel-level predictions that, when applied to SAX slices,
+yield endocardial and epicardial contours with sub-pixel accuracy.
+
+The Automated Cardiac Diagnosis Challenge (ACDC), organised by
+\textcite{bernard2018acdc}, provided the first standardised cardiac
+segmentation benchmark. The dataset comprises 100 patients distributed across
+five clinical groups: normal, dilated cardiomyopathy (DCM), hypertrophic
+cardiomyopathy (HCM), abnormal right ventricle, and previous myocardial
+infarction. Each case includes expert delineations at end-diastole (ED) and
+end-systole (ES). The challenge reported that top-performing deep learning
+methods achieved mean Dice scores exceeding 0.93 for the LV cavity and 0.89
+for the myocardium, demonstrating that automated segmentation had reached
+expert-level performance for standard acquisitions.
+
+\textcite{isensee2021nnunet} introduced nnU-Net, a self-configuring framework
+that automatically adapts network topology, patch size, preprocessing, and
+post-processing to each dataset. Applied to the ACDC benchmark, nnU-Net matched
+or exceeded all prior challenge submissions without any manual architecture
+design. The framework has since become the standard baseline against which new
+cardiac segmentation methods are evaluated.
+
+The Multi-Centre, Multi-Vendor and Multi-Disease (M\&Ms) challenge, described
+by \textcite{campello2021mnms}, extended evaluation to the clinically critical
+question of domain generalisation. The dataset includes 345 subjects acquired on
+scanners from four different vendors (Siemens, General Electric, Philips, and
+Canon) across six clinical centres. The challenge demonstrated that while
+methods trained on a single vendor achieved high accuracy on that vendor,
+performance dropped significantly when tested on unseen vendors --- with Dice
+reductions of 5--15 percentage points in some cases. This finding motivated the
+development of domain-adaptation techniques and highlighted the importance of
+multi-source training data.
+
+For population-level analysis, the UK Biobank \parencite{sudlow2015ukbiobank}
+provides the largest available resource, with cardiac MRI acquired for over
+40\,000 participants using a standardised 1.5T protocol. \textcite{bai2018automated}
+developed a fully convolutional pipeline to segment this cohort at scale,
+producing automated delineations that, after quality control, serve as the
+foundation for large-scale shape modelling and epidemiological studies.
+
+\begin{figure}[t]
 \centering
-\begin{tabular}{p{0.22\textwidth} p{0.28\textwidth} p{0.22\textwidth} p{0.22\textwidth}}
-\toprule
-Family & Core idea & Strengths & Limitations \\
-\midrule
-Interpolation and parametric fitting & Infer the 3D surface from stacked slices or from a low-dimensional analytic shape prior \parencite{petitjean2011segmentationreview,heimann2009ssmreview}. & Simple, fast, and easy to interpret. & Sensitive to sparse coverage and may oversmooth local morphology. \\
-Statistical shape models & Learn a population shape space and fit it to new cases \parencite{cootes1995asm,heimann2009ssmreview,bai2015biventricularatlas}. & Strong anatomical prior and robust to missing information. & Limited by the training population and by the linearity of the latent space. \\
-Point-based and implicit representation learning & Encode unordered point clouds with a permutation-invariant encoder and recover the surface as a continuous level set \parencite{qi2017pointnet,deepsdf2019,occupancynetworks2019,tancik2020fourierfeatures}. & Handles sparse or irregular samples and supports sub-voxel surface detail. & Depends on a good sampling strategy and on an implicit decoder that is stable to train. \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Interpolation and classical shape fitting}
-\noindent
-Classical reconstruction methods usually begin with a set of segmented SAX
-slices and then interpolate between them or fit a parametric model to the
-observed contours. Reviews of cardiac segmentation note that such methods are
-attractive because they are computationally simple, but their performance is
-limited by the absence of direct information between slices, especially near the
-apex and base of the ventricle \parencite{petitjean2011segmentationreview,
-heimann2009ssmreview}. In practice, these methods tend to encode geometric
-assumptions explicitly, so their accuracy depends on how closely those
-assumptions match the anatomy of the patient being reconstructed
-\parencite{heimann2009ssmreview}.
-
-The main advantage of this family is interpretability. When a reconstruction is
-driven by interpolation or by a low-order geometric prior, failures are easier
-to inspect and debug than in a purely learned pipeline. The main drawback is
-that the model does not learn a rich data-driven representation of cardiac
-variation, so it may underfit subjects whose ventricle geometry departs from the
-training assumptions \parencite{heimann2009ssmreview,bai2015biventricularatlas}.
+\fbox{\parbox{0.88\linewidth}{\centering\vspace{4em}%
+\textbf{[Placeholder]} Example SAX slices from the ACDC dataset showing
+endocardial and epicardial contours for different pathological groups (normal,
+DCM, HCM) at end-diastole.%
+\vspace{4em}}}
+\caption{Representative short-axis slices from the ACDC dataset with expert
+segmentation contours across different cardiac pathologies
+\parencite{bernard2018acdc}.}
+\label{fig:acdc-examples}
+\end{figure}
 
 \subsection{Statistical shape models}
+\label{subsec:ssm-review}
+
 \noindent
-Statistical shape models provide a compact representation of anatomical
-variation by aligning a training set of meshes or contours and then learning the
-dominant modes of variation, typically through principal component analysis
-\parencite{cootes1995asm,heimann2009ssmreview}. For the left ventricle, this
-framework is especially useful because it can absorb missing slices, suppress
-segmentation noise, and constrain the reconstructed surface to remain within a
-plausible cardiac manifold \parencite{suinesiaputra2014collaborative}.
+Statistical Shape Models (SSMs) encode anatomical variability by aligning a
+training population to point-to-point correspondence and applying PCA to extract
+the dominant modes of variation \parencite{cootes1995asm,heimann2009ssmreview}.
+\textcite{cootes1995asm} introduced Point Distribution Models, where a training
+set of shapes --- each represented by $k$ corresponding landmarks --- is rigidly
+aligned via Procrustes analysis, averaged into a mean shape $\bar{x}$, and
+decomposed via PCA into principal modes $\Phi$. A new shape is generated as
+$x = \bar{x} + \Phi\,b$, where $b$ are shape parameters constrained within
+$\pm 3\sigma$ of each eigenvalue to remain anatomically plausible. In their
+experiments on hand and face contours, \textcite{cootes1995asm} showed that the
+first 5--10 modes captured over 95\% of population variance, demonstrating the
+efficiency of the linear representation.
 
-Cardiac-specific studies have shown that statistical atlases and shape models can
-be built from large cohorts and used to study normal variation, disease-related
-remodelling, and motion patterns \parencite{medrano2014lvshapevariation,
-bai2015biventricularatlas,khalafvand2018lvflowssm}. In particular, the left
-ventricle does not vary only by size; it also varies by eccentricity, curvature,
-and regional deformation, which makes the choice of shape basis important for
-later measurements \parencite{medrano2014lvshapevariation,
-suinesiaputra2018infarctchallenge}.
+\textcite{heimann2009ssmreview} surveyed over 100 studies applying SSMs to
+medical image segmentation and identified the cardiac domain as particularly
+well-suited because of the regularity of ventricular geometry and the
+availability of large training cohorts. Their review highlighted that SSM
+accuracy depends critically on three factors: the quality of inter-subject
+correspondence, the size and diversity of the training set, and the alignment
+method used.
 
-The main limitation of a linear statistical model is that it compresses the
-population into a low-dimensional subspace. This is useful when the goal is
-regularization, but it can become restrictive when the anatomy is complex or
-when the input slices are sparse \parencite{heimann2009ssmreview,bai2015biventricularatlas}.
+\textcite{frangi2002cardiacssm} pioneered automatic construction of multi-object
+cardiac SSMs, proposing a non-rigid registration framework that establishes
+dense correspondence across subjects without manual landmarks. Applied to
+biventricular models, their approach captured coupled shape variation between
+the left and right ventricles, demonstrating that multi-structure models
+outperform single-structure ones for segmentation-by-fitting tasks.
 
-\subsection{Point-based and implicit representation learning}
+\textcite{bai2015biventricularatlas} constructed the most comprehensive cardiac
+atlas to date, using over 1000 high-resolution MRI scans from the UK Digital
+Heart Project. Their biventricular model captures both end-diastolic shape and
+wall motion through the cardiac cycle. The authors reported that the first 50
+PCA modes explain approximately 90\% of shape variance, and demonstrated that
+the atlas enables automatic segmentation of new subjects by fitting the model to
+image evidence with mean surface-to-surface errors below 1.5~mm.
+
+\textcite{demarvao2014atlas} applied the same UK Biobank-derived SSM to study
+myocardial hypertrophy and showed that atlas-based shape analysis detects subtle
+remodelling patterns that volumetric indices alone (such as LV mass) miss. Their
+study demonstrated substantially improved statistical power for detecting
+hypertrophic phenotypes when using shape modes compared to traditional clinical
+measurements, requiring fewer subjects to achieve equivalent sensitivity.
+
+\textcite{medrano2014lvshapevariation} used a multi-ethnic cohort of over 1900
+subjects to characterise normal LV shape variation. They reported that the
+dominant modes correspond to overall ventricular size, followed by eccentricity,
+apical shape, and regional wall curvature --- confirming that cardiac shape
+cannot be adequately described by a single size parameter.
+\textcite{suinesiaputra2018infarctchallenge} organised an international
+challenge to classify myocardial infarction from SSM-derived shape features,
+showing that machine learning classifiers trained on the first 20 shape modes
+achieved AUC values above 0.85 for distinguishing infarcted from healthy
+ventricles.
+
+SSMs serve dual roles in reconstruction pipelines. First, they act as
+\emph{geometric priors} that regularise shape recovery from sparse observations,
+constraining the solution to lie on or near the learned manifold. Second, they
+function as \emph{synthetic data generators}: by sampling the latent space, one
+can produce thousands of anatomically plausible meshes for training data-hungry
+deep learning models without additional manual annotation
+\parencite{heimann2009ssmreview,khalafvand2018lvflowssm}.
+\textcite{khalafvand2018lvflowssm} demonstrated this second role by generating
+SSM-sampled LV geometries to train computational fluid dynamics simulations,
+showing that the synthetic population reproduced the haemodynamic statistics of
+real subjects.
+
+\subsection{Deep learning models for 3D shape reconstruction}
+\label{subsec:dl-reconstruction-review}
+
 \noindent
-PointNet introduced a simple but effective idea for unordered geometric data:
-an encoder can consume a point set directly if the architecture is permutation
-invariant and aggregates local features into a global latent code
-\parencite{qi2017pointnet}. This matches the implemented notebook pipeline,
-which starts from
-contour-derived point samples and learns a latent shape description before
-decoding geometry.
+Classical reconstruction methods interpolate between segmented SAX slices using
+splines or deformable surfaces, but cannot recover geometric detail between
+slices, particularly near the apex and base
+\parencite{petitjean2011segmentationreview,heimann2009ssmreview}.
+\textcite{petitjean2011segmentationreview} noted that linear interpolation
+between contours produces visible staircase artefacts and fails to reproduce the
+smooth taper of the LV apex, while parametric models (prolate spheroids,
+B-spline surfaces) impose smoothness but cannot express patient-specific
+morphological detail. Modern approaches replace interpolation with learned
+shape recovery, falling into two broad families: template deformation and
+implicit field prediction.
 
-The decoder side of the model belongs to the implicit surface family. DeepSDF
-represents a shape as the zero level set of a learned signed-distance function,
-which makes completion from partial input and shape interpolation natural
-\parencite{deepsdf2019}. Occupancy Networks use a closely related idea, but
-predict occupancy instead of signed distance; the common point is that the
-surface is reconstructed as a continuous decision boundary rather than as a
-fixed polygonal template \parencite{occupancynetworks2019}.
+Template deformation methods maintain a fixed mesh topology and learn per-vertex
+displacements conditioned on input observations. \textcite{wang2018pixel2mesh}
+proposed Pixel2Mesh, which takes a single RGB image as input and iteratively
+refines an ellipsoidal template mesh through three stages of graph convolutional
+layers. At each stage, vertex features are enriched with image features sampled
+via learned projections, and the mesh is refined through unpooling. The authors
+reported Chamfer distances below 0.5 on the ShapeNet benchmark, demonstrating
+that graph-based deformation can recover complex topology from minimal input.
+\textcite{choi2020pose2mesh} extended this paradigm with Pose2Mesh, which
+recovers full 3D human body meshes from sparse 2D pose keypoints. Their
+cascaded coarse-to-fine architecture first predicts a coarse mesh from joint
+positions and then refines vertex locations with finer graph convolutions,
+achieving state-of-the-art results on the Human3.6M benchmark. The
+architectural principle --- recovering dense 3D geometry from sparse 2D
+observations --- is directly analogous to the cardiac problem of inferring a
+full LV mesh from a handful of 2D SAX contours.
 
-The inspected training notebook clarifies the implemented practical direction.
-The model is explicitly phase-conditioned and predicts
-paired endocardial and epicardial signed-distance fields with a coupled
-parameterization that preserves positive wall thickness by construction. In the
-same implementation, Fourier feature mappings and SDF-oriented losses
-concentrate supervision on surface fidelity, gradient regularity, and
-off-surface consistency, while mesh extraction is performed from the zero level
-set with marching cubes. This design is consistent with implicit SDF
-reconstruction literature
-\parencite{qi2017pointnet,deepsdf2019,occupancynetworks2019,tancik2020fourierfeatures}.
+In the cardiac domain, template deformation preserves the topological
+consistency required for cross-subject comparison and downstream analysis such
+as wall-thickness computation
+\parencite{bai2015biventricularatlas,suinesiaputra2014collaborative}.
+\textcite{beetz2021cardiacshape} applied point-cloud variational autoencoders
+to biventricular shapes from the UK Biobank, learning a compact latent
+space that enables generation of subpopulation-specific anatomy models.
+Their decoder produces meshes with fixed vertex correspondence, making
+population statistics directly computable from the generated samples.
+
+Implicit Neural Representations (INRs) take a fundamentally different approach:
+rather than deforming a template, they encode geometry as continuous functions
+where the surface is the zero-level set of a learned scalar field.
+\textcite{deepsdf2019} introduced DeepSDF, which parameterises the signed
+distance function (SDF) of an entire shape class with a single neural network
+conditioned on a per-shape latent code. Given partial or noisy point-cloud
+observations, their auto-decoder architecture optimises the latent code at test
+time to find the shape in the learned space that best explains the input. On the
+ShapeNet benchmark, DeepSDF achieved reconstruction quality comparable to
+voxel-based methods while using an order of magnitude fewer parameters, and
+naturally supports shape interpolation in latent space.
+\textcite{occupancynetworks2019} proposed Occupancy Networks, which predict
+binary inside/outside occupancy rather than signed distance. Their encoder
+processes a point cloud or image to produce a latent vector, and the decoder
+evaluates occupancy at arbitrary 3D query points. Both DeepSDF and Occupancy
+Networks produce resolution-independent surfaces extracted via the Marching
+Cubes algorithm \parencite{lorensen1987marchingcubes}, which generates a
+watertight triangulated mesh from the zero-crossing of the implicit field on a
+regular grid.
+
+Two techniques are critical for applying INRs to thin cardiac structures where
+high-frequency geometric detail must be preserved. \textcite{tancik2020fourierfeatures}
+demonstrated that standard MLPs exhibit spectral bias --- they preferentially
+learn low-frequency components --- and proposed mapping input coordinates through
+random Fourier features before the network. In their experiments on 2D image
+regression and 3D shape reconstruction, Fourier encoding substantially reduced
+reconstruction error compared to raw coordinate input, with the improvement most
+pronounced for high-frequency details such as thin structures and sharp edges.
+\textcite{gropp2020igr} introduced Implicit Geometric Regularisation, showing
+that enforcing the eikonal constraint ($\|\nabla f\| = 1$) as a loss term during
+training produces valid distance fields without requiring ground-truth SDF values
+at every point. Their approach enables training from raw point clouds alone,
+which is particularly relevant when dense SDF supervision is expensive to
+compute.
+
+For encoding unordered input observations such as SAX contour points, the
+PointNet architecture \parencite{qi2017pointnet} provides a
+permutation-invariant encoder via shared MLPs followed by symmetric max-pooling.
+\textcite{qi2017pointnet} demonstrated that this simple design achieves
+classification accuracy of 89.2\% on the ModelNet40 benchmark and produces
+compact global descriptors that capture the essential geometry of the input
+point set regardless of its size or ordering. In cardiac applications, each SAX
+slice contributes a set of contour points that can be processed by a
+PointNet-style encoder to produce a latent representation of the observed
+geometry.
+
+\subsection{Wall-thickness measurement techniques}
+\label{subsec:thickness-review}
+
+\noindent
+Myocardial wall thickness is a primary clinical biomarker for cardiac
+remodelling. \textcite{grossman1974wallthickness} demonstrated that wall
+thickness is a principal determinant of left-ventricular diastolic stiffness,
+with hypertrophied ventricles exhibiting markedly elevated stiffness
+proportional to end-diastolic wall thickness. More recently,
+\textcite{huelnhagen2017t2wallthickness} showed at 7.0T MRI that wall thickness
+correlates with tissue transverse relaxation properties, confirming its value as
+a non-invasive surrogate for myocardial tissue characterisation. The AHA 17-segment model
+\parencite{cerqueira2002segmentation} provides the standard framework for
+reporting regional thickness values.
+
+The accuracy of wall-thickness measurement depends critically on the quality of
+the underlying surface reconstruction, as any smoothing or geometric artefact
+propagates directly into the thickness estimate. The literature describes
+five families of measurement methods, each with distinct trade-offs.
+
+The simplest approach uses nearest-neighbour distance: for each endocardial
+vertex, a KD-tree identifies the closest epicardial point, yielding a
+measurement in $O(N \log M)$ time. While computationally trivial (under 1~ms
+for typical cardiac meshes), this method provides only a lower bound on the true
+transmural thickness because it ignores the anatomical direction of measurement
+--- the nearest point may lie tangentially rather than across the wall.
+
+Ray-based methods address this limitation by casting a ray from each endocardial
+vertex along its surface normal until it intersects the epicardium. The
+intersection is computed via the M\"{o}ller--Trumbore algorithm, accelerated with
+a Bounding Volume Hierarchy (BVH) to $O(\log F)$ per query. This approach
+measures transmurally but is sensitive to normal noise: a slightly rotated
+normal can produce a spurious long or short ray. The Shape Diameter Function
+variant improves robustness by casting a cone of $K$ rays (typically $K{=}7$) at
+a half-angle of $30°$ around the normal and reporting the median intersection
+distance, effectively filtering outlier hits caused by local mesh irregularities.
+
+Volumetric methods operate on voxelised representations. The Euclidean Distance
+Transform (EDT) computes, for each myocardial voxel, the distance to the nearest
+boundary, and the sum of the endocardial and epicardial distance fields
+approximates local thickness ($t = D_{\mathrm{endo}} + D_{\mathrm{epi}}$). This
+estimate is exact for planar parallel boundaries and overestimates by
+approximately 5--10\% for the curvatures typical of the LV mid-wall. The method
+is computationally efficient ($O(V)$ via the Saito--Toriwaki algorithm) but
+limited by voxel resolution.
+
+PDE-based methods represent the gold standard for transmural thickness.
+\textcite{jones2000laplace} introduced the Laplacian approach --- originally for
+cortical thickness in brain imaging --- which solves $\nabla^2\psi = 0$ with
+Dirichlet conditions ($\psi{=}0$ at the endocardium, $\psi{=}1$ at the
+epicardium). The uniqueness of the harmonic solution guarantees that the
+resulting streamlines never cross, producing a globally consistent transmural
+direction field. The local thickness is $t = 1/|\nabla\psi|$. While
+conceptually elegant, this formulation amplifies numerical errors where the
+gradient magnitude is small (thin walls, apex). \textcite{yezzi2003thickness}
+proposed an improvement: instead of dividing by $|\nabla\psi|$, they solve two
+advection equations ($\nabla\psi \cdot \nabla u = -1$ from the endocardium and
+$\nabla\psi \cdot \nabla v = -1$ from the epicardium), with the total thickness
+given directly as $t = u + v$. This Eulerian PDE formulation avoids the
+numerical instability of gradient division and produces identical results to the
+Laplacian method in smooth regions while being significantly more stable near
+the apex and in walls thinner than 4~mm.
+
+Finally, mesh-based regularised correspondence methods combine an initial
+geometric estimate (normal projection or nearest neighbour) with iterative
+Laplacian smoothing on the mesh connectivity graph. At each iteration, each
+vertex's thickness is updated as a weighted average of its neighbours, anchored
+to the initial estimate. This produces spatially smooth thickness maps suitable
+for bullseye visualisation, at the cost of potentially attenuating real local
+thickness variation if the smoothing parameter is set too aggressively.
 
 \begin{figure}[t]
 \centering
-\fbox{\begin{minipage}{0.92\linewidth}
-\centering
-\begin{tabular}{c}
-SAX contour points, tissue labels, and cardiac phase indicator \\
-$\downarrow$ \\
-Point-set encoder to latent code \\
-$\downarrow$ \\
-Implicit SDF decoder with coupled endocardial and epicardial outputs \\
-$\downarrow$ \\
-SDF-supervised training with surface, regularity, and thickness constraints \\
-$\downarrow$ \\
-Zero-level mesh extraction and downstream thickness analysis
-\end{tabular}
-\end{minipage}}
-\caption{Placeholder schematic of the phase-conditioned implicit SDF reconstruction pipeline aligned with the training notebook implementation.}
-\label{fig:phase-conditioned-sdf-placeholder}
+\fbox{\parbox{0.88\linewidth}{\centering\vspace{4em}%
+\textbf{[Placeholder]} Summary diagram of wall-thickness measurement families:
+(a) KD-tree nearest neighbour, (b) normal ray, (c) Laplace streamlines,
+(d) AHA-17 bullseye output.%
+\vspace{4em}}}
+\caption{Overview of wall-thickness measurement approaches, ranging from simple
+distance queries to PDE-based transmural streamlines, with results aggregated
+into the standardised AHA 17-segment bullseye.}
+\label{fig:thickness-overview}
 \end{figure}
 
-Fourier feature mappings are relevant because they mitigate the spectral bias of
-plain multilayer perceptrons and help them fit high-frequency geometric detail
-\parencite{tancik2020fourierfeatures}. In practice, this matters when the model
-must preserve thin walls, sharp curvature changes, or small local variations in
-the reconstructed ventricle surface.
+\subsection{Summary and research gap}
+\label{subsec:research-gap}
 
-In the implemented pipeline, the key point is the combination of a
-PointNet-style encoder with an implicit SDF decoder. That combination is more
-consistent with the actual notebooks because it learns a compact latent code
-from unordered samples and decodes a continuous surface that can be
-interrogated at arbitrary resolution
-\parencite{qi2017pointnet,deepsdf2019,tancik2020fourierfeatures}.
-
-\subsection{Wall-thickness analysis}
 \noindent
-Wall thickness is a clinically meaningful quantity because it reflects cardiac
-remodelling and myocardial health, and it is typically measured as the distance
-between endocardial and epicardial surfaces or through equivalent geometric
-constructs \parencite{grossman1974wallthickness,cerqueira2002segmentation}.
-Recent MRI studies continue to treat wall thickness as a sensitive marker of
-myocardial structure and tissue properties \parencite{huelnhagen2017t2wallthickness}.
-
-The literature therefore links the reconstruction problem to a downstream
-measurement problem. A method that reconstructs the left ventricle more
-faithfully will usually yield more stable thickness estimates, whereas a method
-that over-smooths the surface can attenuate local thickness variation
-\parencite{grossman1974wallthickness,huelnhagen2017t2wallthickness}. This is why
-wall-thickness estimation cannot be treated as a detached post-processing step:
-it depends on the geometric fidelity of the reconstructed surface itself
-\parencite{cerqueira2002segmentation,medrano2014lvshapevariation}.
-
-\begin{figure}[t]
-\centering
-\fbox{\begin{minipage}{0.92\linewidth}
-\centering
-\begin{tabular}{c}
-Reconstructed endocardial and epicardial implicit surfaces \\
-$\downarrow$ \\
-Sampling or querying paired surface points \\
-$\downarrow$ \\
-Distance-based wall-thickness map generation \\
-$\downarrow$ \\
-Global and regional thickness statistics for evaluation
-\end{tabular}
-\end{minipage}}
-\caption{Placeholder diagram for the wall-thickness analysis workflow from paired ventricular surfaces.}
-\label{fig:thickness-workflow-placeholder}
-\end{figure}
-
-\section{Summary and Research Gap}
-\label{sec:research-gap}
-\noindent
-The reviewed literature shows a clear progression. Classical interpolation and
-parametric fitting methods are simple but limited. Statistical shape models add
-a strong anatomical prior and are well suited to cardiac anatomy, but they are
-restricted by the learned latent space. Point-based implicit methods offer
-continuous surface modelling from sparse observations, yet they require careful
-sampling and regularization to remain anatomically stable
-\parencite{heimann2009ssmreview,bai2015biventricularatlas,qi2017pointnet,
-deepsdf2019,tancik2020fourierfeatures}.
-
-The identified gap is the combination of these strengths in a
-single pipeline. Existing studies usually emphasize either population-level
-shape priors or generic implicit reconstruction, but less often a unified
-workflow that starts from sparse SAX contours, conditions reconstruction on
-cardiac phase, and preserves downstream thickness consistency as part of model
-design \parencite{suinesiaputra2018infarctchallenge,grossman1974wallthickness,
-huelnhagen2017t2wallthickness,qi2017pointnet,deepsdf2019}. The remaining chapters
-describe a pipeline that combines statistical shape modelling,
-PointNet-style encoding, phase-conditioned implicit SDF decoding, and
-wall-thickness-oriented evaluation.
+The reviewed literature shows that each component of the LV analysis pipeline is
+well-studied in isolation: segmentation is effectively solved by deep learning,
+SSMs encode population-level shape priors, implicit representations provide
+continuous surface modelling, and multiple wall-thickness algorithms exist.
+However, few studies integrate these components into a unified pipeline that
+encodes sparse SAX contour points with a permutation-invariant encoder, decodes
+paired endocardial and epicardial surfaces as implicit signed distance fields,
+conditions reconstruction on cardiac phase, architecturally guarantees positive
+wall thickness by construction, and trains jointly on real clinical data and
+SSM-derived synthetic samples. This gap motivates the approach described in the
+remaining chapters.

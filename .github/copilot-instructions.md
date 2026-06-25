@@ -59,6 +59,9 @@ it. For sourcing or summarising papers, delegate to the
   `\cref{eq:…}`, never a raw `(\ref{…})`.
 - Code blocks via the configured `lstlisting` `thesisCode` style (see
   [main.tex](main.tex)); always set `caption` and `label`.
+- **No bullet-point lists** (`itemize`, `enumerate`) in thesis prose. Express
+  ideas in flowing paragraphs. Lists are acceptable only in the methodology
+  review section for search-term groupings if strictly necessary.
 
 ## Bibliography Workflow
 
