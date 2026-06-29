@@ -33,13 +33,13 @@ It should be used as a scratch planning file before writing the final LaTeX chap
 - Current mesh-processing configuration in the code is: isotropic target spacing 1.5 mm, SDF smoothing scale 1.5 mm, Taubin smoothing with 25 iterations (`λ=0.53`, `μ=-0.55`), 3 Laplacian fairing iterations, basal fraction 0.08, and target 4000 vertices.
 - The mesh pipeline performs per-slice cleaning, 3D largest-component filtering, SDF smoothing, marching cubes, Taubin smoothing, basal-plane capping, Laplacian fairing, and quadric decimation.
 - Anatomical prechecks are used to reject bad meshes: apical taper, basal support, centreline drift, contour regularity, endo-inside-epi, wall proxy, and long-axis ratio.
-- Real patients are not augmented. The notebook writes the cache to `ed_occupancy_cache_v2/`.
+- Real patients are split at patient level and then augmented at the contour-input level during training. The notebook writes the cache to `ed_occupancy_cache_v2/`.
 
 ### Notebook 3 — `datasetES_real.ipynb`
 - A real end-systolic dataset was prepared with the same direct segmentation-to-mesh strategy as ED-real.
 - This notebook replaces an older ES approach that force-fitted the diastolic UK Biobank SSM to systolic contours, which the notebook states produced unrealistic ES geometry.
 - The current ES cache uses the same main configuration as ED-real: 10 SAX slices, 8.0 mm thickness, 10.0 mm spacing, 60 contour points per ring, 2048 query points, 1.5 mm isotropic target spacing, 1.5 mm SDF smoothing, 25 Taubin iterations, 3 Laplacian iterations, and target 4000 vertices.
-- Real ES meshes are built directly from ACDC, M&Ms, and M&Ms-2 segmentations, with no augmentation and patient-level splitting.
+- Real ES meshes are built directly from ACDC, M&Ms, and M&Ms-2 segmentations, with patient-level splitting and contour-input augmentation during training.
 - The notebook writes the cache to `es_occupancy_cache_v2/`.
 
 ### Notebook 4 — `training.ipynb`
@@ -224,6 +224,7 @@ It should be used as a scratch planning file before writing the final LaTeX chap
 - Synthetic ED dataset from SSM: 3--4 pages.
 - Real ED and ES dataset preparation: 4--5 pages.
 - Cache format and contour representation: 1--2 pages.
+- Spatial normalisation and data augmentation: 2--3 pages.
 - CardioSDF architecture: 4--5 pages.
 - Loss function and training strategy: 3--4 pages.
 - Inference and analytic wall-thickness extraction: 1--2 pages.
@@ -238,6 +239,11 @@ It should be used as a scratch planning file before writing the final LaTeX chap
 ### 3.2 Data Preparation
 
 **Important:** This section should be written as a real engineering pipeline, not as a short dataset paragraph. It should explain how raw meshes/segmentations became training examples.
+
+#### 3.2.0 Data Sources, Phases, and Geometry Standardisation
+- **Write about:** What each case contains before processing: segmentation masks or SSM mesh, ED/ES phase, LV cavity/myocardium labels, voxel spacing, and SAX slice geometry.
+- **Include:** Real data requires orientation correction, label harmonisation, and phase handling because ED and ES represent different cardiac states.
+- **Why it matters:** The model does not learn from raw MRI pixels. It learns from a standardised contour/cache representation derived from the raw segmentations or synthetic meshes.
 
 #### 3.2.1 Synthetic ED Dataset (SSM-based)
 - **Write about:**
@@ -259,7 +265,7 @@ It should be used as a scratch planning file before writing the final LaTeX chap
   - Pipeline: NIfTI → RAS+ canonical → isotropic resample (current code uses 1.5 mm target spacing) → per-slice cleaning → 3D largest component → SDF → Gaussian smoothing → Marching Cubes → Taubin smoothing (current code: 25 iters, λ=0.53, μ=-0.55) → cotangent Laplacian fairing → basal cap → quadric decimation to 4000 target vertices.
   - Contour/cache settings: 10 slices, 8.0 mm slice thickness, 10.0 mm spacing, 60 contour points per ring, 2048 query points.
   - Anatomical prechecks: apical taper, basal support, centerline drift, contour regularity, endo-inside-epi, wall proxy, long-axis ratio.
-  - Patient-level split (no data leakage), no augmentation.
+  - Patient-level split (no data leakage), followed by contour-input augmentation during training.
   - Acceleration: CPU-parallel processing via ProcessPoolExecutor, with optional CuPy GPU acceleration for Gaussian filtering when available.
 - **From:** `datasetED_real.ipynb`.
 - **Figure:** real-data preprocessing pipeline: segmentation mask → cleaned mask → SDF/marching cubes → smoothed/capped mesh → contours/cache.
@@ -267,7 +273,7 @@ It should be used as a scratch planning file before writing the final LaTeX chap
 
 #### 3.2.3 Real ES Dataset
 - **Write about:** Same direct real-segmentation pipeline as ED-real, but for end-systolic frames. Replaces the earlier SSM-fitting approach that the notebook says produced unrealistic systolic geometry.
-- **What was done:** Output cache is `es_occupancy_cache_v2/`, with no augmentation and patient-level splitting.
+- **What was done:** Output cache is `es_occupancy_cache_v2/`, with patient-level splitting and contour-input augmentation during training.
 - **From:** `datasetES_real.ipynb`.
 - **Figure optional:** ED vs ES example surfaces from the real caches, to show that the model sees both phases.
 - **Table row:** include ES in the same dataset/configuration table as ED to avoid repeated text.
@@ -277,6 +283,13 @@ It should be used as a scratch planning file before writing the final LaTeX chap
 - **Why it matters:** This is the bridge between the data notebooks and the training notebook. It explains how synthetic and real data can be mixed.
 - **Include:** 10 SAX slices, 60 points per ring, tissue labels for endocardium/epicardium, phase conditioning, and 2048 query points.
 - **Table:** cache fields and their meaning. Columns: field, shape/type, source, used by model/loss.
+
+#### 3.2.5 Spatial Normalisation and Data Augmentation
+- **Write about:** Real masks are canonicalised to RAS+, resampled to isotropic spacing, and converted to a fixed SAX-like contour representation. Synthetic meshes are sliced into the same representation.
+- **Spacing details:** 1.5 mm target spacing for real mesh extraction, 10 SAX slices, 8.0 mm slice thickness, 10.0 mm slice spacing, 60 contour points per ring, 2048 query points.
+- **Heart movement:** ED and ES are different phases. ES has smaller cavity volume and different myocardial configuration, so phase is included as a model input.
+- **Augmentation:** For the thesis, both synthetic and real cases are augmented at the contour-input level. Augmentation simulates observation variability: XY translations, point jitter, rotations, scale jitter, slice dropout, and contour-point dropout.
+- **Important wording:** Target meshes and cached SDF/query supervision remain fixed. Augmentation acts as observation noise, not as a new anatomical ground truth.
 
 ### 3.3 CardioSDF Architecture
 
@@ -313,22 +326,22 @@ It should be used as a scratch planning file before writing the final LaTeX chap
 
 ### 3.4 Training Regime
 
-**Important:** This section should explain the training decisions as engineering choices: why mixed synthetic/real data, why phase conditioning, why augmentation only for synthetic ED, and why the loss has multiple terms.
+**Important:** This section should explain the training decisions as engineering choices: why mixed synthetic/real data, why phase conditioning, why contour-input augmentation is applied to all data streams, and why the loss has multiple terms.
 
 #### 3.4.1 Dataset Mix
 - **Write about:**
   - Combined ED + ES with phase conditioning (input_dim=5).
   - Synthetic ED: 800 samples (SSM), augmented.
-  - Real ED: ACDC, M&Ms, M&Ms-2, no augmentation.
-  - Real ES: ACDC, M&Ms, M&Ms-2, no augmentation.
+  - Real ED: ACDC, M&Ms, M&Ms-2, augmented at contour-input level.
+  - Real ES: ACDC, M&Ms, M&Ms-2, augmented at contour-input level.
   - Patient-level split for real data.
 - **From:** `training.ipynb` data loading.
 
 #### 3.4.2 Augmentation
 - **Write about:**
-  - Applied only to synthetic ED samples (encoder input only; GT targets unchanged).
+  - Applied to synthetic and real samples at the encoder-input/contour level; GT targets unchanged.
   - Per-slice XY translation, per-point jitter, slice dropout, rotation, scale jitter, contour-point dropout.
-  - Real data is NOT augmented.
+  - Augmentation is phase-preserving: ED remains ED and ES remains ES.
 - **From:** `training.ipynb` augmentation pipeline.
 
 #### 3.4.3 Loss Function
@@ -423,7 +436,7 @@ It should be used as a scratch planning file before writing the final LaTeX chap
   - Synthetic ED: 1300 samples (UK Biobank SSM), 80/10/10 split.
   - Real ED: ACDC, M&Ms, M&Ms-2, patient-level split.
   - Real ES: ACDC, M&Ms, M&Ms-2, patient-level split.
-  - Mixed training: synthetic ED (800, augmented) + real ED + real ES (no augmentation).
+  - Mixed training: synthetic ED (800) + real ED + real ES, with contour-input augmentation for all streams.
 - **From:** `datasetED_ssm.ipynb`, `datasetED_real.ipynb`, `datasetES_real.ipynb`.
 - **Table:** final dataset statistics. Columns: dataset/source, phase, number of patients, number of samples, train, validation, test, augmented yes/no, cache path.
 - **Missing value:** exact real ED/ES counts must be copied from the final cache/notebook outputs before final writing.
