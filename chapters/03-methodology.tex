@@ -5,47 +5,730 @@
 \chapter{Methodology}
 \label{ch:methodology}
 
-\noindent This chapter describes the proposed approach to address the
-research questions stated in \cref{sec:research-questions}.
+\noindent This chapter describes the methodology used to reconstruct 3D LV
+geometry from sparse short-axis contours and to measure myocardial wall
+thickness on the reconstructed model. The proposed
+pipeline, named CardioSDF, combines synthetic and real cardiac MRI-derived data,
+a phase-conditioned implicit neural representation, and a systematic comparison
+of local wall-thickness algorithms.
 
 \section{Overview}
 \label{sec:method-overview}
 \noindent
-% TODO: high-level overview of the approach. A diagram (TikZ) helps here.
+The complete workflow starts from segmented short-axis (SAX) cardiac MRI stacks
+or synthetic Statistical Shape Model (SSM) meshes. In both cases, the input is
+converted into a common contour-based representation composed of endocardial and
+epicardial points sampled across SAX slices. These points are passed to a
+PointNet-style encoder that produces a compact latent code for the observed LV
+geometry. A signed-distance implicit decoder then predicts two coupled surfaces:
+the endocardium and the epicardium. The epicardial field is parameterised as a
+monotone offset from the endocardial field, which guarantees positive wall
+thickness by construction.
 
-\section{System Architecture}
+The methodological design is organised around four objectives. First, the input
+representation must be compatible with both synthetic and real cases. Second,
+the model must reconstruct smooth watertight LV surfaces from sparse 2D
+observations. Third, the decoder must produce a valid myocardial wall everywhere,
+not only at the observed slices. Fourth, the reconstructed geometry must support
+local wall-thickness measurements that can be visualised as surface colour maps
+and regional AHA-17 bullseye plots.
+
+The chapter is therefore organised as a technical pipeline rather than as a
+single model description. \Cref{sec:data-preparation} explains how synthetic and
+real data were converted into a shared cache representation. \Cref{sec:architecture}
+describes the CardioSDF encoder and decoder, with particular attention to the
+monotone-epi parameterisation used to guarantee positive wall thickness.
+\Cref{sec:training-inference} presents the training and inference procedure, and
+\cref{sec:wall-thickness-protocol} describes the wall-thickness algorithms used
+to evaluate local measurements on the reconstructed geometry.
+
+\begin{figure}[t]
+	\centering
+	\fbox{\parbox{0.88\linewidth}{\centering\vspace{4em}%
+	\textbf{[Placeholder]} CardioSDF pipeline: SAX contours and cardiac phase
+	$\rightarrow$ PointNet encoder $\rightarrow$ latent code $z$ $\rightarrow$
+	monotone-epi SDF decoder $\rightarrow$ endocardial and epicardial meshes
+	$\rightarrow$ local wall-thickness map.%
+	\vspace{4em}}}
+	\caption{Overview of the CardioSDF methodology for LV reconstruction and
+	wall-thickness measurement.}
+	\label{fig:methodology-pipeline}
+\end{figure}
+
+\begin{table}[t]
+	\centering
+	\caption{High-level summary of the CardioSDF methodology.}
+	\label{tab:method-summary}
+	\small
+	\begin{tabular}{p{0.22\textwidth} p{0.30\textwidth} p{0.36\textwidth}}
+		\toprule
+		Stage & Input / operation & Output \\
+		\midrule
+		Data preparation & Synthetic SSM meshes and real ED/ES segmentations & Shared contour and query-point caches \\
+		Encoder & SAX contour points with tissue and phase labels & 256-dimensional latent code $z$ \\
+		Decoder & Latent code and Fourier-encoded query coordinates & Endocardial SDF, epicardial SDF, and bounded offset $\delta$ \\
+		Mesh extraction & Dense SDF samples on a $96^3$ grid & Endocardial and epicardial triangular meshes \\
+		Thickness analysis & CardioSDF geometry and AHA orientation & Analytic thickness and 10-method local thickness maps \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\section{Data Preparation}
+\label{sec:data-preparation}
+\noindent
+Three data streams were prepared for the thesis: a synthetic ED dataset generated
+from an SSM, a real ED dataset reconstructed directly from segmentation masks,
+and a real ES dataset processed with the same real-data pipeline. All datasets
+were converted into the same cache schema so that the training code could mix
+synthetic and real cases without changing the model interface.
+
+\subsection{Synthetic end-diastolic dataset}
+\label{subsec:synthetic-ed-dataset}
+\noindent
+The synthetic ED dataset was generated from the UK Digital Heart Project LV SSM,
+which provides a mean LV shape and 100 principal modes of variation
+\parencite{bai2015biventricularatlas}. The SSM was used as a controlled source
+of anatomically plausible LV geometry, allowing the training set to include
+shape variation beyond the available real segmentations. In the notebook, the
+mean shape contained 22043 vertices, the PCA matrix had size $66129\times100$,
+and the eigenvalue vector contained 100 variances. A synthetic shape was created
+from the standard linear SSM model
+\begin{equation}
+	X(b) = \bar{X} + \Phi b,
+	\label{eq:ssm-generation}
+\end{equation}
+where $\bar{X}$ is the mean shape, $\Phi$ is the matrix of PCA modes, and $b$ is
+the vector of sampled latent coefficients.
+
+Latent coefficients were not sampled arbitrarily. Each accepted vector was
+constrained by a per-mode sigma clip and a global Mahalanobis bound,
+\begin{equation}
+	\left|\frac{b_i}{\sigma_i}\right| \leq 3,
+	\qquad
+	\sum_i \left(\frac{b_i}{\sigma_i}\right)^2 \leq \chi^2_{0.99,d},
+	\label{eq:ssm-latent-constraint}
+\end{equation}
+where $\sigma_i$ is the standard deviation associated with mode $i$ and $d$ is
+the number of active modes. This filtering prevents extreme samples from moving
+outside the plausible shape distribution. Each candidate mesh was further
+filtered using volume, surface area, sphericity, and apex/base plausibility
+checks.
+
+The final synthetic generation run accepted 1300 meshes. The notebook also
+created pathology-like examples by exciting selected SSM modes to simulate
+normal, dilated cardiomyopathy, hypertrophic cardiomyopathy, and post-infarction
+geometries. Because the SSM describes the LV endocardium, a synthetic epicardial
+surface was produced by applying variable normal offsets, with a larger offset
+near the base and a smaller offset near the apex. Each mesh was then sliced into
+10 SAX levels with 8~mm slice thickness and 10~mm spacing, and the resulting
+contours were used to build training-compatible cache objects.
+
+The synthetic pipeline served two purposes. First, it provided controlled
+geometric variation for training the encoder and decoder before relying entirely
+on real clinical segmentations. Second, it made it possible to generate
+pathology-like examples with known shape parameters, which is useful for testing
+whether the model can represent global LV remodelling. To avoid accepting
+unrealistic samples, the generation loop combined fast proxy metrics with
+periodic exact VTK audits. This ensured that the accepted meshes remained within
+physiological ranges for size and compactness while keeping the generation time
+manageable.
+
+After mesh generation, each synthetic case was transformed into the same
+observation type available in real SAX MRI: a sparse set of endocardial and
+epicardial contour rings. Query points were sampled near the surfaces and in the
+surrounding volume, and inside/outside labels or SDF targets were cached for
+training supervision. This step is important because CardioSDF is not trained
+from complete meshes as direct input. The meshes define supervision, but the
+model input remains the sparse contour representation.
+
+The synthetic epicardial surface was generated from the endocardial mesh by
+offsetting vertices along outward surface normals. The offset was larger near
+the base and smaller near the apex, reflecting the expected tapering of the LV
+wall. In simplified form, the epicardial vertex $q_i$ associated with
+endocardial vertex $p_i$ was computed as
+\begin{equation}
+	q_i = p_i + d_i n_i,
+	\label{eq:synthetic-epi-offset}
+\end{equation}
+where $n_i$ is the outward normal and $d_i$ is the local wall offset. The
+notebook used a base offset of approximately 10~mm, an apex offset of
+approximately 5~mm, and Gaussian perturbations to avoid perfectly uniform wall
+geometry. This synthetic epicardium is not intended to be a clinical truth, but
+it provides a consistent outer surface for pretraining and geometry supervision.
+
+\begin{table}[t]
+	\centering
+	\caption{Configuration of the synthetic ED dataset generation pipeline.}
+	\label{tab:synthetic-ed-config}
+	\small
+	\begin{tabular}{p{0.30\textwidth} p{0.56\textwidth}}
+		\toprule
+		Component & Configuration \\
+		\midrule
+		Shape source & UK Digital Heart Project LV SSM, mean shape plus 100 PCA modes \\
+		Accepted meshes & 1300 synthetic ED meshes \\
+		Latent constraints & Mahalanobis 99\% bound and per-mode $3\sigma$ clipping \\
+		Quality checks & Volume, surface area, sphericity, and apex/base plausibility \\
+		Pathology-like cases & Normal, DCM, HCM, and post-infarction mode excitations \\
+		Epicardium & Variable normal-offset surface, thinner near the apex \\
+		SAX extraction & 10 slices, 8~mm thickness, 10~mm spacing \\
+		Query cache & 2048 near-surface and volumetric query points per case \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\subsection{Real end-diastolic and end-systolic datasets}
+\label{subsec:real-ed-es-datasets}
+\noindent
+The real ED and ES datasets were prepared from ACDC, M\&Ms, and M\&Ms-2
+segmentation masks \parencite{bernard2018acdc,campello2021mnms}. The same core
+pipeline was used for both phases. Each NIfTI volume was first canonicalised to
+RAS+ orientation and resampled to an isotropic grid. The LV cavity label was
+used to define the endocardial mask, while the union of LV cavity and myocardium
+labels defined the epicardial mask:
+\begin{equation}
+	M_{\mathrm{endo}} = \mathbb{1}[L = L_{\mathrm{LV}}],
+	\qquad
+	M_{\mathrm{epi}} = \mathbb{1}[L \in \{L_{\mathrm{LV}}, L_{\mathrm{MYO}}\}],
+	\label{eq:endo-epi-masks}
+\end{equation}
+where $L$ is the segmentation label image, $L_{\mathrm{LV}}$ is the LV cavity
+label, and $L_{\mathrm{MYO}}$ is the myocardium label. Per-slice cleaning, hole
+filling, and three-dimensional largest-component filtering were applied before
+surface extraction.
+
+For each cleaned mask, a smoothed signed-distance representation was converted
+to a mesh with marching cubes. The resulting surfaces were processed with Taubin
+smoothing, basal-plane capping, Laplacian fairing, and quadric decimation. The
+current notebook configuration uses 1.5~mm target spacing, 1.5~mm SDF smoothing,
+25 Taubin iterations, 3 Laplacian fairing iterations, and a target of 4000
+vertices. Anatomical quality checks were applied to reject cases with poor
+apical tapering, insufficient basal support, excessive centreline drift,
+irregular contours, invalid endocardium-epicardium ordering, implausible wall
+geometry, or unrealistic long-axis ratio. Real cases were split at patient level
+and were not augmented.
+
+The ED and ES pipelines deliberately avoid fitting the UK Biobank SSM to real
+segmentations. This choice is especially important for the ES phase, where an
+earlier SSM-fitting approach produced unrealistic systolic geometry. Instead,
+the real-data notebooks reconstruct surfaces directly from the observed
+segmentation masks. The SSM is therefore used for synthetic ED data generation,
+while the real ED and ES datasets preserve the patient-specific geometry present
+in the original segmentations.
+
+The real-data preprocessing also standardises label conventions across sources.
+The datasets do not use identical encodings for the LV cavity, myocardium, and
+right ventricle. The notebooks therefore map each source to a common
+LV/myocardium representation before surface extraction. This harmonisation makes
+the downstream cache independent of the source dataset and prevents the training
+code from needing dataset-specific logic.
+
+Surface extraction was treated as a reconstruction problem rather than a direct
+visualisation of voxel masks. A raw marching-cubes mesh from sparse SAX
+segmentations can contain staircase artefacts, disconnected fragments, and
+irregular basal closure. The real-data pipeline therefore smooths the volumetric
+boundary representation before surface extraction, keeps the largest anatomical
+component, applies volume-preserving Taubin smoothing, fits a basal plane, and
+decimates the final mesh. The basal cap is particularly important because SAX
+segmentations usually terminate at the valve plane; without a controlled cap,
+the reconstructed surface may contain a jagged or anatomically implausible base.
+
+The ES cache uses the same processing logic as the ED cache, but it is built
+from end-systolic frames. This is not a minor implementation detail: the ES
+geometry has a smaller cavity and different wall configuration, and forcing a
+diastolic SSM to match systolic contours was found to produce unrealistic
+surfaces. Building ES meshes directly from real segmentations preserves the
+phase-specific anatomy needed by the phase-conditioned model.
+
+\begin{table}[t]
+	\centering
+	\caption{Main operations in the real ED/ES mesh-preparation pipeline.}
+	\label{tab:real-pipeline}
+	\small
+	\begin{tabular}{p{0.25\textwidth} p{0.57\textwidth}}
+		\toprule
+		Operation & Purpose \\
+		\midrule
+		RAS+ canonicalisation & Aligns scanner orientations across datasets \\
+		Label harmonisation & Converts ACDC, M\&Ms, and M\&Ms-2 to common LV/myocardium masks \\
+		Isotropic resampling & Reduces anisotropy before 3D surface extraction \\
+		Slice cleaning & Removes small 2D components and fills holes within SAX slices \\
+		3D component filtering & Keeps the main anatomical LV component \\
+		Marching cubes & Converts the volumetric boundary representation to triangular surfaces \\
+		Taubin smoothing and fairing & Reduces staircase artefacts while preserving global shape \\
+		Basal-plane cap & Produces a controlled closure at the valve-plane boundary \\
+		Quadric decimation & Reduces mesh size to a consistent target complexity \\
+		Anatomical prechecks & Rejects geometrically implausible or corrupted cases \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\subsection{Training cache representation}
+\label{subsec:training-cache-representation}
+\noindent
+All prepared cases were stored in a common representation composed of contour
+points, tissue labels, cardiac phase labels, mesh-derived supervision points,
+and cached SDF or occupancy queries. The real ED and ES caches use 10 SAX
+slices, 8~mm slice thickness, 10~mm spacing, 60 contour points per ring, and
+2048 query points per case. This shared representation allows the final model to
+combine synthetic ED samples, real ED samples, and real ES samples in a single
+phase-conditioned training run.
+
+The cache representation separates what the model observes from what the loss
+uses for supervision. The encoder observes only contour points, tissue identity,
+and phase. The decoder is supervised using surface samples, cached query points,
+and sign or SDF information derived from the training meshes. This distinction
+matches the target use case: at inference time, the model should reconstruct a
+full 3D LV geometry from sparse SAX contour observations rather than from a full
+3D mesh.
+
+\begin{table}[t]
+	\centering
+	\caption{Summary of the datasets prepared for CardioSDF training and
+	evaluation. Exact real-data sample counts should be filled after final cache
+	export.}
+	\label{tab:method-datasets}
+	\small
+	\begin{tabular}{p{0.18\textwidth} p{0.18\textwidth} p{0.30\textwidth} p{0.22\textwidth}}
+		\toprule
+		Data stream & Phase & Source & Main role \\
+		\midrule
+		Synthetic SSM & ED & UK Digital Heart Project LV SSM & Anatomical shape variation and synthetic augmentation \\
+		Real MRI & ED & ACDC, M\&Ms, M\&Ms-2 & Clinical end-diastolic geometry \\
+		Real MRI & ES & ACDC, M\&Ms, M\&Ms-2 & Clinical end-systolic geometry and phase conditioning \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\begin{table}[t]
+	\centering
+	\caption{Main fields in the shared training cache. Field names are descriptive
+	rather than tied to a single file format.}
+	\label{tab:cache-schema}
+	\small
+	\begin{tabular}{p{0.20\textwidth} p{0.24\textwidth} p{0.24\textwidth} p{0.20\textwidth}}
+		\toprule
+		Field & Meaning & Source & Used by \\
+		\midrule
+		Contour points & SAX endocardial and epicardial points & Synthetic slicing or real masks & Encoder and anchor loss \\
+		Tissue label & Endocardium or epicardium identifier & Contour extraction & Encoder tissue pooling \\
+		Phase label & ED or ES cardiac phase & Dataset metadata & Phase-conditioned encoder input \\
+		Surface samples & Points on endocardial and epicardial meshes & Mesh extraction & Surface and normal losses \\
+		Query points & Near-surface and volumetric samples & Occupancy/SDF cache & SDF, sign, and exterior losses \\
+		Mesh metadata & Vertices, faces, scale, and orientation & Preprocessing pipeline & Evaluation and visualisation \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\section{CardioSDF Architecture}
 \label{sec:architecture}
 \noindent
-% TODO: describe the architecture and main components.
+CardioSDF is composed of a PointNet-style encoder, Fourier positional encoding,
+and an implicit signed-distance decoder. The encoder maps sparse contour
+observations to a latent vector, while the decoder evaluates continuous SDF
+values at arbitrary 3D query points. The design follows the same general
+principle as point-cloud encoders and implicit shape decoders
+\parencite{qi2017pointnet,deepsdf2019}, but it is specialised for paired LV
+surfaces and wall-thickness measurement. The model therefore separates the
+observed input representation from the resolution of the reconstructed mesh.
 
-% Example figure placeholder:
-% \begin{figure}[htbp]
-%   \centering
-%   \includegraphics[width=0.8\textwidth]{architecture-diagram}
-%   \caption{Overview of the proposed system architecture.}
-%   \label{fig:architecture}
-% \end{figure}
+This architecture was chosen because the input and output have different
+geometric structure. The input is sparse, unordered, and slice-based, whereas
+the output is a continuous 3D surface. A point-cloud encoder is suitable for the
+input because it does not require a fixed grid or a fixed vertex correspondence.
+An implicit decoder is suitable for the output because it can be sampled at any
+resolution and converted into a mesh with marching cubes only at inference time.
+The monotone-epi coupling then adds the anatomical constraint needed for wall
+thickness: the epicardial field is not predicted independently, but is tied to
+the endocardial field through a positive offset.
 
-\section{Components}
-\label{sec:components}
-
-\subsection{Component A}
-\label{subsec:component-a}
+\subsection{Contour encoder}
+\label{subsec:contour-encoder}
 \noindent
-% TODO
+The encoder receives a point cloud whose features include spatial coordinates,
+tissue identity, and cardiac phase. A shared multilayer perceptron transforms
+each point independently into a feature vector. Separate max-pooling operations
+are then applied to endocardial and epicardial points, producing tissue-specific
+global descriptors. These descriptors are concatenated and projected to a
+256-dimensional latent vector $z$. The use of max-pooling makes the encoder
+permutation-invariant, which is necessary because contour points have no fixed
+ordering across patients or slices.
 
-\subsection{Component B}
-\label{subsec:component-b}
+Let $P = \{p_i\}_{i=1}^{N}$ denote the contour-point set for one case, where
+each point includes spatial coordinates, a tissue indicator, and a phase value.
+The shared point encoder computes
+\begin{equation}
+	h_i = \phi_{\mathrm{enc}}(p_i),
+	\label{eq:point-encoding}
+\end{equation}
+where $\phi_{\mathrm{enc}}$ is the shared multilayer perceptron. Tissue-specific
+global descriptors are then formed with symmetric pooling,
+\begin{equation}
+	z_{\mathrm{endo}} = \max_{i \in \mathcal{E}} h_i,
+	\qquad
+	z_{\mathrm{epi}} = \max_{i \in \mathcal{P}} h_i,
+	\label{eq:tissue-pooling}
+\end{equation}
+where $\mathcal{E}$ and $\mathcal{P}$ are the sets of endocardial and
+epicardial contour points. The final latent code is obtained by projecting the
+concatenated tissue descriptors,
+\begin{equation}
+	z = W_z [z_{\mathrm{endo}}, z_{\mathrm{epi}}] + b_z.
+	\label{eq:latent-projection}
+\end{equation}
+
+Separating endocardial and epicardial pooling is important because the two
+contours encode different anatomical information. Endocardial points describe
+the LV cavity shape, while epicardial points determine the outer myocardial
+boundary. A single global pooling operation could mix these two roles and reduce
+the decoder's ability to distinguish cavity geometry from wall geometry. The
+per-tissue pooling step therefore gives the latent representation explicit
+access to both surfaces before they are fused.
+
+\subsection{Implicit decoder and monotone-epi coupling}
+\label{subsec:monotone-epi-decoder}
 \noindent
-% TODO
+Before query points are passed to the decoder, their coordinates are transformed
+with Fourier positional encoding. In the final training notebook, six frequency
+bands are used, producing a 39-dimensional encoded coordinate representation.
+Fourier features reduce the spectral bias of coordinate MLPs and help the
+network represent higher-frequency geometric detail \parencite{tancik2020fourierfeatures}.
+For a query coordinate $x\in\mathbb{R}^3$, the encoded feature vector is
+conceptually written as
+\begin{equation}
+	\gamma(x) = [x, \sin(2^0\pi x), \cos(2^0\pi x), \ldots,
+	\sin(2^{L-1}\pi x), \cos(2^{L-1}\pi x)],
+	\label{eq:fourier-encoding}
+\end{equation}
+with $L=6$ frequency bands in the implemented model. The decoder is an
+eight-layer MLP with width 512 and a skip connection at the middle layer. It
+uses a softplus activation with high beta to preserve smooth implicit surfaces
+while avoiding the piecewise-linear creases associated with ReLU activations.
 
-\section{Implementation Details}
-\label{sec:implementation}
+The decoder has two output heads. The first predicts the endocardial signed
+distance $f_{\mathrm{endo}}$. The second predicts a bounded positive offset
+$\delta$, interpreted as the local distance between the endocardial and
+epicardial fields. The offset is parameterised as
+\begin{equation}
+	\delta(x,z) = \tau_{\min} + (\delta_{\mathrm{cap}} - \tau_{\min})
+	\sigma\left(g_{\delta}(x,z)\right),
+	\label{eq:bounded-delta}
+\end{equation}
+where $x$ is the query location, $z$ is the latent code, $g_{\delta}$ is the raw
+decoder output, $\sigma$ is the sigmoid function, $\tau_{\min}$ is the minimum
+normalised wall thickness, and $\delta_{\mathrm{cap}}$ is the maximum allowed
+normalised offset. The epicardial field is then defined as
+\begin{equation}
+	f_{\mathrm{epi}}(x,z) = f_{\mathrm{endo}}(x,z) - \delta(x,z).
+	\label{eq:monotone-epi}
+\end{equation}
+Because \cref{eq:bounded-delta} enforces $\delta(x,z) \geq \tau_{\min}$, the
+epicardial surface is constrained to remain outside the endocardial surface in
+the model's signed-distance convention. In the final notebook configuration,
+$\tau_{\min}=0.05$ and $\delta_{\mathrm{cap}}=0.45$ in normalised units,
+corresponding approximately to 1.25--11.25~mm under the 25~mm scale used during
+training.
+
+\begin{table}[t]
+	\centering
+	\caption{Main CardioSDF architecture settings used in the final training
+	notebook.}
+	\label{tab:model-hyperparameters}
+	\small
+	\begin{tabular}{p{0.30\textwidth} p{0.48\textwidth}}
+		\toprule
+		Component & Configuration \\
+		\midrule
+		Input features & 3D coordinates, tissue label, and cardiac phase \\
+		Encoder type & Shared MLP with endocardial and epicardial max-pooling \\
+		Latent dimension & 256 \\
+		Positional encoding & Fourier features with $L=6$ frequency bands \\
+		Decoder & 8-layer MLP, width 512, skip connection at layer 4 \\
+		Activation & Softplus with high beta \\
+		Output heads & Endocardial SDF and bounded wall-thickness offset \\
+		Thickness range & $\tau_{\min}=0.05$, $\delta_{\mathrm{cap}}=0.45$ in normalised units \\
+		Inference grid & $96^3$ query grid for marching cubes \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\section{Training and Inference}
+\label{sec:training-inference}
 \noindent
-% TODO: technology stack, libraries, key design decisions.
+This section describes how CardioSDF is trained from the shared cache
+representation and how a surface mesh and wall-thickness map are extracted at
+inference time. Training is multi-objective because the model must learn both a
+geometric SDF and an anatomically valid relationship between the endocardium and
+epicardium.
 
-% Example code listing:
-% \begin{lstlisting}[language=Python, caption={Example function.}, label={lst:example}]
-% def example():
-%     pass
-% \end{lstlisting}
+\subsection{Training data mix and augmentation}
+\label{subsec:training-data-mix}
+\noindent
+The final training configuration uses a combined ED and ES mode with phase
+conditioning. Synthetic ED samples are augmented at the encoder-input level,
+while real ED and ES samples are not augmented. The optimiser is AdamW with a
+learning rate of $2\times10^{-5}$ and weight decay of $5\times10^{-4}$. Training
+uses mixed precision, gradient clipping, cosine annealing, early stopping, and
+gradient accumulation. On the Kaggle run described in the notebook, the model is
+parallelised across two NVIDIA T4 GPUs with PyTorch DataParallel.
+
+The mixed dataset was chosen to balance coverage and realism. Synthetic ED data
+provides controlled shape variability and supports geometric augmentation, but it
+does not capture all segmentation artefacts present in real clinical data. Real
+ED and ES samples provide patient-specific anatomy from multiple sources and
+allow the model to learn the effect of cardiac phase. To avoid leaking patient
+identity across splits, real cases are split at patient level. Augmentation is
+applied only to synthetic ED contour inputs because the synthetic ground truth is
+procedurally controlled, whereas real segmentations should remain tied to the
+observed anatomy.
+
+The augmentation operations perturb only the encoder input. The cached mesh and
+query-point supervision remain fixed. This design simulates realistic contour
+uncertainty, such as small in-plane translations, jitter, missing slices, or
+point dropout, without changing the target surface. In practical terms, the
+encoder is encouraged to be robust to imperfect sparse observations while the
+decoder is still supervised against a consistent 3D geometry.
+
+\subsection{Loss function}
+\label{subsec:training-loss}
+\noindent
+
+The loss function combines surface fitting, eikonal regularisation,
+off-surface repulsion, normal consistency, wall-thickness floor enforcement,
+cached SDF supervision, contour anchoring, sign-consistency penalties, and
+outside-bounding-box constraints. These terms serve complementary purposes:
+surface terms align the zero-level sets with the target meshes, eikonal and
+normal terms regularise the SDF geometry, contour anchoring preserves agreement
+with the observed SAX slices, and sign constraints prevent collapse of the
+myocardial wall.
+
+The total training objective can be written as
+\begin{align}
+	\mathcal{L}_{\mathrm{total}} ={}&
+	\lambda_{\mathrm{surf}}\mathcal{L}_{\mathrm{surf}} +
+	\lambda_{\mathrm{eik}}\mathcal{L}_{\mathrm{eik}} +
+	\lambda_{\mathrm{off}}\mathcal{L}_{\mathrm{off}} +
+	\lambda_{\mathrm{normal}}\mathcal{L}_{\mathrm{normal}}
+	\notag \\
+	&+ \lambda_{\mathrm{WT}}\mathcal{L}_{\mathrm{WT}} +
+	\lambda_{\mathrm{L1}}\mathcal{L}_{\mathrm{L1}} +
+	\lambda_{\mathrm{anchor}}\mathcal{L}_{\mathrm{anchor}} +
+	\lambda_{\mathrm{sign}}\mathcal{L}_{\mathrm{sign}}
+	\notag \\
+	&+ \lambda_{\mathrm{extsign}}\mathcal{L}_{\mathrm{extsign}} +
+	\lambda_{\mathrm{bbox}}\mathcal{L}_{\mathrm{bbox}} +
+	\lambda_z \lVert z \rVert_2^2 .
+	\label{eq:training-objective}
+\end{align}
+The eikonal term is computed with automatic differentiation outside mixed
+precision to avoid numerical instability in the gradient calculation. The
+wall-thickness term complements the architectural lower bound on $\delta$ by
+penalising any residual tendency toward the minimum offset during training.
+The eikonal term follows the standard SDF regularisation principle that
+$\lVert\nabla f\rVert$ should be close to one for a valid distance field
+\parencite{gropp2020igr}.
+
+\begin{table}[t]
+	\centering
+	\caption{Purpose of the main CardioSDF training-loss terms.}
+	\label{tab:loss-terms}
+	\small
+	\begin{tabular}{p{0.19\textwidth} p{0.34\textwidth} p{0.35\textwidth}}
+		\toprule
+		Term & Purpose & Effect on reconstruction \\
+		\midrule
+		$\mathcal{L}_{\mathrm{surf}}$ & Fits zero-level sets to surface samples & Places endocardial and epicardial surfaces on the target meshes \\
+		$\mathcal{L}_{\mathrm{eik}}$ & Encourages $\lVert \nabla f \rVert = 1$ & Regularises the decoder as a signed-distance field \\
+		$\mathcal{L}_{\mathrm{off}}$ & Repels off-surface points from zero & Reduces spurious zero crossings away from the myocardium \\
+		$\mathcal{L}_{\mathrm{normal}}$ & Aligns predicted and target normals & Improves local surface orientation \\
+		$\mathcal{L}_{\mathrm{WT}}$ & Enforces the wall-thickness floor & Discourages collapse toward an unrealistically thin wall \\
+		$\mathcal{L}_{\mathrm{L1}}$ & Supervises cached query-point distances & Provides dense volumetric SDF information \\
+		$\mathcal{L}_{\mathrm{anchor}}$ & Anchors input contour points to the surface & Preserves agreement with observed SAX contours \\
+		Sign terms & Enforce inside/outside consistency & Stabilise the relative position of endocardium and epicardium \\
+		Bbox term & Pushes points outside the contour box outward & Suppresses exterior false surfaces \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\subsection{Optimisation and hardware}
+\label{subsec:optimisation-hardware}
+\noindent
+The final training setup uses AdamW with learning rate $2\times10^{-5}$ and
+weight decay $5\times10^{-4}$. A cosine annealing schedule controls the learning
+rate, and early stopping prevents unnecessary training after validation
+stagnation. The notebook uses automatic mixed precision to reduce memory usage,
+gradient clipping at 1.0 to stabilise updates, and gradient accumulation to
+increase the effective batch size. The maximum number of epochs is 400, although
+early stopping can terminate training earlier.
+
+The model was trained in a Kaggle environment with two NVIDIA T4 GPUs using
+PyTorch DataParallel. Spectral normalisation was disabled in the final notebook
+because of memory pressure, and a simpler weight-clipping strategy was used for
+lightweight Lipschitz control. These decisions reflect the practical constraint
+that the decoder is evaluated at many query points during training, making GPU
+memory a limiting factor.
+
+\begin{table}[t]
+	\centering
+	\caption{Training configuration used for CardioSDF.}
+	\label{tab:training-config}
+	\small
+	\begin{tabular}{p{0.30\textwidth} p{0.48\textwidth}}
+		\toprule
+		Setting & Value \\
+		\midrule
+		Training mode & Combined ED and ES with phase conditioning \\
+		Optimiser & AdamW \\
+		Learning rate & $2\times10^{-5}$ \\
+		Weight decay & $5\times10^{-4}$ \\
+		Maximum epochs & 400 \\
+		Batch size & 8, with gradient accumulation \\
+		Gradient clipping & 1.0 \\
+		Precision & Automatic mixed precision \\
+		Hardware & 2 NVIDIA T4 GPUs with DataParallel \\
+		Inference grid & $96^3$ \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\subsection{Inference and analytic wall-thickness extraction}
+\label{subsec:inference-analytic-thickness}
+\noindent
+
+At inference time, the model encodes the input contour points into $z$ and
+evaluates the decoder on a uniform $96^3$ grid. Marching cubes extracts the
+zero-level sets of $f_{\mathrm{endo}}$ and $f_{\mathrm{epi}}$
+\parencite{lorensen1987marchingcubes}. No mesh repair, cap synthesis, or
+PyMeshFix post-processing is applied to the predicted model outputs. Local
+analytic wall thickness is obtained by evaluating $\delta(x,z)$ at endocardial
+surface vertices and converting the result from normalised units to millimetres,
+\begin{equation}
+	t_{\mathrm{CardioSDF}}(x) = s\,\delta(x,z),
+	\label{eq:analytic-thickness}
+\end{equation}
+where $s$ is the spatial scale used to map normalised coordinates back to
+millimetres. This analytic estimate is different from a post-hoc distance
+between two meshes: it is produced directly by the decoder parameterisation.
+The 10 additional wall-thickness algorithms described in
+\cref{sec:wall-thickness-protocol} are therefore used as comparison methods on
+the same geometry, not as the only source of thickness information.
+
+\section{Wall-Thickness Evaluation Protocol}
+\label{sec:wall-thickness-protocol}
+\noindent
+The wall-thickness evaluation is performed on the CardioSDF-generated geometry.
+The segmentation volume is used to extract contour rings and to orient the AHA
+regional coordinate system, but the measured surfaces are the endocardial and
+epicardial meshes produced by the trained model. This distinction is important:
+the evaluation tests thickness estimation on the reconstructed implicit model,
+not directly on raw segmentation meshes.
+
+\subsection{Thickness methods}
+\label{subsec:thickness-methods}
+\noindent
+
+Ten wall-thickness methods are applied to the same reconstructed geometry:
+KD-tree nearest neighbour, symmetric KD-tree, normal rays, Euclidean Distance
+Transform boundary sum, Euclidean Distance Transform medial axis, Laplace field,
+geodesic Dijkstra, SDF cone rays, regularised correspondence, and the
+Yezzi--Prince Eulerian PDE method. Each method returns local thickness values in
+millimetres at endocardial vertices or projected endocardial locations. The
+outputs are summarised with mean, median, standard deviation, fifth percentile,
+ninety-fifth percentile, finite-value fraction, and runtime, and are visualised
+as 3D colour maps and AHA-17 bullseye plots.
+
+\begin{table}[t]
+	\centering
+	\caption{Wall-thickness methods evaluated on the CardioSDF-generated LV
+	geometry.}
+	\label{tab:wall-thickness-methods}
+	\small
+	\begin{tabular}{c p{0.25\textwidth} p{0.18\textwidth} p{0.35\textwidth}}
+		\toprule
+		\# & Method & Category & Main measurement principle \\
+		\midrule
+		1 & KD-tree nearest neighbour & Distance & Closest epicardial point for each endocardial vertex \\
+		2 & Symmetric KD-tree & Distance & Bidirectional nearest-neighbour consistency \\
+		3 & Normal rays & Ray & Intersection of endocardial normal rays with the epicardium \\
+		4 & EDT boundary sum & Volumetric & Sum of endocardial and epicardial distance transforms \\
+		5 & EDT medial axis & Volumetric & Thickness inferred from medial-axis distance ridges \\
+		6 & Laplace field & PDE & Transmural field lines from a harmonic potential \\
+		7 & Geodesic Dijkstra & Graph & Shortest paths through a 26-neighbour myocardial graph \\
+		8 & SDF cone rays & Ray & Median of multiple cone rays around the surface normal \\
+		9 & Regularised correspondence & Mesh & Smoothed correspondence field over the surface graph \\
+		10 & Yezzi--Prince & PDE & Eulerian transport equations along the transmural field \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+The methods cover geometric distances, ray intersections, volumetric distance
+fields, graph distances, mesh regularisation, and PDE formulations. The
+nearest-neighbour baseline assigns each endocardial vertex $p_i$ the distance
+to the closest epicardial vertex $q_j$,
+\begin{equation}
+	t_i^{\mathrm{KD}} = \min_j \lVert p_i - q_j \rVert_2.
+	\label{eq:kd-thickness}
+\end{equation}
+This is fast and easy to reproduce, but it does not guarantee that the closest
+point lies in the anatomical transmural direction.
+
+The Laplace method instead defines a smooth scalar field $\psi$ over the
+myocardium by solving
+\begin{equation}
+	\nabla^2 \psi = 0,
+	\qquad
+	\psi|_{\mathrm{endo}} = 0,
+	\qquad
+	\psi|_{\mathrm{epi}} = 1.
+	\label{eq:laplace-thickness}
+\end{equation}
+The local wall thickness is then estimated from the gradient magnitude along the
+transmural field. This family of methods is attractive because harmonic field
+lines do not cross, but numerical errors can appear where the wall is thin or
+where the field gradient is small \parencite{jones2000laplace}. The
+Yezzi--Prince approach addresses this by solving Eulerian transport equations
+along the same transmural field and combining the endocardial and epicardial
+travel times \parencite{yezzi2003thickness}. In simplified form,
+\begin{equation}
+	\nabla \psi \cdot \nabla u = -1,
+	\qquad
+	t = u + v,
+	\label{eq:yezzi-prince-thickness}
+\end{equation}
+where $u$ and $v$ are the propagation distances from opposite boundaries.
+
+The cone-ray method uses the endocardial surface normal but reduces sensitivity
+to a single noisy ray. For each endocardial point, several rays are cast inside
+a cone around the normal direction, and the median valid hit distance is used:
+\begin{equation}
+	t_i^{\mathrm{cone}} = \operatorname{median}_{k=1}^{K} d_{ik},
+	\qquad K=7.
+	\label{eq:cone-ray-thickness}
+\end{equation}
+In the notebook implementation the cone half-angle is $30^{\circ}$. This makes
+the estimate more robust than a single normal ray while still preserving an
+approximately transmural interpretation.
+
+\subsection{Regional AHA-17 mapping}
+\label{subsec:aha17-mapping}
+\noindent
+Local wall-thickness values are also aggregated into the AHA 17-segment model
+\parencite{cerqueira2002segmentation}. This requires identifying the LV
+long-axis direction, distinguishing base from apex, and establishing a septal
+reference direction. The wall-thickness notebook therefore includes an
+anatomical QA step that visualises base/apex orientation and septal alignment
+before constructing bullseye plots.
+
+The AHA aggregation does not replace per-vertex thickness maps. Instead, it
+provides a clinically familiar regional summary of the same local measurements.
+For each method, endocardial vertices are assigned to basal, mid-cavity,
+apical, or apical-cap regions according to their normalised long-axis position,
+and then subdivided angularly around the LV centreline. Segment statistics are
+reported using robust summaries such as the mean and percentiles so that local
+outliers do not dominate the regional interpretation.
+
+This evaluation should be interpreted as an algorithmic comparison and
+reproducibility study rather than as clinical validation. Unless expert manual
+wall-thickness measurements are added, the thesis can conclude that CardioSDF
+provides an objective and locally resolved computational framework, but it
+should not claim replacement of clinical measurement protocols.

@@ -1,6 +1,6 @@
 ﻿% ============================================================
 % !TeX root = ../main.tex
-%  Chapter 2 â€” Literature Review
+%  Chapter 2 -- Literature Review
 % ============================================================
 \chapter{Literature Review}
 \label{ch:literature-review}
@@ -288,9 +288,9 @@ space that enables generation of subpopulation-specific anatomy models.
 Their decoder produces meshes with fixed vertex correspondence, making
 population statistics directly computable from the generated samples.
 
-Implicit Neural Representations (INRs) take a fundamentally different approach:
-rather than deforming a template, they encode geometry as continuous functions
-where the surface is the zero-level set of a learned scalar field.
+Implicit Neural Representations (INRs) take a different approach. Rather than
+deforming a template, they encode geometry as a continuous function whose
+zero-level set defines the surface.
 \textcite{deepsdf2019} introduced DeepSDF, which parameterises the signed
 distance function (SDF) of an entire shape class with a single neural network
 conditioned on a per-shape latent code. Given partial or noisy point-cloud
@@ -368,7 +368,7 @@ a Bounding Volume Hierarchy (BVH) to $O(\log F)$ per query. This approach
 measures transmurally but is sensitive to normal noise: a slightly rotated
 normal can produce a spurious long or short ray. The Shape Diameter Function
 variant improves robustness by casting a cone of $K$ rays (typically $K{=}7$) at
-a half-angle of $30°$ around the normal and reporting the median intersection
+a half-angle of $30^{\circ}$ around the normal and reporting the median intersection
 distance, effectively filtering outlier hits caused by local mesh irregularities.
 
 Volumetric methods operate on voxelised representations. The Euclidean Distance
@@ -426,10 +426,10 @@ The reviewed literature shows that each component of the LV analysis pipeline is
 well-studied in isolation: segmentation is effectively solved by deep learning,
 SSMs encode population-level shape priors, implicit representations provide
 continuous surface modelling, and multiple wall-thickness algorithms exist.
-However, few studies integrate these components into a unified pipeline that
-encodes sparse SAX contour points with a permutation-invariant encoder, decodes
-paired endocardial and epicardial surfaces as implicit signed distance fields,
-conditions reconstruction on cardiac phase, architecturally guarantees positive
-wall thickness by construction, and trains jointly on real clinical data and
-SSM-derived synthetic samples. This gap motivates the approach described in the
-remaining chapters.
+However, few studies integrate these components into a single pipeline for the
+specific setting addressed in this thesis. The missing combination is a method
+that encodes sparse SAX contour points, decodes paired endocardial and
+epicardial surfaces as implicit signed distance fields, conditions the
+reconstruction on cardiac phase, guarantees positive wall thickness by
+construction, and trains jointly on real clinical data and SSM-derived synthetic
+samples. This gap motivates the approach described in the remaining chapters.
