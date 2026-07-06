@@ -91,6 +91,42 @@ make these two sources indistinguishable to the model interface while preserving
 their different roles: synthetic data provides controlled shape variability, and
 real data provides acquisition- and segmentation-specific anatomy.
 
+\subsection{Problem visualisation and 3D slice inspection}
+\label{subsec:problem-visualisation}
+\noindent
+Before designing the reconstruction pipeline, the segmented cardiac MRI stacks
+were visualised in three dimensions to make the sparsity of the input problem
+explicit. Each short-axis slice was placed at its physical through-plane
+position using the image spacing and affine information available in the NIfTI
+header. The LV cavity and myocardium labels were then overlaid on the slice
+planes, allowing the stack to be inspected as a set of parallel cross-sections
+rather than as an isolated sequence of two-dimensional images.
+
+This visual inspection served as an exploratory quality-control step. It made it
+possible to verify whether the apical and basal slices were ordered correctly,
+whether the through-plane axis had been detected consistently after RAS+
+canonicalisation, and whether the LV and myocardial labels matched the expected
+dataset convention. More importantly, it showed the central reconstruction
+challenge addressed in this thesis: only sparse contours are directly observed,
+while the final objective is a continuous three-dimensional endocardial and
+epicardial geometry. The 3D slice view therefore motivated the later conversion
+from labelled slices to contour rings and, finally, to implicit SDF supervision.
+
+\begin{figure}[t]
+	\centering
+	\fbox{\parbox{0.88\linewidth}{\centering\vspace{4em}%
+	\textbf{[Placeholder]} Three-dimensional visualisation of a SAX cardiac MRI
+	stack: parallel slice planes in physical space with LV cavity and myocardium
+	labels overlaid, showing the sparse cross-sectional observations used for
+	reconstruction.%
+	\vspace{4em}}}
+	\caption{Problem visualisation through 3D inspection of segmented SAX MRI
+	slices. The view places each labelled slice at its physical position and
+	highlights the gap between sparse two-dimensional observations and the desired
+	continuous LV surface geometry.}
+	\label{fig:problem-visualisation-sax-stack}
+\end{figure}
+
 \subsection{Data sources and cardiac phases}
 \label{subsec:data-sources-phases}
 \noindent
@@ -146,9 +182,9 @@ created pathology-like examples by exciting selected SSM modes to simulate
 normal, dilated cardiomyopathy, hypertrophic cardiomyopathy, and post-infarction
 geometries. Because the SSM describes the LV endocardium, a synthetic epicardial
 surface was produced by applying variable normal offsets, with a larger offset
-near the base and a smaller offset near the apex. Each mesh was then sliced into
-10 SAX levels with 8~mm slice thickness and 10~mm spacing, and the resulting
-contours were used to build training-compatible cache objects.
+near the base and a smaller offset near the apex. Each mesh was then converted
+into 10 SAX contour levels, and the resulting contours were used to build
+training-compatible cache objects.
 
 The synthetic pipeline served two purposes. First, it provided controlled
 geometric variation for training the encoder and decoder before relying entirely
@@ -198,7 +234,7 @@ it provides a consistent outer surface for pretraining and geometry supervision.
 		Quality checks & Volume, surface area, sphericity, and apex/base plausibility \\
 		Pathology-like cases & Normal, DCM, HCM, and post-infarction mode excitations \\
 		Epicardium & Variable normal-offset surface, thinner near the apex \\
-		SAX extraction & 10 slices, 8~mm thickness, 10~mm spacing \\
+		SAX extraction & 10 SAX contour levels \\
 		Query cache & 2048 near-surface and volumetric query points per case \\
 		\bottomrule
 	\end{tabular}
@@ -281,13 +317,14 @@ are defined in a consistent physical coordinate system rather than in arbitrary
 voxel units.
 
 After surface extraction, all cases are converted into a common sparse SAX
-observation. The cache uses 10 slices, 8~mm slice thickness, 10~mm slice
-spacing, and 60 contour points per ring. These values approximate the sparse
-through-plane sampling pattern of clinical SAX cine MRI while keeping a fixed
-input size for training. For supervision, 2048 query points are stored per case,
-sampled near the surfaces and in the surrounding volume. These query points
-allow the decoder to learn not only the observed contours but also the
-three-dimensional interior/exterior structure of the LV geometry.
+observation. Both the synthetic and real pipelines use 10 SAX contour levels;
+the real ED/ES caches store 60 contour points per ring. This fixed contour-level
+representation approximates the sparse through-plane sampling pattern of
+clinical SAX cine MRI while keeping a consistent input size for training. For
+supervision, 2048 query points are stored per case, sampled near the surfaces
+and in the surrounding volume. These query points allow the decoder to learn not
+only the observed contours but also the three-dimensional interior/exterior
+structure of the LV geometry.
 
 \subsection{Data augmentation}
 \label{subsec:data-augmentation}
@@ -338,10 +375,9 @@ clinical segmentations.
 All prepared cases were stored in a common representation composed of contour
 points, tissue labels, cardiac phase labels, mesh-derived supervision points,
 and cached SDF or occupancy queries. The real ED and ES caches use 10 SAX
-slices, 8~mm slice thickness, 10~mm spacing, 60 contour points per ring, and
-2048 query points per case. This shared representation allows the final model to
-combine synthetic ED samples, real ED samples, and real ES samples in a single
-phase-conditioned training run.
+contour levels, 60 contour points per ring, and 2048 query points per case. This
+shared representation allows the final model to combine synthetic ED samples,
+real ED samples, and real ES samples in a single phase-conditioned training run.
 
 The cache representation separates what the model observes from what the loss
 uses for supervision. The encoder observes only contour points, tissue identity,
@@ -458,10 +494,12 @@ access to both surfaces before they are fused.
 \label{subsec:monotone-epi-decoder}
 \noindent
 Before query points are passed to the decoder, their coordinates are transformed
-with Fourier positional encoding. In the final training notebook, six frequency
-bands are used, producing a 39-dimensional encoded coordinate representation.
+with Fourier positional encoding. In the final training notebook, three
+frequency bands are used, producing a 21-dimensional encoded coordinate
+representation. This setting retains enough frequency content for LV-scale
+anatomy while reducing sub-voxel ringing and scattered marching-cubes artefacts.
 Fourier features reduce the spectral bias of coordinate MLPs and help the
-network represent higher-frequency geometric detail \parencite{tancik2020fourierfeatures}.
+network represent geometric detail \parencite{tancik2020fourierfeatures}.
 For a query coordinate $x\in\mathbb{R}^3$, the encoded feature vector is
 conceptually written as
 \begin{equation}
@@ -469,7 +507,7 @@ conceptually written as
 	\sin(2^{L-1}\pi x), \cos(2^{L-1}\pi x)],
 	\label{eq:fourier-encoding}
 \end{equation}
-with $L=6$ frequency bands in the implemented model. The decoder is an
+with $L=3$ frequency bands in the implemented model. The decoder is an
 eight-layer MLP with width 512 and a skip connection at the middle layer. It
 uses a softplus activation with high beta to preserve smooth implicit surfaces
 while avoiding the piecewise-linear creases associated with ReLU activations.
@@ -511,7 +549,7 @@ training.
 		Input features & 3D coordinates, tissue label, and cardiac phase \\
 		Encoder type & Shared MLP with endocardial and epicardial max-pooling \\
 		Latent dimension & 256 \\
-		Positional encoding & Fourier features with $L=6$ frequency bands \\
+		Positional encoding & Fourier features with $L=3$ frequency bands \\
 		Decoder & 8-layer MLP, width 512, skip connection at layer 4 \\
 		Activation & Softplus with high beta \\
 		Output heads & Endocardial SDF and bounded wall-thickness offset \\
