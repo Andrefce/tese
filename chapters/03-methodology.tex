@@ -15,15 +15,19 @@ of local wall-thickness algorithms.
 \section{Overview}
 \label{sec:method-overview}
 \noindent
-The complete workflow starts from segmented short-axis (SAX) cardiac MRI stacks
-or synthetic Statistical Shape Model (SSM) meshes. In both cases, the input is
-converted into a common contour-based representation composed of endocardial and
-epicardial points sampled across SAX slices. These points are passed to a
-PointNet-style encoder that produces a compact latent code for the observed LV
-geometry. A signed-distance implicit decoder then predicts two coupled surfaces:
-the endocardium and the epicardium. The epicardial field is parameterised as a
-monotone offset from the endocardial field, which guarantees positive wall
-thickness by construction.
+The complete thesis workflow can be read as a progression from sparse clinical
+observations to continuous three-dimensional geometry and then to quantitative
+wall-thickness summaries. It starts from segmented short-axis (SAX) cardiac MRI
+stacks or synthetic Statistical Shape Model (SSM) meshes. In both cases, the
+available geometry is converted into a common contour-based representation
+composed of endocardial and epicardial points sampled across SAX slices. These
+points are passed to a PointNet-style encoder that produces a compact latent
+code for the observed LV geometry. A signed-distance implicit decoder then
+predicts two coupled surfaces: the endocardium and the epicardium. The
+epicardial field is parameterised as a monotone offset from the endocardial
+field, which guarantees positive wall thickness by construction. The resulting
+surfaces are finally used to compute local thickness maps and regional AHA-17
+summaries.
 
 The methodological design is organised around four objectives. First, the input
 representation must be compatible with both synthetic and real cases. Second,
@@ -42,16 +46,23 @@ monotone-epi parameterisation used to guarantee positive wall thickness.
 \cref{sec:wall-thickness-protocol} describes the wall-thickness algorithms used
 to evaluate local measurements on the reconstructed geometry.
 
+\Cref{fig:methodology-pipeline} summarises this end-to-end workflow and should
+be interpreted as an overview of the thesis methodology rather than as a figure
+belonging only to data preparation. The first panels illustrate the sparse SAX
+observation and contour extraction, the mesh panel represents the reconstructed
+LV surface domain, and the lower panels show how the reconstructed geometry is
+converted into local and regional wall-thickness measurements.
+
 \begin{figure}[t]
 	\centering
-	\fbox{\parbox{0.88\linewidth}{\centering\vspace{4em}%
-	\textbf{[Placeholder]} CardioSDF pipeline: SAX contours and cardiac phase
-	$\rightarrow$ PointNet encoder $\rightarrow$ latent code $z$ $\rightarrow$
-	monotone-epi SDF decoder $\rightarrow$ endocardial and epicardial meshes
-	$\rightarrow$ local wall-thickness map.%
-	\vspace{4em}}}
-	\caption{Overview of the CardioSDF methodology for LV reconstruction and
-	wall-thickness measurement.}
+	\includegraphics[width=\linewidth]{cardiosdf_pipeline_visual_flow}
+	\caption{End-to-end overview of the thesis methodology. A representative SAX
+	slice from ACDC patient002 illustrates the segmented clinical input and the
+	corresponding endocardial, epicardial, and right-ventricular contours. The
+	contour-extraction stage shows the sparse endocardial and epicardial
+	observations used by CardioSDF, the mesh stage illustrates the reconstructed
+	LV surface domain, and the final stages show local wall-thickness mapping and
+	aggregation into the AHA-17 regional representation.}
 	\label{fig:methodology-pipeline}
 \end{figure}
 
@@ -111,19 +122,29 @@ challenge addressed in this thesis: only sparse contours are directly observed,
 while the final objective is a continuous three-dimensional endocardial and
 epicardial geometry. The 3D slice view therefore motivated the later conversion
 from labelled slices to contour rings and, finally, to implicit SDF supervision.
+The illustrative views in this section were generated from ACDC patient002, a
+dilated cardiomyopathy case with end-diastolic and end-systolic frames indicated
+in the accompanying metadata \parencite{bernard2018acdc}.
 
 \begin{figure}[t]
 	\centering
-	\fbox{\parbox{0.88\linewidth}{\centering\vspace{4em}%
-	\textbf{[Placeholder]} Three-dimensional visualisation of a SAX cardiac MRI
-	stack: parallel slice planes in physical space with LV cavity and myocardium
-	labels overlaid, showing the sparse cross-sectional observations used for
-	reconstruction.%
-	\vspace{4em}}}
-	\caption{Problem visualisation through 3D inspection of segmented SAX MRI
-	slices. The view places each labelled slice at its physical position and
-	highlights the gap between sparse two-dimensional observations and the desired
-	continuous LV surface geometry.}
+	\includegraphics[width=0.98\linewidth]{patient002_clinical_viewer_ed_es}
+	\caption{Representative SAX slices generated from ACDC patient002. The panels
+	show ED frame 1 and ES frame 12 with contours for the LV cavity, myocardium,
+	and right ventricle. This view was used to verify frame selection, label
+	convention, and the visual separation between the LV cavity and myocardium before contour
+	extraction.}
+	\label{fig:problem-visualisation-clinical-viewer}
+\end{figure}
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=0.78\linewidth]{patient002_3d_sax_stack}
+	\caption{Problem visualisation through 3D inspection of the segmented ED SAX
+	stack for ACDC patient002. The view places the slices according to their
+	physical through-plane spacing and overlays the segmentation contours,
+	highlighting the gap between sparse two-dimensional observations and the
+	desired continuous LV surface geometry.}
 	\label{fig:problem-visualisation-sax-stack}
 \end{figure}
 
