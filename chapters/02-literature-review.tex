@@ -75,11 +75,97 @@ corpus of 35 publications.
 
 \begin{figure}[t]
 \centering
-\fbox{\parbox{0.88\linewidth}{\centering\vspace{3em}%
-\textbf{[Placeholder]} PRISMA flow diagram showing the selection process:
-142 identified $\rightarrow$ 111 after duplicate removal $\rightarrow$
-48 full-text $\rightarrow$ 35 included.%
-\vspace{3em}}}
+\definecolor{pri}{RGB}{37,99,135}
+\definecolor{prilight}{RGB}{232,244,252}
+\definecolor{priborder}{RGB}{130,185,215}
+\definecolor{exc}{RGB}{155,70,85}
+\definecolor{exclight}{RGB}{253,240,242}
+\definecolor{excborder}{RGB}{210,160,170}
+\definecolor{inc}{RGB}{30,120,90}
+\definecolor{inclight}{RGB}{230,248,240}
+\definecolor{incborder}{RGB}{120,195,160}
+\definecolor{phasegray}{RGB}{108,117,125}
+\begin{tikzpicture}[
+  node distance=0.9cm and 2.2cm,
+  % Main flow cards
+  card/.style={rectangle, rounded corners=8pt, draw=priborder,
+               fill=prilight, text width=5.0cm, minimum height=1.1cm,
+               align=center, font=\sffamily\small, line width=0.6pt,
+               inner sep=8pt},
+  % Exclusion annotations (minimal, no heavy box)
+  excl/.style={rectangle, rounded corners=6pt, draw=excborder,
+               fill=exclight, text width=3.0cm, minimum height=0.8cm,
+               align=center, font=\sffamily\scriptsize, line width=0.5pt,
+               inner sep=5pt},
+  % Final included card
+  finalcard/.style={rectangle, rounded corners=8pt, draw=incborder,
+                    fill=inclight, text width=5.0cm, minimum height=1.1cm,
+                    align=center, font=\sffamily\small\bfseries,
+                    line width=1.2pt, inner sep=8pt},
+  % Flow arrows
+  flow/.style={-{Stealth[length=2.5mm, width=1.8mm]}, line width=0.7pt,
+               color=pri!70},
+  % Exclusion arrows (dashed, subtle)
+  excflow/.style={-{Stealth[length=2mm, width=1.4mm]}, line width=0.5pt,
+                  color=exc!60, densely dashed},
+  % Phase labels
+  phase/.style={font=\sffamily\scriptsize\bfseries, text=phasegray},
+]
+  % --- Main flow ---
+  \node[card] (identify)
+    {Records identified\\[1pt]
+     {\footnotesize Scopus, PubMed, IEEE Xplore}\\[3pt]
+     \textbf{\color{pri}$n = 142$}};
+
+  \node[card, below=of identify] (screen)
+    {Title and abstract screening\\[3pt]
+     \textbf{\color{pri}$n = 111$}};
+
+  \node[card, below=of screen] (eligible)
+    {Full-text eligibility\\assessment\\[3pt]
+     \textbf{\color{pri}$n = 48$}};
+
+  \node[card, below=of eligible] (qualify)
+    {Studies meeting\\inclusion criteria\\[3pt]
+     \textbf{\color{pri}$n = 28$}};
+
+  \node[finalcard, below=1.4cm of qualify] (included)
+    {{\normalfont\sffamily\scriptsize Citation searching ($+7$)}\\[3pt]
+     Studies included in review\\[3pt]
+     \textbf{\color{inc}$n = 35$}};
+
+  % --- Exclusion annotations ---
+  \node[excl, right=of identify] (exdup)
+    {{\bfseries\color{exc}$-31$}\\duplicates};
+
+  \node[excl, right=of screen] (extitle)
+    {{\bfseries\color{exc}$-63$}\\title/abstract};
+
+  \node[excl, right=of eligible] (exft)
+    {{\bfseries\color{exc}$-20$}\\full-text review};
+
+  % --- Flow arrows ---
+  \draw[flow] (identify) -- (screen);
+  \draw[flow] (screen) -- (eligible);
+  \draw[flow] (eligible) -- (qualify);
+  \draw[flow] (qualify) -- (included);
+
+  % --- Exclusion arrows ---
+  \draw[excflow] (identify.east) -- (exdup.west);
+  \draw[excflow] (screen.east) -- (extitle.west);
+  \draw[excflow] (eligible.east) -- (exft.west);
+
+  % --- Phase labels (left margin, aligned to nodes) ---
+  \node[phase, rotate=90, anchor=south] at ([xshift=-1.4cm]identify.west)
+    {Identification};
+  \node[phase, rotate=90, anchor=south] at ([xshift=-1.4cm]screen.west)
+    {Screening};
+  \node[phase, rotate=90, anchor=south] at ([xshift=-1.4cm]eligible.west)
+    {Eligibility};
+  \node[phase, rotate=90, anchor=south]
+    at ([xshift=-1.4cm]$(qualify.west)!0.5!(included.west)$)
+    {Inclusion};
+\end{tikzpicture}
 \caption{PRISMA flow diagram summarising the literature selection process.}
 \label{fig:prisma-flow}
 \end{figure}
