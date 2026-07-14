@@ -393,20 +393,19 @@ def fig_ssm_sampling_pipeline():
 
     labels = [
         "(a)", "(b)", "(c)",
-        "(d)", "(e)", "(f)",
+        "(d)", "(e)",
     ]
-    fig = plt.figure(figsize=(10.8, 3.8), facecolor="white")
+    fig = plt.figure(figsize=(9.0, 3.8), facecolor="white")
 
-    # Row of 6 panels: 3 flat, 3 3D
+    # Row of 5 panels: 1 flat, 4 3D (removed pathology panel)
     positions = [
-        [0.01, 0.10, 0.155, 0.80],   # (a) scatter - 2D
-        [0.175, 0.10, 0.135, 0.80],  # (b) mesh - 3D
-        [0.330, 0.10, 0.135, 0.80],  # (c) quality - 3D
-        [0.490, 0.10, 0.150, 0.80],  # (d) pathology - 3D
-        [0.655, 0.10, 0.155, 0.80],  # (e) contours - 3D
-        [0.825, 0.10, 0.155, 0.80],  # (f) cache - 3D
+        [0.01, 0.10, 0.180, 0.80],   # (a) scatter - 2D
+        [0.200, 0.10, 0.155, 0.80],  # (b) mesh - 3D
+        [0.370, 0.10, 0.155, 0.80],  # (c) quality - 3D
+        [0.545, 0.10, 0.200, 0.80],  # (d) contours - 3D (was e)
+        [0.765, 0.10, 0.215, 0.80],  # (e) cache - 3D (was f)
     ]
-    projections = ["rectilinear", "3d", "3d", "3d", "3d", "3d"]
+    projections = ["rectilinear", "3d", "3d", "3d", "3d"]
 
     axes = [
         fig.add_axes(pos, projection=proj)
@@ -417,9 +416,8 @@ def fig_ssm_sampling_pipeline():
     draw_mesh(axes[1], mean_pts, faces, color=C_ENDO, stride=4, alpha=0.90)
     axes[1].set_title("Mesh from SSM\n$X(b)=\\bar{X}+\\Phi b$", fontsize=7, pad=2)
     draw_quality_gate(axes[2], mean_pts, pc, sigmas, faces, rng=rng)
-    draw_pathology_shapes(axes[3], mean_pts, pc, sigmas, faces)
-    draw_contour_rings(axes[4], mean_pts, faces)
-    draw_query_cache(axes[5], mean_pts, faces, rng=rng)
+    draw_contour_rings(axes[3], mean_pts, faces)
+    draw_query_cache(axes[4], mean_pts, faces, rng=rng)
 
     for ax, lbl in zip(axes, labels):
         ax.set_title(f"{lbl} {ax.get_title()}", fontsize=7)
