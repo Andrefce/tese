@@ -431,6 +431,71 @@
       \verb 10.1161/hc0402.102975
       \endverb
     \endentry
+    \entry{chlap2021augmentation}{article}{}{}
+      \name{author}{6}{}{%
+        {{un=0,uniquepart=base,hash=4e1d16434f23b88ee7ffd40a176ff593}{%
+           family={Chlap},
+           familyi={C\bibinitperiod},
+           given={Phillip},
+           giveni={P\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=9d6ee237baed14758c4aa28b13e7d05b}{%
+           family={Min},
+           familyi={M\bibinitperiod},
+           given={Hang},
+           giveni={H\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=daf46a327780d03c6b6be0c8ce378525}{%
+           family={Vandenberg},
+           familyi={V\bibinitperiod},
+           given={Nym},
+           giveni={N\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=0f7397e2c366cde7d6f5fb26470e455f}{%
+           family={Dowling},
+           familyi={D\bibinitperiod},
+           given={Jason},
+           giveni={J\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=1110f654b79b1d5996e16dfc5a7aacbe}{%
+           family={Holloway},
+           familyi={H\bibinitperiod},
+           given={Lois},
+           giveni={L\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=940ba228b29fdf01379e489453d12b02}{%
+           family={Haworth},
+           familyi={H\bibinitperiod},
+           given={Annette},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{968640b746901336bd3fcab11b9fcd0b}
+      \strng{fullhash}{2b98b43cbe9f97ccd97823fc6d377661}
+      \strng{fullhashraw}{2b98b43cbe9f97ccd97823fc6d377661}
+      \strng{bibnamehash}{2b98b43cbe9f97ccd97823fc6d377661}
+      \strng{authorbibnamehash}{2b98b43cbe9f97ccd97823fc6d377661}
+      \strng{authornamehash}{968640b746901336bd3fcab11b9fcd0b}
+      \strng{authorfullhash}{2b98b43cbe9f97ccd97823fc6d377661}
+      \strng{authorfullhashraw}{2b98b43cbe9f97ccd97823fc6d377661}
+      \field{sortinit}{C}
+      \field{sortinithash}{4d103a86280481745c9c897c925753c0}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Medical Imaging and Radiation Oncology}
+      \field{number}{5}
+      \field{title}{A Review of Medical Image Data Augmentation Techniques for Deep Learning Applications}
+      \field{volume}{65}
+      \field{year}{2021}
+      \field{pages}{545\bibrangedash 563}
+      \range{pages}{19}
+      \verb{doi}
+      \verb 10.1111/1754-9485.13261
+      \endverb
+    \endentry
     \entry{choi2020pose2mesh}{article}{}{}
       \name{author}{3}{}{%
         {{un=0,uniquepart=base,hash=0ffc335f94a2c1a6e18515823c241fcf}{%
@@ -652,6 +717,48 @@
       \range{pages}{16}
       \verb{doi}
       \verb 10.1109/TMI.2002.804426
+      \endverb
+    \endentry
+    \entry{garland1997qem}{article}{}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=b65b1e0d8d79fe6e41bb998ea526b3cd}{%
+           family={Garland},
+           familyi={G\bibinitperiod},
+           given={Michael},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=8f9598aabaf2312feba985421616712c}{%
+           family={Heckbert},
+           familyi={H\bibinitperiod},
+           given={Paul\bibnamedelima S.},
+           giveni={P\bibinitperiod\bibinitdelim S\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{publisher}{1}{%
+        {ACM Press/Addison-Wesley Publishing Co.}%
+      }
+      \strng{namehash}{23aa512fc4888e5a31b95cb70780877b}
+      \strng{fullhash}{23aa512fc4888e5a31b95cb70780877b}
+      \strng{fullhashraw}{23aa512fc4888e5a31b95cb70780877b}
+      \strng{bibnamehash}{23aa512fc4888e5a31b95cb70780877b}
+      \strng{authorbibnamehash}{23aa512fc4888e5a31b95cb70780877b}
+      \strng{authornamehash}{23aa512fc4888e5a31b95cb70780877b}
+      \strng{authorfullhash}{23aa512fc4888e5a31b95cb70780877b}
+      \strng{authorfullhashraw}{23aa512fc4888e5a31b95cb70780877b}
+      \field{sortinit}{G}
+      \field{sortinithash}{32d67eca0634bf53703493fb1090a2e8}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Proceedings of the 24th Annual Conference on Computer Graphics and Interactive Techniques}
+      \field{title}{Surface Simplification Using Quadric Error Metrics}
+      \field{year}{1997}
+      \field{pages}{209\bibrangedash 216}
+      \range{pages}{8}
+      \verb{doi}
+      \verb 10.1145/258734.258849
       \endverb
     \endentry
     \entry{gropp2020igr}{article}{}{}
@@ -1010,6 +1117,43 @@
       \verb 10.1145/37402.37422
       \endverb
     \endentry
+    \entry{martinisla2023mnms2}{article}{}{}
+      \true{moreauthor}
+      \true{morelabelname}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=47bde4d21c3f2171ba0d877eb32dcc64}{%
+           family={Martín-Isla},
+           familyi={M\bibinithyphendelim I\bibinitperiod},
+           given={Carlos},
+           giveni={C\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{41dd1487a83459629de73246ebc1cf42}
+      \strng{fullhash}{41dd1487a83459629de73246ebc1cf42}
+      \strng{fullhashraw}{41dd1487a83459629de73246ebc1cf42}
+      \strng{bibnamehash}{41dd1487a83459629de73246ebc1cf42}
+      \strng{authorbibnamehash}{41dd1487a83459629de73246ebc1cf42}
+      \strng{authornamehash}{41dd1487a83459629de73246ebc1cf42}
+      \strng{authorfullhash}{41dd1487a83459629de73246ebc1cf42}
+      \strng{authorfullhashraw}{41dd1487a83459629de73246ebc1cf42}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Journal of Biomedical and Health Informatics}
+      \field{number}{7}
+      \field{title}{Deep Learning Segmentation of the Right Ventricle in Cardiac {MRI}: The {M\&Ms} Challenge}
+      \field{volume}{27}
+      \field{year}{2023}
+      \field{pages}{3302\bibrangedash 3313}
+      \range{pages}{12}
+      \verb{doi}
+      \verb 10.1109/JBHI.2023.3267857
+      \endverb
+    \endentry
     \entry{medrano2014lvshapevariation}{article}{}{}
       \true{moreauthor}
       \true{morelabelname}
@@ -1310,6 +1454,93 @@
       \range{pages}{8}
       \verb{doi}
       \verb 10.1007/978-3-319-24574-4_28
+      \endverb
+    \endentry
+    \entry{shapira2008sdf}{article}{}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=19980a85fe75eb78b973fadb0b47ed98}{%
+           family={Shapira},
+           familyi={S\bibinitperiod},
+           given={Lior},
+           giveni={L\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=2462bcffc1fe2b2516806856ac49610b}{%
+           family={Shamir},
+           familyi={S\bibinitperiod},
+           given={Ariel},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=cdf44d78713bc27a81394749a9d8bbdc}{%
+           family={Cohen-Or},
+           familyi={C\bibinithyphendelim O\bibinitperiod},
+           given={Daniel},
+           giveni={D\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{79521c90adbc82d0033cb8bee2e880dc}
+      \strng{fullhash}{f31d6be0e02b91fdf0d94effd0a9b5ad}
+      \strng{fullhashraw}{f31d6be0e02b91fdf0d94effd0a9b5ad}
+      \strng{bibnamehash}{f31d6be0e02b91fdf0d94effd0a9b5ad}
+      \strng{authorbibnamehash}{f31d6be0e02b91fdf0d94effd0a9b5ad}
+      \strng{authornamehash}{79521c90adbc82d0033cb8bee2e880dc}
+      \strng{authorfullhash}{f31d6be0e02b91fdf0d94effd0a9b5ad}
+      \strng{authorfullhashraw}{f31d6be0e02b91fdf0d94effd0a9b5ad}
+      \field{sortinit}{S}
+      \field{sortinithash}{b164b07b29984b41daf1e85279fbc5ab}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{The Visual Computer}
+      \field{number}{4}
+      \field{title}{Consistent Mesh Partitioning and Skeletonisation Using the Shape Diameter Function}
+      \field{volume}{24}
+      \field{year}{2008}
+      \field{pages}{249\bibrangedash 259}
+      \range{pages}{11}
+      \verb{doi}
+      \verb 10.1007/s00371-007-0197-5
+      \endverb
+    \endentry
+    \entry{shorten2019augmentation}{article}{}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=d49d1c5cbce775054678e29a462ca723}{%
+           family={Shorten},
+           familyi={S\bibinitperiod},
+           given={Connor},
+           giveni={C\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=c7e0de384e7d1be2ca29a338e7f5c047}{%
+           family={Khoshgoftaar},
+           familyi={K\bibinitperiod},
+           given={Taghi\bibnamedelima M.},
+           giveni={T\bibinitperiod\bibinitdelim M\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{dae7c2fd5449b2cabfe6d8cea2eebe96}
+      \strng{fullhash}{dae7c2fd5449b2cabfe6d8cea2eebe96}
+      \strng{fullhashraw}{dae7c2fd5449b2cabfe6d8cea2eebe96}
+      \strng{bibnamehash}{dae7c2fd5449b2cabfe6d8cea2eebe96}
+      \strng{authorbibnamehash}{dae7c2fd5449b2cabfe6d8cea2eebe96}
+      \strng{authornamehash}{dae7c2fd5449b2cabfe6d8cea2eebe96}
+      \strng{authorfullhash}{dae7c2fd5449b2cabfe6d8cea2eebe96}
+      \strng{authorfullhashraw}{dae7c2fd5449b2cabfe6d8cea2eebe96}
+      \field{sortinit}{S}
+      \field{sortinithash}{b164b07b29984b41daf1e85279fbc5ab}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Big Data}
+      \field{title}{A Survey on Image Data Augmentation for Deep Learning}
+      \field{volume}{6}
+      \field{year}{2019}
+      \field{pages}{60}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1186/s40537-019-0197-0
       \endverb
     \endentry
     \entry{sudlow2015ukbiobank}{article}{}{}
@@ -2118,6 +2349,71 @@
       \verb 10.1161/hc0402.102975
       \endverb
     \endentry
+    \entry{chlap2021augmentation}{article}{}{}
+      \name{author}{6}{}{%
+        {{un=0,uniquepart=base,hash=4e1d16434f23b88ee7ffd40a176ff593}{%
+           family={Chlap},
+           familyi={C\bibinitperiod},
+           given={Phillip},
+           giveni={P\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=9d6ee237baed14758c4aa28b13e7d05b}{%
+           family={Min},
+           familyi={M\bibinitperiod},
+           given={Hang},
+           giveni={H\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=daf46a327780d03c6b6be0c8ce378525}{%
+           family={Vandenberg},
+           familyi={V\bibinitperiod},
+           given={Nym},
+           giveni={N\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=0f7397e2c366cde7d6f5fb26470e455f}{%
+           family={Dowling},
+           familyi={D\bibinitperiod},
+           given={Jason},
+           giveni={J\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=1110f654b79b1d5996e16dfc5a7aacbe}{%
+           family={Holloway},
+           familyi={H\bibinitperiod},
+           given={Lois},
+           giveni={L\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=940ba228b29fdf01379e489453d12b02}{%
+           family={Haworth},
+           familyi={H\bibinitperiod},
+           given={Annette},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{968640b746901336bd3fcab11b9fcd0b}
+      \strng{fullhash}{2b98b43cbe9f97ccd97823fc6d377661}
+      \strng{fullhashraw}{2b98b43cbe9f97ccd97823fc6d377661}
+      \strng{bibnamehash}{2b98b43cbe9f97ccd97823fc6d377661}
+      \strng{authorbibnamehash}{2b98b43cbe9f97ccd97823fc6d377661}
+      \strng{authornamehash}{968640b746901336bd3fcab11b9fcd0b}
+      \strng{authorfullhash}{2b98b43cbe9f97ccd97823fc6d377661}
+      \strng{authorfullhashraw}{2b98b43cbe9f97ccd97823fc6d377661}
+      \field{sortinit}{C}
+      \field{sortinithash}{4d103a86280481745c9c897c925753c0}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Medical Imaging and Radiation Oncology}
+      \field{number}{5}
+      \field{title}{A Review of Medical Image Data Augmentation Techniques for Deep Learning Applications}
+      \field{volume}{65}
+      \field{year}{2021}
+      \field{pages}{545\bibrangedash 563}
+      \range{pages}{19}
+      \verb{doi}
+      \verb 10.1111/1754-9485.13261
+      \endverb
+    \endentry
     \entry{choi2020pose2mesh}{article}{}{}
       \name{author}{3}{}{%
         {{un=0,uniquepart=base,hash=0ffc335f94a2c1a6e18515823c241fcf}{%
@@ -2339,6 +2635,48 @@
       \range{pages}{16}
       \verb{doi}
       \verb 10.1109/TMI.2002.804426
+      \endverb
+    \endentry
+    \entry{garland1997qem}{article}{}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=b65b1e0d8d79fe6e41bb998ea526b3cd}{%
+           family={Garland},
+           familyi={G\bibinitperiod},
+           given={Michael},
+           giveni={M\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=8f9598aabaf2312feba985421616712c}{%
+           family={Heckbert},
+           familyi={H\bibinitperiod},
+           given={Paul\bibnamedelima S.},
+           giveni={P\bibinitperiod\bibinitdelim S\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{publisher}{1}{%
+        {ACM Press/Addison-Wesley Publishing Co.}%
+      }
+      \strng{namehash}{23aa512fc4888e5a31b95cb70780877b}
+      \strng{fullhash}{23aa512fc4888e5a31b95cb70780877b}
+      \strng{fullhashraw}{23aa512fc4888e5a31b95cb70780877b}
+      \strng{bibnamehash}{23aa512fc4888e5a31b95cb70780877b}
+      \strng{authorbibnamehash}{23aa512fc4888e5a31b95cb70780877b}
+      \strng{authornamehash}{23aa512fc4888e5a31b95cb70780877b}
+      \strng{authorfullhash}{23aa512fc4888e5a31b95cb70780877b}
+      \strng{authorfullhashraw}{23aa512fc4888e5a31b95cb70780877b}
+      \field{sortinit}{G}
+      \field{sortinithash}{32d67eca0634bf53703493fb1090a2e8}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Proceedings of the 24th Annual Conference on Computer Graphics and Interactive Techniques}
+      \field{title}{Surface Simplification Using Quadric Error Metrics}
+      \field{year}{1997}
+      \field{pages}{209\bibrangedash 216}
+      \range{pages}{8}
+      \verb{doi}
+      \verb 10.1145/258734.258849
       \endverb
     \endentry
     \entry{gropp2020igr}{article}{}{}
@@ -2697,6 +3035,43 @@
       \verb 10.1145/37402.37422
       \endverb
     \endentry
+    \entry{martinisla2023mnms2}{article}{}{}
+      \true{moreauthor}
+      \true{morelabelname}
+      \name{author}{1}{}{%
+        {{un=0,uniquepart=base,hash=47bde4d21c3f2171ba0d877eb32dcc64}{%
+           family={Martín-Isla},
+           familyi={M\bibinithyphendelim I\bibinitperiod},
+           given={Carlos},
+           giveni={C\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{41dd1487a83459629de73246ebc1cf42}
+      \strng{fullhash}{41dd1487a83459629de73246ebc1cf42}
+      \strng{fullhashraw}{41dd1487a83459629de73246ebc1cf42}
+      \strng{bibnamehash}{41dd1487a83459629de73246ebc1cf42}
+      \strng{authorbibnamehash}{41dd1487a83459629de73246ebc1cf42}
+      \strng{authornamehash}{41dd1487a83459629de73246ebc1cf42}
+      \strng{authorfullhash}{41dd1487a83459629de73246ebc1cf42}
+      \strng{authorfullhashraw}{41dd1487a83459629de73246ebc1cf42}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Journal of Biomedical and Health Informatics}
+      \field{number}{7}
+      \field{title}{Deep Learning Segmentation of the Right Ventricle in Cardiac {MRI}: The {M\&Ms} Challenge}
+      \field{volume}{27}
+      \field{year}{2023}
+      \field{pages}{3302\bibrangedash 3313}
+      \range{pages}{12}
+      \verb{doi}
+      \verb 10.1109/JBHI.2023.3267857
+      \endverb
+    \endentry
     \entry{medrano2014lvshapevariation}{article}{}{}
       \true{moreauthor}
       \true{morelabelname}
@@ -2997,6 +3372,93 @@
       \range{pages}{8}
       \verb{doi}
       \verb 10.1007/978-3-319-24574-4_28
+      \endverb
+    \endentry
+    \entry{shapira2008sdf}{article}{}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=19980a85fe75eb78b973fadb0b47ed98}{%
+           family={Shapira},
+           familyi={S\bibinitperiod},
+           given={Lior},
+           giveni={L\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=2462bcffc1fe2b2516806856ac49610b}{%
+           family={Shamir},
+           familyi={S\bibinitperiod},
+           given={Ariel},
+           giveni={A\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=cdf44d78713bc27a81394749a9d8bbdc}{%
+           family={Cohen-Or},
+           familyi={C\bibinithyphendelim O\bibinitperiod},
+           given={Daniel},
+           giveni={D\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{79521c90adbc82d0033cb8bee2e880dc}
+      \strng{fullhash}{f31d6be0e02b91fdf0d94effd0a9b5ad}
+      \strng{fullhashraw}{f31d6be0e02b91fdf0d94effd0a9b5ad}
+      \strng{bibnamehash}{f31d6be0e02b91fdf0d94effd0a9b5ad}
+      \strng{authorbibnamehash}{f31d6be0e02b91fdf0d94effd0a9b5ad}
+      \strng{authornamehash}{79521c90adbc82d0033cb8bee2e880dc}
+      \strng{authorfullhash}{f31d6be0e02b91fdf0d94effd0a9b5ad}
+      \strng{authorfullhashraw}{f31d6be0e02b91fdf0d94effd0a9b5ad}
+      \field{sortinit}{S}
+      \field{sortinithash}{b164b07b29984b41daf1e85279fbc5ab}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{The Visual Computer}
+      \field{number}{4}
+      \field{title}{Consistent Mesh Partitioning and Skeletonisation Using the Shape Diameter Function}
+      \field{volume}{24}
+      \field{year}{2008}
+      \field{pages}{249\bibrangedash 259}
+      \range{pages}{11}
+      \verb{doi}
+      \verb 10.1007/s00371-007-0197-5
+      \endverb
+    \endentry
+    \entry{shorten2019augmentation}{article}{}{}
+      \name{author}{2}{}{%
+        {{un=0,uniquepart=base,hash=d49d1c5cbce775054678e29a462ca723}{%
+           family={Shorten},
+           familyi={S\bibinitperiod},
+           given={Connor},
+           giveni={C\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=c7e0de384e7d1be2ca29a338e7f5c047}{%
+           family={Khoshgoftaar},
+           familyi={K\bibinitperiod},
+           given={Taghi\bibnamedelima M.},
+           giveni={T\bibinitperiod\bibinitdelim M\bibinitperiod},
+           givenun=0}}%
+      }
+      \strng{namehash}{dae7c2fd5449b2cabfe6d8cea2eebe96}
+      \strng{fullhash}{dae7c2fd5449b2cabfe6d8cea2eebe96}
+      \strng{fullhashraw}{dae7c2fd5449b2cabfe6d8cea2eebe96}
+      \strng{bibnamehash}{dae7c2fd5449b2cabfe6d8cea2eebe96}
+      \strng{authorbibnamehash}{dae7c2fd5449b2cabfe6d8cea2eebe96}
+      \strng{authornamehash}{dae7c2fd5449b2cabfe6d8cea2eebe96}
+      \strng{authorfullhash}{dae7c2fd5449b2cabfe6d8cea2eebe96}
+      \strng{authorfullhashraw}{dae7c2fd5449b2cabfe6d8cea2eebe96}
+      \field{sortinit}{S}
+      \field{sortinithash}{b164b07b29984b41daf1e85279fbc5ab}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \true{uniqueprimaryauthor}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Big Data}
+      \field{title}{A Survey on Image Data Augmentation for Deep Learning}
+      \field{volume}{6}
+      \field{year}{2019}
+      \field{pages}{60}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1186/s40537-019-0197-0
       \endverb
     \endentry
     \entry{sudlow2015ukbiobank}{article}{}{}

@@ -9,6 +9,7 @@
 % --- Encoding & language -------------------------------------
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+\usepackage{mathptmx}             % Times New Roman-like text & math
 \usepackage[english,portuguese]{babel}
 
 % --- Math ----------------------------------------------------
@@ -18,15 +19,20 @@
 \usepackage{amsthm}
 
 % --- Layout --------------------------------------------------
-\usepackage[a4paper, margin=2.5cm]{geometry}
-\usepackage[onehalfspacing]{setspace}
+\usepackage[a4paper, margin=2.5cm, footskip=1.25cm]{geometry} % page no. 1.25cm from edge
+\usepackage{setspace}
+\setstretch{1.5}                    % true 1.5 line spacing (matches Word)
 \usepackage{fancyhdr}
 \usepackage{titlesec}
 \usepackage{chngcntr}
+\usepackage[hang]{footmisc}        % hanging footnotes (norm 2.1.xi)
+\setlength{\footnotemargin}{0.4cm} % 0.4cm hanging indent on wrapped note lines
+\renewcommand{\footnotelayout}{\fontsize{11}{13}\selectfont\singlespacing} % 11pt, single
 
 % --- Graphics & typography -----------------------------------
 \usepackage{graphicx}
 \graphicspath{{images/}}
+\usepackage{float}
 \usepackage{eurosym}
 \usepackage{enumitem}
 \usepackage{etoolbox}
@@ -68,6 +74,11 @@
 ]{biblatex}
 \addbibresource{bibliography/references.bib}
 
+% References: same size as text, single-spaced, 0.7cm hanging, no gap (norm 2.1.xii)
+\renewcommand*{\bibfont}{\normalfont\normalsize\singlespacing}
+\setlength{\bibitemsep}{0pt}
+\setlength{\bibhang}{0.7cm}
+
 % --- Cross-references (load AFTER hyperref) ------------------
 \usepackage[hidelinks]{hyperref}
 \usepackage[noabbrev, capitalise]{cleveref}
@@ -80,15 +91,34 @@
   pdfkeywords = {keyword1, keyword2, keyword3}, % TODO: keywords
 }
 
-% --- Section style (template default) ------------------------
+% --- Heading styles (matched to the ISCTE Word template) -----
+%  Body: Times 12pt justified, first-line indent 0.7cm.
+%  Section 14pt bold, Subsection 12pt bold (left-aligned).
+%  Chapter: "CHAPTER N" 12pt caps centred + 18pt bold centred title.
+\setlength{\parindent}{0.7cm}
 \makeatletter
   \def\section{\@startsection{section}{1}%
     \z@{.5\linespacing\@plus.7\linespacing}{.25\linespacing}%
-    {\normalfont\bfseries\flushleft}}
+    {\normalfont\fontsize{14}{16.8}\selectfont\bfseries\flushleft}}
   \def\subsection{\@startsection{subsection}{2}%
     \z@{.5\linespacing\@plus.7\linespacing}{.25\linespacing}%
-    {\normalfont\bfseries\flushleft}}
+    {\normalfont\fontsize{12}{14.4}\selectfont\bfseries\flushleft}}
 \makeatother
+
+\titleformat{\chapter}[display]
+  {\normalfont\centering}
+  {\fontsize{12}{14.4}\selectfont\MakeUppercase{\chaptername}\ \thechapter}
+  {8pt}
+  {\fontsize{18}{22}\selectfont\bfseries}
+\titlespacing*{\chapter}{0pt}{10pt}{20pt}
+
+% Unnumbered front/back chapters (Resumo, Abstract, References): 16pt bold centred
+\titleformat{name=\chapter,numberless}[display]
+  {\normalfont\centering}
+  {}
+  {0pt}
+  {\fontsize{16}{19.2}\selectfont\bfseries}
+\titlespacing*{name=\chapter,numberless}{0pt}{10pt}{20pt}
 
 % --- Numbering scopes ----------------------------------------
 \numberwithin{equation}{chapter}

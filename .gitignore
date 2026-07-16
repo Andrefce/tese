@@ -28,3 +28,6 @@ __pycache__/
 .vscode/
 .DS_Store
 Thumbs.db
+
+scripts/webapp
+/webapp

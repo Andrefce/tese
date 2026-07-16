@@ -29,7 +29,12 @@ OUT_PATH = ROOT / "images/fig_contour_augmentation.png"
 C_ENDO = "#0072B2"
 C_EPI = "#D55E00"
 C_GREY = "#7A7A7A"
-VISUAL_Z_BOOST = 8.0
+# The NIfTI header reports 1 mm through-plane spacing, so the 10 acquired SAX
+# levels span only ~9 mm and any mesh built from them collapses to a pancake.
+# A realistic clinical SAX slice gap is applied consistently to both the
+# contour stacks and the reconstructed mesh so every panel shows true LV
+# long-axis proportions at the same scale.
+SLICE_MM = 8.0
 
 
 def load_segmentation() -> tuple[np.ndarray, tuple[float, float, float]]:
@@ -72,7 +77,7 @@ def contour_stack(seg: np.ndarray, spacing: tuple[float, float, float]) -> tuple
             xyz = np.column_stack([
                 xy[:, 1] * spacing[1],
                 xy[:, 0] * spacing[0],
-                np.full(len(xy), z * spacing[2]),
+                np.full(len(xy), float(sid) * SLICE_MM),
             ])
             points.append(np.column_stack([xyz, np.full(len(xyz), tissue)]))
             slice_ids.append(np.full(len(xyz), sid, dtype=np.int16))
@@ -121,19 +126,15 @@ def style_3d(ax: plt.Axes) -> None:
     ax.view_init(elev=17, azim=-61)
     ax.set_proj_type("ortho")
     ax.set_box_aspect((1.0, 1.0, 1.0))
-    ax.set_xlim(-0.72, 0.72)
-    ax.set_ylim(-0.72, 0.72)
-    ax.set_zlim(-0.46, 0.46)
+    ax.set_xlim(-0.62, 0.62)
+    ax.set_ylim(-0.62, 0.62)
+    ax.set_zlim(-0.62, 0.62)
     ax.set_axis_off()
     ax.set_facecolor("white")
 
 
 def draw_contours(ax: plt.Axes, contour: np.ndarray) -> None:
     contour = contour.copy()
-    # The source stack has 1 mm slice spacing and a roughly 100 mm in-plane
-    # field of view. Exaggerating only the display z coordinate makes the
-    # clinically important slice sparsity legible without altering the data.
-    contour[:, 2] *= VISUAL_Z_BOOST
     for tissue, colour in ((0, C_ENDO), (1, C_EPI)):
         points = contour[contour[:, 3] == tissue]
         ax.scatter(points[:, 0], points[:, 1], points[:, 2], s=4.5,
@@ -153,60 +154,75 @@ def smoothed_mesh(mask: np.ndarray, spacing: tuple[float, float, float]) -> tupl
 def draw_target(ax: plt.Axes, seg: np.ndarray, spacing: tuple[float, float, float]) -> None:
     all_vertices = []
     meshes = []
-    for mask, colour, alpha in ((seg == 3, C_ENDO, 0.92), (np.isin(seg, [2, 3]), C_EPI, 0.23)):
-        vertices, faces = smoothed_mesh(mask, spacing)
+    # Reconstruct the mesh with the same realistic slice spacing used for the
+    # contour stacks so panel (f) matches panels (a)--(e) in scale and shape.
+    mesh_spacing = (spacing[0], spacing[1], SLICE_MM)
+    # Endocardium drawn as an opaque inner surface, epicardium as a translucent
+    # outer shell so the myocardial wall is visible.
+    for mask, colour, alpha in ((seg == 3, C_ENDO, 1.0), (np.isin(seg, [2, 3]), C_EPI, 0.20)):
+        vertices, faces = smoothed_mesh(mask, mesh_spacing)
         all_vertices.append(vertices)
         meshes.append((vertices, faces, colour, alpha))
-    centre = np.vstack(all_vertices).mean(axis=0)
-    scale = max(np.ptp(np.vstack(all_vertices), axis=0))
+    stacked = np.vstack(all_vertices)
+    centre = stacked.mean(axis=0)
+    # Same normalisation as the contour panels: centre and divide by max extent.
+    scale = max(np.ptp(stacked, axis=0))
+    light = np.array([0.3, 0.4, 0.85])
+    light = light / np.linalg.norm(light)
     for vertices, faces, colour, alpha in meshes:
-        vertices = (vertices - centre) / scale
-        vertices[:, 2] *= -VISUAL_Z_BOOST
-        face_colour = (*to_rgb(colour), alpha)
-        ax.add_collection3d(Poly3DCollection(vertices[faces], facecolors=face_colour,
-                                              edgecolors="none", linewidths=0.0))
+        vertices = (vertices - centre) / max(scale, 1e-8)
+        # Match the contour treatment: flip the long axis only.
+        vertices[:, 2] *= -1.0
+        tris = vertices[faces]
+        base_rgb = np.array(to_rgb(colour))
+        if alpha >= 0.99:
+            # Flat shading for the opaque endocardium to convey 3D curvature.
+            normals = np.cross(tris[:, 1] - tris[:, 0], tris[:, 2] - tris[:, 0])
+            norms = np.linalg.norm(normals, axis=1, keepdims=True)
+            normals = normals / np.clip(norms, 1e-8, None)
+            shade = np.clip(np.abs(normals @ light), 0.0, 1.0)
+            shade = 0.45 + 0.55 * shade
+            face_colours = np.clip(base_rgb[None, :] * shade[:, None], 0.0, 1.0)
+            face_colours = np.column_stack([face_colours, np.full(len(tris), alpha)])
+            collection = Poly3DCollection(tris, facecolors=face_colours,
+                                          edgecolors="none", linewidths=0.0)
+        else:
+            face_colour = (*base_rgb, alpha)
+            collection = Poly3DCollection(tris, facecolors=face_colour,
+                                          edgecolors=(*base_rgb, 0.35), linewidths=0.15)
+        collection.set_sort_zpos(0.0 if alpha >= 0.99 else 1.0)
+        ax.add_collection3d(collection)
     style_3d(ax)
 
 
-def label_panel(ax: plt.Axes, label: str, title: str, subtitle: str) -> None:
-    ax.set_title(f"{label} {title}", loc="left", fontsize=10.5, fontweight="bold", pad=5)
-    ax.text2D(0.0, -0.11, subtitle, transform=ax.transAxes, fontsize=8.2,
-              color="#454545", ha="left", va="top", linespacing=1.25)
+def label_panel(ax: plt.Axes, label: str) -> None:
+    ax.text2D(0.02, 0.02, label, transform=ax.transAxes, fontsize=11,
+              fontweight="bold", color="#202020", ha="left", va="bottom")
 
 
 def main() -> None:
     seg, spacing = load_segmentation()
     original, slice_ids = contour_stack(seg, spacing)
     panels = [
-        ("(a)", "Original contour stack", "Sparse SAX observation", original),
-        ("(b)", "Translation + jitter", "Independent in-plane shift per slice\nand point-wise in-plane noise", augment(original, slice_ids, "translation_jitter")),
-        ("(c)", "Slice dropout", "Two SAX levels omitted\n(at least three levels are retained)", augment(original, slice_ids, "slice_dropout")),
-        ("(d)", "Rotation + scale", "Long-axis rotation and\nglobal scale perturbation", augment(original, slice_ids, "rotation_scale")),
-        ("(e)", "Point dropout", "Thirty percent of contour\npoints omitted", augment(original, slice_ids, "point_dropout")),
+        ("(a)", original),
+        ("(b)", augment(original, slice_ids, "translation_jitter")),
+        ("(c)", augment(original, slice_ids, "slice_dropout")),
+        ("(d)", augment(original, slice_ids, "rotation_scale")),
+        ("(e)", augment(original, slice_ids, "point_dropout")),
     ]
 
-    fig = plt.figure(figsize=(16.0, 4.8), dpi=300, facecolor="white")
-    grid = fig.add_gridspec(1, 6, left=0.035, right=0.99, bottom=0.20, top=0.78, wspace=0.16)
-    for index, (label, title, subtitle, points) in enumerate(panels):
+    fig = plt.figure(figsize=(16.0, 3.4), dpi=300, facecolor="white")
+    grid = fig.add_gridspec(1, 6, left=0.01, right=0.99, bottom=0.02, top=0.98, wspace=0.05)
+    for index, (label, points) in enumerate(panels):
         ax = fig.add_subplot(grid[0, index], projection="3d")
         draw_contours(ax, points)
-        label_panel(ax, label, title, subtitle)
+        label_panel(ax, label)
 
     target_ax = fig.add_subplot(grid[0, 5], projection="3d")
     draw_target(target_ax, seg, spacing)
-    label_panel(target_ax, "(f)", "Fixed 3D supervision", "Derived mesh, sampled surfaces,\nand query targets are unchanged")
+    label_panel(target_ax, "(f)")
 
-    fig.text(0.035, 0.925, "Contour-input augmentation during CardioSDF training",
-             fontsize=15, fontweight="bold", color="#202020", ha="left")
-    fig.text(0.035, 0.875,
-             "Every training stream receives a representative perturbation of its encoder observation; the paired target in panel (f) remains fixed.",
-             fontsize=9.5, color="#454545", ha="left")
-    fig.text(0.035, 0.055, "● Endocardium", color=C_ENDO, fontsize=9.5, fontweight="bold")
-    fig.text(0.145, 0.055, "● Epicardium", color=C_EPI, fontsize=9.5, fontweight="bold")
-    fig.text(0.292, 0.055, "Display z is exaggerated to make SAX slice spacing visible; all panels use the same patient002 ED case.",
-             color=C_GREY, fontsize=8.8)
-
-    fig.savefig(OUT_PATH, dpi=300, facecolor="white", bbox_inches="tight", pad_inches=0.08)
+    fig.savefig(OUT_PATH, dpi=300, facecolor="white", bbox_inches="tight", pad_inches=0.05)
     print(f"Saved {OUT_PATH}")
 
 
