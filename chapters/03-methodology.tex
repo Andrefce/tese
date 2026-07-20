@@ -611,6 +611,80 @@ rings is preserved and only the observation frame changes.
 	\end{tabular}
 \end{table}
 
+\subsection{Dataset composition and splits}
+\label{subsec:dataset-composition}
+\noindent
+This subsection reports how many samples each data stream finally
+contributes and how the real streams are divided for training and
+evaluation. The real data come from two public collections: the Automated
+Cardiac Diagnosis Challenge (ACDC) and the second Multi-Centre,
+Multi-Vendor and Multi-Disease Cardiac Segmentation challenge (M\&Ms-2).
+Together they provide 460 patients (100 from ACDC and 360 from M\&Ms-2). For
+each patient we reconstruct one mesh at end-diastole (ED, the fully filled
+ventricle) and one at end-systole (ES, the contracted ventricle), giving two
+real streams. The synthetic stream is generated from the UK Digital Heart
+Project SSM: of its 100 modes, the first 32 already capture 99\% of the shape
+variance, so we sample within that sub-space. Drawing shape coefficients under
+the Mahalanobis bound of \cref{eq:ssm-latent-constraint} and rejecting
+implausible shapes yields 1300 accepted meshes out of 2048 candidates (63\%).
+
+Not every real patient produces a usable mesh. A segmentation may be a
+long-axis view, cover too few slices, or fail an anatomical plausibility check,
+such as an endocardium that is not fully enclosed by the epicardium. After
+these quality gates, 444 of the 460 patients yield a valid ED mesh and 423
+yield a valid ES mesh. \Cref{fig:dataset-pipeline} summarises this attrition
+for the three streams.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\linewidth]{dataset_pipeline}
+	\caption{Number of candidate samples and how many survive the quality gates
+	for each data stream. The real streams start from the 460 indexed patients;
+	the synthetic stream starts from the 2048 sampled shape vectors.}
+	\label{fig:dataset-pipeline}
+\end{figure}
+
+To prevent information from leaking between training and evaluation, the real
+streams are split by patient: all meshes from a given patient stay within a
+single split. \Cref{fig:dataset-splits} shows the resulting composition. The
+ED stream is divided into 310 training, 67 validation, and 67 test patients,
+and the ES stream into 338 training, 66 validation, and 19 test patients. The
+synthetic ED meshes are used only to enrich the pre-training stage and are
+never placed in the validation or test sets.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\linewidth]{dataset_splits}
+	\caption{Patient-level train, validation, and test split for the two real
+	streams. Splitting by patient guarantees that no patient appears in more
+	than one partition.}
+	\label{fig:dataset-splits}
+\end{figure}
+
+\Cref{tab:dataset-summary} collects the final sample counts. In total, the
+model is trained and evaluated on 867 real LV meshes, supported by up to 1300
+synthetic ED meshes during pre-training.
+
+\begin{table}[H]
+	\centering
+	\caption{Final sample counts for the three data streams. Real streams report
+	patients that pass the quality gates; the synthetic stream reports accepted
+	meshes.}
+	\label{tab:dataset-summary}
+	\small
+	\begin{tabular}{l l c c c c c}
+		\toprule
+		Stream & Source & Phase & Valid & \multicolumn{3}{c}{Split} \\
+		\cmidrule(lr){5-7}
+		       &        &       & meshes & Train & Val. & Test \\
+		\midrule
+		Real ED      & ACDC + M\&Ms-2 & ED & 444  & 310 & 67 & 67 \\
+		Real ES      & ACDC + M\&Ms-2 & ES & 423  & 338 & 66 & 19 \\
+		Synthetic ED & UK Biobank SSM & ED & 1300 & \multicolumn{3}{c}{pre-training only} \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
 \section{Model Architecture}
 \label{sec:architecture}
 \noindent

@@ -11,49 +11,188 @@ described in \cref{ch:methodology}.
 \section{Experimental Setup}
 \label{sec:setup}
 \noindent
-% TODO: datasets, hardware, software versions, hyper-parameters.
-
-\subsection{Datasets}
-\label{subsec:datasets}
-\noindent
-% TODO
+We evaluate the final CardioSDF model, obtained by pre-training on the synthetic
+SSM meshes and then fine-tuning on the real end-diastolic (ED) and end-systolic
+(ES) data, as described in \cref{ch:methodology}. The datasets, quality gates,
+and patient-level splits are reported in \cref{subsec:dataset-composition}; all
+numbers below are computed on the held-out test partitions, which contain no
+patient seen during training. Two questions guide the evaluation: how faithfully
+the model reconstructs the LV surfaces from sparse contours, and how the analytic
+wall thickness it produces compares with independent measurement algorithms
+applied to the same geometry.
 
 \subsection{Metrics}
 \label{subsec:metrics}
 \noindent
-% TODO: precision, recall, F1, accuracy, etc. — define each formally.
+Reconstruction quality is measured with four quantities. The \emph{Chamfer
+distance} averages, for every reconstructed vertex, the distance to the nearest
+ground-truth surface point and vice versa, reported separately for the
+endocardium and the epicardium in millimetres; smaller is better. The
+\emph{slice residual} is the mean absolute signed-distance value at the input
+contour points, and measures how closely the reconstructed surface passes
+through the observed short-axis (SAX) rings, again in millimetres. The
+\emph{watertight rate} is the fraction of reconstructed meshes that form a
+closed surface with no holes. The \emph{volume ratio} is the reconstructed
+cavity or wall volume divided by its ground-truth value, so that a value of one
+indicates no systematic over- or under-estimation.
+
+Wall thickness is summarised by its mean, its dispersion (standard deviation),
+and its 5th and 95th percentiles across the myocardial surface, all in
+millimetres. These percentiles describe the thin apical and thick basal
+extremes without being distorted by isolated outliers.
 
 \subsection{Baselines}
 \label{subsec:baselines}
 \noindent
-% TODO: list the baselines for comparison.
+Because no paired ground-truth 3D mesh exists for the clinical scans (see
+\cref{subsec:missing-ground-truth}), the reconstruction is compared against the
+derived meshes built from the segmentations, and the analytic wall thickness is
+compared against the four measurement algorithms selected in
+\cref{subsec:thickness-methods}: the Laplace field method, the Yezzi--Prince
+method, the SDF cone-ray method, and the Euclidean Distance Transform (EDT)
+boundary sum kept as a volumetric baseline. As an external plausibility anchor,
+we also report the mean wall thickness obtained directly from the input
+segmentation.
 
 \section{Results}
 \label{sec:results}
 \noindent
-% TODO: present the results. Use tables and figures.
+This section reports first the geometric quality of the reconstruction and then
+the wall-thickness measurements obtained from the reconstructed geometry.
 
-% Example results table:
-% \begin{table}[htbp]
-%   \centering
-%   \caption{Performance comparison on the benchmark.}
-%   \label{tab:results}
-%   \begin{tabular}{l c c c}
-%     \toprule
-%     Method        & Precision & Recall & F1 \\
-%     \midrule
-%     Baseline      & 0.72      & 0.68   & 0.70 \\
-%     Proposed      & \textbf{0.85} & \textbf{0.81} & \textbf{0.83} \\
-%     \bottomrule
-%   \end{tabular}
-% \end{table}
+\subsection{Reconstruction Quality}
+\label{subsec:reconstruction-quality}
+\noindent
+\Cref{tab:reconstruction-quality} summarises the reconstruction accuracy on the
+test set. The endocardial and epicardial surfaces are recovered with a mean
+Chamfer distance of $1.12$~mm and $1.17$~mm respectively, which is close to the
+$1.0$~mm isotropic resolution of the prepared data and therefore near the limit
+of what the derived meshes can resolve. The mean slice residual of $0.57$~mm
+shows that the reconstructed surfaces pass through the observed SAX contours
+with sub-millimetre agreement, confirming that the model honours its input. The
+cavity and wall volumes are reproduced almost exactly, with volume ratios of
+$1.00$ for the endocardium and $1.02$ for the epicardium.
+
+Every reconstructed mesh is watertight, for both the endocardium and the
+epicardium. This is a direct consequence of reading the surfaces as zero-level
+sets of a continuous signed-distance field rather than assembling them from
+per-slice contours, and it holds without any mesh repair, hole filling, or cap
+synthesis. The monotone-epi coupling also guarantees a strictly positive wall:
+the analytic thickness never collapses to zero, with a 5th percentile of
+$2.33$~mm that stays well above the enforced floor.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Reconstruction quality of the final CardioSDF model on the test set.
+    Chamfer distance and slice residual are in millimetres; the volume ratio is
+    dimensionless with an ideal value of one.}
+  \label{tab:reconstruction-quality}
+  \begin{tabular}{l c}
+    \toprule
+    Metric & Value \\
+    \midrule
+    Endocardium Chamfer distance (mm) & 1.12 \\
+    Epicardium Chamfer distance (mm)  & 1.17 \\
+    Slice residual (mm)               & 0.57 \\
+    Endocardium volume ratio          & 1.00 \\
+    Epicardium volume ratio           & 1.02 \\
+    Watertight rate (endocardium)     & 100\% \\
+    Watertight rate (epicardium)      & 100\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Wall-Thickness Measurement}
+\label{subsec:wall-thickness-results}
+\noindent
+The analytic wall thickness read directly from the decoder has a mean of
+$5.31 \pm 0.41$~mm across the test set, with a 5th percentile of $2.33$~mm and a
+95th percentile of $6.67$~mm. These values fall within the normal range for the
+LV myocardium and are consistent with the four independent algorithms applied to
+the same reconstructed surfaces.
+
+\Cref{tab:wall-thickness-results} lists the mean, standard deviation, and 5th and
+95th percentiles for each of the four selected methods, and
+\cref{fig:wall-thickness-comparison} shows the same comparison graphically. The
+three transmural estimators agree to within roughly one millimetre of the mean:
+the Laplace field reports $5.08$~mm, the SDF cone-ray method $5.47$~mm, and the
+Yezzi--Prince method $4.30$~mm. The EDT boundary sum returns a lower mean of
+$3.58$~mm, as expected for a voxel-based estimator that measures the shortest
+transmural distance and therefore reads low in curved regions; it is retained
+only as a baseline. For reference, the mean wall thickness measured directly from
+the input segmentation is $3.61$~mm, and a plain nearest-neighbour measurement on
+the model surface gives $4.55$~mm, so the surface-based and field-based
+estimators bracket the segmentation reference from above, as expected when the
+reconstruction fills in a smooth, complete wall rather than a slice-limited one.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Wall-thickness statistics for the four selected methods, computed on
+    the CardioSDF-generated LV geometry. All values are in millimetres.}
+  \label{tab:wall-thickness-results}
+  \begin{tabular}{l c c c c}
+    \toprule
+    Method & Mean & Std. & $p_{5}$ & $p_{95}$ \\
+    \midrule
+    Laplace field (state of the art) & 5.08 & 1.70 & 2.92 & 8.62 \\
+    Yezzi--Prince (recent)           & 4.30 & 1.43 & 0.96 & 5.80 \\
+    SDF cone rays (promising)        & 5.47 & 1.15 & 3.25 & 7.16 \\
+    \addlinespace
+    EDT boundary sum (baseline)      & 3.58 & 0.86 & 1.49 & 4.81 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.9\textwidth]{wall_thickness_methods_comparison}
+  \caption{Mean wall thickness of the four selected methods on the reconstructed
+    LV geometry, with whiskers spanning the 5th to 95th percentile. The dashed
+    line marks the mean wall thickness measured directly from the input
+    segmentation.}
+  \label{fig:wall-thickness-comparison}
+\end{figure}
 
 \section{Discussion}
 \label{sec:discussion}
 \noindent
-% TODO: interpret the results, discuss why the approach works (or doesn't).
+The results support the two central design choices of CardioSDF. First, encoding
+the LV as a signed-distance field yields watertight surfaces in every test case
+without any post-processing, which removes the mesh-repair heuristics that a
+contour-stacking pipeline would otherwise require. Second, the monotone-epi
+coupling delivers a wall that is positive everywhere, so the analytic thickness
+is usable as a measurement rather than merely a by-product: its mean of
+$5.31$~mm and its percentile range agree with the established Laplace field and
+with the SDF cone-ray estimator to within about one millimetre.
+
+The spread between methods is informative rather than contradictory. Field-based
+transmural estimators and surface-based ray estimators measure thickness along
+slightly different paths, and the EDT baseline reads systematically lower because
+straight-line voxel distances underestimate thickness where the wall curves. The
+agreement of the three transmural methods, together with the sub-millimetre slice
+residual and near-unit volume ratios, indicates that the reconstructed geometry
+is both accurate at the observed slices and plausible between them, which is
+precisely where sparse SAX acquisitions provide no direct evidence.
 
 \section{Threats to Validity}
 \label{sec:threats}
 \noindent
-% TODO: discuss limitations and threats to internal/external validity.
+The most important limitation concerns the ground truth. The reconstruction is
+evaluated against meshes \emph{derived} from the segmentations, not against
+independently acquired 3D surfaces, so the Chamfer distances measure agreement
+with a derived target rather than with true anatomy. For the same reason, the
+wall-thickness comparison is an inter-method and reproducibility study on shared
+geometry, not a clinical validation: without expert manual wall-thickness
+measurements, the thesis can claim an objective and locally resolved
+computational framework, but not the replacement of clinical measurement
+protocols.
+
+Several further factors bound the external validity of the results. The real
+data come from two public collections (ACDC and M\&Ms-2), and the ES test
+partition is small, so per-phase estimates carry more uncertainty than the ED
+ones. The wall-thickness percentiles depend on the AHA orientation and on the
+$96^3$ inference grid, both of which introduce discretisation effects that a
+finer grid or an alternative anatomical frame could shift. Finally, the synthetic
+epicardium used during pre-training is a geometric construction rather than a
+measured surface, which the fine-tuning stage on real data is designed to
+correct but cannot fully rule out as a residual prior.
