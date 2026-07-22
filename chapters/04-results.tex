@@ -39,7 +39,11 @@ indicates no systematic over- or under-estimation.
 Wall thickness is summarised by its mean, its dispersion (standard deviation),
 and its 5th and 95th percentiles across the myocardial surface, all in
 millimetres. These percentiles describe the thin apical and thick basal
-extremes without being distorted by isolated outliers.
+extremes without being distorted by isolated outliers. When the two cardiac
+phases are compared, we additionally report the absolute wall thickening,
+$\Delta_{\text{ES}-\text{ED}}$, and the relative thickening as a percentage of
+the end-diastolic value, which are the standard descriptors of regional
+contractile function.
 
 \subsection{Baselines}
 \label{subsec:baselines}
@@ -54,11 +58,52 @@ boundary sum kept as a volumetric baseline. As an external plausibility anchor,
 we also report the mean wall thickness obtained directly from the input
 segmentation.
 
+\section{Training}
+\label{sec:training}
+\noindent
+The final CardioSDF model is produced in two stages. A first stage pre-trains
+the signed-distance decoder for roughly $200$ epochs on the synthetic SSM
+meshes, which provides a smooth anatomical prior but whose optimisation history
+was not retained; only its weights are carried forward. The second stage, on
+which the reported model is based, fine-tunes these weights on the real
+end-diastolic and end-systolic data described in \cref{ch:methodology}. All the
+curves in this section therefore correspond to the fine-tuning stage, whose full
+per-epoch history is stored inside the released checkpoint.
+
+Fine-tuning runs for $776$ epochs with the AdamW optimiser (learning rate
+$2\times10^{-5}$, weight decay $5\times10^{-4}$) under a cosine-annealing
+schedule with warm restarts, mixed-precision arithmetic, and an effective batch
+size of $16$. The composite objective is the ten-term signed-distance loss of
+\cref{ch:methodology}, combining the on-surface, Eikonal, off-surface, sign, and
+wall-regularisation terms. \Cref{fig:training-curves} plots the total loss and
+its principal components together with two optimisation diagnostics. The total
+training loss decreases from $10.07$ at the first fine-tuning epoch to $0.91$,
+and the validation loss settles at $0.70$, with the best checkpoint selected at
+epoch $695$ before mild over-fitting appears. The surface and Eikonal terms fall
+by more than an order of magnitude, confirming that the reconstructed surfaces
+converge onto the observed contours while the field approaches a true
+signed-distance function; consistently, the mean gradient norm
+$\lVert\nabla f\rVert$ stabilises at $0.996$, essentially the unit value the
+Eikonal term enforces.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{training_curves}
+  \caption{CardioSDF fine-tuning history. Panels (a)--(d) show the total loss
+    and its surface, Eikonal, and off-surface components for the training and
+    validation splits; the dashed vertical line marks the best epoch. Panels
+    (e)--(f) show the mean field gradient norm, whose target is one, and the
+    cosine-annealing learning-rate schedule. The synthetic pre-training stage is
+    not shown because its optimisation history was not retained.}
+  \label{fig:training-curves}
+\end{figure}
+
 \section{Results}
 \label{sec:results}
 \noindent
-This section reports first the geometric quality of the reconstruction and then
-the wall-thickness measurements obtained from the reconstructed geometry.
+This section reports first the geometric quality of the reconstruction, then the
+wall-thickness measurements obtained from the reconstructed geometry, and finally
+the regional analysis over the AHA 17-segment model.
 
 \subsection{Reconstruction Quality}
 \label{subsec:reconstruction-quality}
@@ -80,6 +125,27 @@ per-slice contours, and it holds without any mesh repair, hole filling, or cap
 synthesis. The monotone-epi coupling also guarantees a strictly positive wall:
 the analytic thickness never collapses to zero, with a 5th percentile of
 $2.33$~mm that stays well above the enforced floor.
+
+\Cref{fig:recon-ed-es-meshes} shows the reconstructed endocardial and
+epicardial surfaces for a representative case at both cardiac phases. The
+end-systolic cavity is visibly smaller than the end-diastolic one, and the
+surrounding wall correspondingly thicker, which is the expected effect of
+contraction and confirms that the phase-conditioning input steers the decoder
+towards the correct geometry. Both surfaces are read as zero-level sets of the
+signed-distance field and closed with a single largest-component and hole-filling
+pass, so that each rendered body is a closed manifold rather than a stack of
+per-slice contours.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{recon_ed_es_meshes}
+  \caption{Reconstructed left-ventricular surfaces at end-diastole (left) and
+    end-systole (right) for a representative case. The opaque red surface is the
+    endocardium and the translucent grey shell is the epicardium. The
+    end-systolic cavity is smaller and the wall thicker, consistent with
+    contraction.}
+  \label{fig:recon-ed-es-meshes}
+\end{figure}
 
 \begin{table}[htbp]
   \centering
@@ -152,6 +218,74 @@ reconstruction fills in a smooth, complete wall rather than a slice-limited one.
     segmentation.}
   \label{fig:wall-thickness-comparison}
 \end{figure}
+
+\subsection{Regional Analysis over the AHA 17-Segment Model}
+\label{subsec:aha17-results}
+\noindent
+To localise the measurements anatomically, the reconstructed surface is
+partitioned into the seventeen segments of the American Heart Association (AHA)
+model, assigning each myocardial vertex to a basal, mid-cavity, apical, or
+apical-cap segment from its normalised long-axis height and its circumferential
+angle relative to the right-ventricular insertion.
+\Cref{fig:aha17-bullseye} shows the resulting bullseye map of mean wall
+thickness, and \cref{tab:aha17-thickening} reports, for every segment, the mean
+end-diastolic and end-systolic thickness together with the absolute and relative
+wall thickening between the two phases.
+
+The regional pattern is anatomically consistent. The mid-cavity segments are the
+thickest, with end-diastolic means between $6.85$ and $8.09$~mm, while the basal
+segments and the apical cap are thinner, as expected where the wall tapers
+towards the valve plane and the apex. Every segment thickens from end-diastole to
+end-systole, with a cohort-typical mid-wall thickening of roughly $25\%$; the
+two septal basal segments are the only near-static regions ($-2.0\%$ and
+$+2.2\%$), a pattern commonly observed near the right-ventricular insertion. The
+apical cap shows the largest relative change ($+130\%$), which reflects its very
+small end-diastolic thickness rather than an unusually large absolute motion.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.72\textwidth]{results_aha17_bullseye}
+  \caption{AHA 17-segment bullseye map of mean wall thickness on the
+    reconstructed left-ventricular geometry. Basal segments form the outer ring
+    (1--6), mid-cavity segments the middle ring (7--12), apical segments the
+    inner ring (13--16), and the apical cap the centre (17).}
+  \label{fig:aha17-bullseye}
+\end{figure}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Regional wall thickness over the AHA 17-segment model. Columns give
+    the mean end-diastolic (ED) and end-systolic (ES) thickness in millimetres,
+    the absolute thickening $\Delta_{\text{ES}-\text{ED}}$ in millimetres, and
+    the relative thickening as a percentage of the ED value.}
+  \label{tab:aha17-thickening}
+  \begin{tabular}{c l c c c c}
+    \toprule
+    \# & Segment & ED (mm) & ES (mm) & $\Delta$ (mm) & Thickening (\%) \\
+    \midrule
+    1  & Basal Anterior       & 3.11 & 5.58 & $+2.47$ & $+79.2$ \\
+    2  & Basal Anteroseptal   & 4.22 & 4.14 & $-0.08$ & $-2.0$ \\
+    3  & Basal Inferoseptal   & 2.74 & 2.80 & $+0.06$ & $+2.2$ \\
+    4  & Basal Inferior       & 2.79 & 3.50 & $+0.71$ & $+25.6$ \\
+    5  & Basal Inferolateral  & 3.94 & 5.30 & $+1.37$ & $+34.7$ \\
+    6  & Basal Anterolateral  & 3.23 & 5.18 & $+1.95$ & $+60.6$ \\
+    \addlinespace
+    7  & Mid Anterior         & 7.55 & 9.44 & $+1.89$ & $+25.0$ \\
+    8  & Mid Anteroseptal     & 7.66 & 9.64 & $+1.98$ & $+25.9$ \\
+    9  & Mid Inferoseptal     & 7.45 & 9.43 & $+1.98$ & $+26.6$ \\
+    10 & Mid Inferior         & 7.24 & 8.94 & $+1.70$ & $+23.4$ \\
+    11 & Mid Inferolateral    & 6.85 & 8.77 & $+1.91$ & $+27.9$ \\
+    12 & Mid Anterolateral    & 8.09 & 10.17 & $+2.08$ & $+25.8$ \\
+    \addlinespace
+    13 & Apical Anterior      & 6.65 & 9.20 & $+2.55$ & $+38.4$ \\
+    14 & Apical Septal        & 5.77 & 7.54 & $+1.77$ & $+30.6$ \\
+    15 & Apical Inferior      & 5.75 & 7.78 & $+2.03$ & $+35.4$ \\
+    16 & Apical Lateral       & 6.13 & 9.76 & $+3.63$ & $+59.1$ \\
+    \addlinespace
+    17 & Apex                 & 3.28 & 7.56 & $+4.28$ & $+130.5$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
 \section{Discussion}
 \label{sec:discussion}
