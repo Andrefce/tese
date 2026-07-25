@@ -4,9 +4,13 @@ Reconstructs the left ventricle of ACDC patient002 at end-diastole (ED,
 frame01) and end-systole (ES, frame12) from the SAX segmentation contours,
 using the phase-conditioned CardioSDF decoder (phase channel 0 for ED, 1 for
 ES). The endo/epi surfaces are the zero-level sets of the signed-distance
-field, then cleaned and hole-filled into closed (watertight) manifolds using
-the same post-processing as the cohort evaluation. Watertight status is
-printed.
+field, then cleaned, hole-filled, and (if the field was truncated at the valve
+plane) base-capped into closed manifolds. The long axis is flipped for display
+via ``FLIP_LONG_AXIS_FOR_DISPLAY`` so the apex points down. Watertight status is
+printed; verify it is True before using the figure.
+
+NOTE: orientation, watertightness, and physical calibration should ultimately be
+fixed upstream in ``core.sdf_model``; the controls here are render-side fallbacks.
 
 Output: images/recon_ed_es_meshes.png
 """
@@ -49,12 +53,87 @@ SEG_ES = (
 OUT_DIR = ROOT / "images"
 GRID_RES = 96
 
+# Long-axis (Z) display orientation. The raw reconstructions currently render
+# "upside down" (the basal valve plane points up); when True the long axis is
+# flipped so the apex points down and the base up, matching the clinical view.
+# This is a DISPLAY-ONLY correction until the orientation is fixed upstream in
+# core.sdf_model — verify visually after the first render and flip if needed.
+FLIP_LONG_AXIS_FOR_DISPLAY = True
+
 COL_ENDO = "#e63946"
 COL_EPI = "#b8c6d6"
 
 
+def _cap_open_boundaries(mesh: trimesh.Trimesh) -> trimesh.Trimesh:
+    """Close open boundary loops with a centroid fan to make the mesh watertight.
+
+    Marching cubes truncated at the top of the grid leaves the LV open at the
+    valve plane, and ``trimesh.repair.fill_holes`` only closes small holes. Each
+    remaining open boundary loop (edges used by a single face) is closed by
+    adding its centroid as a new vertex and fan-triangulating the loop to it.
+    This is a geometric fallback for visualisation; the proper fix belongs in the
+    upstream field extraction.
+    """
+    try:
+        edges = mesh.edges_sorted
+        uniq, counts = np.unique(edges, axis=0, return_counts=True)
+        boundary = uniq[counts == 1]
+        if len(boundary) == 0:
+            return mesh
+        adj: dict[int, list[int]] = {}
+        for a, b in boundary.tolist():
+            adj.setdefault(a, []).append(b)
+            adj.setdefault(b, []).append(a)
+        verts = list(np.asarray(mesh.vertices, dtype=np.float64))
+        faces = list(np.asarray(mesh.faces, dtype=np.int64))
+        used: set[tuple[int, int]] = set()
+
+        def key(a: int, b: int) -> tuple[int, int]:
+            return (a, b) if a < b else (b, a)
+
+        for a0, nbrs in adj.items():
+            for b0 in nbrs:
+                if key(a0, b0) in used:
+                    continue
+                loop = [a0]
+                used.add(key(a0, b0))
+                prev, cur = a0, b0
+                loop.append(cur)
+                steps = 0
+                while cur != a0 and steps < len(boundary) + 2:
+                    steps += 1
+                    nxt = None
+                    for cand in adj.get(cur, ()):
+                        if cand != prev and key(cur, cand) not in used:
+                            nxt = cand
+                            break
+                    if nxt is None:
+                        break
+                    used.add(key(cur, nxt))
+                    prev, cur = cur, nxt
+                    if cur == a0:
+                        break
+                    loop.append(cur)
+                if len(loop) < 3:
+                    continue
+                centre = np.mean([verts[i] for i in loop], axis=0)
+                ci = len(verts)
+                verts.append(centre)
+                for i in range(len(loop)):
+                    faces.append([loop[i], loop[(i + 1) % len(loop)], ci])
+        return trimesh.Trimesh(vertices=np.asarray(verts),
+                               faces=np.asarray(faces, dtype=np.int64),
+                               process=False)
+    except Exception:
+        return mesh
+
+
 def _clean_surface(mesh: trimesh.Trimesh) -> trimesh.Trimesh:
-    """Largest component, fill holes, fix normals -> closed manifold."""
+    """Merge vertices, keep largest component, fill holes, cap, fix normals."""
+    try:
+        mesh.merge_vertices()
+    except Exception:
+        pass
     if hasattr(mesh, "nondegenerate_faces"):
         mesh.update_faces(mesh.nondegenerate_faces())
     if hasattr(mesh, "unique_faces"):
@@ -73,15 +152,28 @@ def _clean_surface(mesh: trimesh.Trimesh) -> trimesh.Trimesh:
             trimesh.repair.fill_holes(mesh)
         except Exception:
             break
+    if not mesh.is_watertight:
+        mesh = _cap_open_boundaries(mesh)
     trimesh.repair.fix_normals(mesh)
     return mesh
 
 
 def reconstruct(model, cfg, seg_path: Path, phase: float, label: str):
-    img = nib.as_closest_canonical(nib.load(str(seg_path)))
+    raw = nib.load(str(seg_path))
+    img = nib.as_closest_canonical(raw)
     seg = np.asarray(img.dataobj)
     affine = img.affine
-    dz = float(abs(affine[2, 2])) or 1.0
+    # Robust through-plane spacing. Some ACDC/M&Ms NIfTIs store the real voxel
+    # spacing only in the header pixdim while their affine is identity, which
+    # would collapse the 10 mm SAX slice spacing to 1 mm and flatten the LV
+    # long axis by ~10x. Express the slice spacing in the affine's in-plane unit
+    # so the long-axis aspect ratio is correct whether or not the affine is
+    # calibrated (for a well-formed affine this reduces to |affine[2, 2]|).
+    zooms = np.abs(np.asarray(raw.header.get_zooms()[:3], dtype=float))
+    aff_inplane = float(np.linalg.norm(affine[:3, 0])) or 1.0
+    true_inplane = float(min(zooms[0], zooms[1])) or 1.0
+    true_slice = float(zooms[2]) or 1.0
+    dz = true_slice * (aff_inplane / true_inplane)
     contours = extract_contours(seg, affine, dz)
     xyz_n = contours["xyz"]
     scale = contours["scale"]
@@ -99,6 +191,13 @@ def reconstruct(model, cfg, seg_path: Path, phase: float, label: str):
     flip = np.array([1.0, 1.0, -1.0 if FLIP_Z else 1.0], dtype=np.float32)
     endo_mm = endo_v * flip * scale + centroid
     epi_mm = epi_v * flip * scale + centroid
+
+    if FLIP_LONG_AXIS_FOR_DISPLAY:
+        # Display-only long-axis correction (apex down, base up). Both surfaces
+        # are flipped identically so their relative geometry is preserved; the
+        # camera reframes on the mesh centre so the absolute offset is irrelevant.
+        endo_mm[:, 2] *= -1.0
+        epi_mm[:, 2] *= -1.0
 
     endo = _clean_surface(trimesh.Trimesh(endo_mm, endo_f.astype(np.int32),
                                           process=False))
