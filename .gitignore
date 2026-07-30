@@ -22,7 +22,12 @@ __pycache__/
 *.xdv
 
 # Keep the final PDF if you want to commit it; otherwise uncomment:
-# main.pdf
+main.pdf
+
+# --- Local datasets (not versioned) ---------------------
+notebooks/data/
+*.nii
+*.nii.gz
 
 # --- Editor / OS -----------------------------------------
 .vscode/
