@@ -10,7 +10,7 @@ It should be used as a scratch planning file before writing the final LaTeX chap
 ### Main thesis idea
 - The work is not only about making a 3D model. The complete idea is: reconstruct a 3D left-ventricle (LV) model from 2D short-axis (SAX) MRI contours, then use that reconstructed model to measure LV myocardial wall thickness locally and objectively.
 - The final proposed method is CardioSDF: a phase-conditioned signed-distance implicit neural representation that predicts endocardial and epicardial SDFs and also gives analytic wall thickness through the learned delta field.
-- The wall-thickness part is central: the model enforces a positive wall thickness by construction and the separate wall-thickness notebook compares 10 measurement algorithms on the same CardioSDF geometry.
+- The wall-thickness part is central: the model enforces a positive wall thickness by construction and the separate wall-thickness notebook compares four measurement algorithms on the same CardioSDF geometry.
 
 ### Notebook 1 — `datasetED_ssm.ipynb`
 - A synthetic end-diastolic dataset was created from the UK Biobank / UK Digital Heart Project LV Statistical Shape Model.
@@ -58,11 +58,11 @@ It should be used as a scratch planning file before writing the final LaTeX chap
 
 ### Notebook 5 — `lv_wall_thickness_10_methods.ipynb`
 - This notebook estimates LV wall thickness on the trained CardioSDF 3D model, not directly on raw segmentation meshes.
-- The notebook explicitly states that the trained model is first used to generate endocardial and epicardial 3D surfaces, and the 10 methods are then applied to that model geometry.
+- The notebook explicitly states that the trained model is first used to generate endocardial and epicardial 3D surfaces, and the wall-thickness methods are then applied to that model geometry.
 - The input segmentation is used only to extract contour rings for CardioSDF and to orient AHA-17 anatomy. The analysis meshes and volumetric masks are generated from the CardioSDF/INR output.
 - Each method returns per-endocardial-vertex wall thickness in millimetres, allowing local maps rather than only one global mean.
-- The 10 implemented methods are: KD-tree nearest neighbour, symmetric KD-tree, normal rays, EDT boundary sum, EDT medial axis, Laplace field, geodesic Dijkstra, SDF cone rays, regularised correspondence, and Yezzi–Prince.
-- The notebook produces a summary table, a 10-panel 3D wall-thickness colour-map figure, an AHA-17 bullseye figure for all methods, and an AHA anatomical QA figure for base/apex and septal orientation.
+- The notebook implements a broader exploratory survey, but the thesis reports four representative methods: the Laplace field, Yezzi–Prince, and SDF cone-ray estimators, with the EDT boundary sum kept as a volumetric baseline.
+- The notebook produces a summary table, 3D wall-thickness colour-map figures, an AHA-17 bullseye figure, and an AHA anatomical QA figure for base/apex and septal orientation.
 - This is the evidence for the thesis question about local wall-thickness changes and for the objective comparison of LV wall-thickness algorithms.
 
 ### What can already be written safely
@@ -86,8 +86,8 @@ It should be used as a scratch planning file before writing the final LaTeX chap
 - The most important technical-core sections are: data preparation, cache/contour representation, CardioSDF architecture, monotone-epi wall-thickness parameterisation, loss function, inference, and the wall-thickness measurement protocol.
 
 ### What is still missing before the thesis is strong
-- **Final comparison table:** Chapter 4 needs one decisive table that compares CardioSDF analytic thickness and the 10 wall-thickness methods using the same geometry. Include mean, median, std, p5, p95, min, max, valid/finite fraction, runtime, and warnings/failures.
-- **A simple baseline:** Add at least one baseline so the thesis is not only "our method works". Good options are direct marching cubes from segmentation masks, KD-tree thickness on segmentation-derived meshes, or an older SSM/ray-based approach if the results exist. If a baseline cannot be completed, state this honestly and present the 10-method comparison as an internal reproducibility benchmark.
+- **Final comparison table:** Chapter 4 needs one decisive table that compares CardioSDF analytic thickness and the four wall-thickness methods using the same geometry. Include mean, median, std, p5, p95, min, max, valid/finite fraction, runtime, and warnings/failures.
+- **A simple baseline:** Add at least one baseline so the thesis is not only "our method works". Good options are direct marching cubes from segmentation masks, KD-tree thickness on segmentation-derived meshes, or an older SSM/ray-based approach if the results exist. If a baseline cannot be completed, state this honestly and present the four-method comparison as an internal reproducibility benchmark.
 - **Ground-truth honesty:** The wall-thickness study compares algorithms on CardioSDF geometry. Unless expert clinical measurements exist, do not claim clinical ground-truth accuracy. Claim objective, reproducible, local thickness estimation and method agreement/disagreement.
 - **Local wall-thickness evidence:** The thesis must visually prove local thickness, not only report global means. Include 3D surface colour maps and AHA-17 bullseye plots.
 - **Dataset counts:** Add exact counts for synthetic ED, real ED, and real ES after final cache generation: train/val/test, number of patients, number of samples, and augmentation status.
@@ -98,11 +98,11 @@ It should be used as a scratch planning file before writing the final LaTeX chap
 ### Minimum Evidence Package for Final Thesis
 - **Must-have table 1:** Dataset statistics and split table.
 - **Must-have table 2:** CardioSDF reconstruction metrics: watertight rate, endo Chamfer, epi Chamfer, slice residual, and possibly Hausdorff/HD95 if available.
-- **Must-have table 3:** Wall-thickness comparison across CardioSDF analytic δ and the 10 methods.
+- **Must-have table 3:** Wall-thickness comparison across CardioSDF analytic δ and the four methods.
 - **Must-have figure 1:** Full CardioSDF pipeline diagram from 2D SAX contours to 3D mesh and wall-thickness map.
 - **Must-have figure 2:** Example 3D reconstructions for ED and ES, preferably with input contours overlaid or shown beside them.
 - **Must-have figure 3:** Local wall-thickness colour map on the reconstructed LV.
-- **Must-have figure 4:** 10-method wall-thickness comparison panel.
+- **Must-have figure 4:** Four-method wall-thickness comparison panel.
 - **Must-have figure 5:** AHA-17 bullseye plot for regional wall thickness.
 - **Must-have figure 6:** AHA orientation / anatomical QA figure if used to justify regional mapping.
 - **Optional but strong:** A baseline comparison figure/table and one failure-case figure.
@@ -128,13 +128,13 @@ It should be used as a scratch planning file before writing the final LaTeX chap
   - **How it is answered:** Use CardioSDF from `training.ipynb`: input 2D SAX contour points + tissue label + cardiac phase, encode them with PointNet, decode endo/epi signed-distance fields, and extract 3D meshes with marching cubes on a 96³ grid.
 - **Question 2:** Can the reconstructed model show local wall-thickness changes, not only a global average?
   - **Thesis version:** Can local myocardial wall-thickness variation be estimated over the reconstructed LV surface and represented regionally, for example with 3D colour maps and AHA-17 bullseye plots?
-  - **How it is answered:** Use the analytic δ output of CardioSDF at endocardial vertices and the 10 wall-thickness methods from `lv_wall_thickness_10_methods.ipynb`; report local thickness maps, p5/p95 values, and AHA-17 regional plots.
+  - **How it is answered:** Use the analytic δ output of CardioSDF at endocardial vertices and the four wall-thickness methods from `lv_wall_thickness_10_methods.ipynb`; report local thickness maps, p5/p95 values, and AHA-17 regional plots.
 - **Question 3:** Can the model guarantee physically valid LV wall thickness?
   - **Thesis version:** Can the decoder architecture enforce positive myocardial wall thickness by construction instead of depending only on post-processing or manual correction?
   - **How it is answered:** Use the monotone-epi decoder from `training.ipynb`, where δ = τ_min + (δ_cap − τ_min)·σ(·) and f_epi = f_endo − δ, guaranteeing δ ≥ τ_min everywhere.
 - **Question 4:** Can an objective computational model be built for LV wall-thickness measurement?
   - **Thesis version:** Can CardioSDF provide a reproducible and objective framework for LV wall-thickness estimation, and how do established thickness algorithms compare when applied to the same reconstructed geometry?
-  - **How it is answered:** Compare the analytic CardioSDF thickness with 10 methods implemented in `lv_wall_thickness_10_methods.ipynb`: KD-tree, symmetric KD-tree, normal rays, EDT boundary sum, EDT medial axis, Laplace field, geodesic Dijkstra, SDF cone rays, regularised correspondence, and Yezzi–Prince.
+  - **How it is answered:** Compare the analytic CardioSDF thickness with four representative methods evaluated in `lv_wall_thickness_10_methods.ipynb`: the Laplace field, Yezzi–Prince, and SDF cone-ray estimators, with the EDT boundary sum as a volumetric baseline.
 - **From:** `training.ipynb` for the reconstruction and analytic wall-thickness model; `lv_wall_thickness_10_methods.ipynb` for local/regional wall-thickness evaluation.
 
 ### 1.4 Objectives
@@ -143,14 +143,14 @@ It should be used as a scratch planning file before writing the final LaTeX chap
 - Measure local wall-thickness variation over the LV surface, not only one global mean value.
 - Represent local changes using 3D wall-thickness colour maps and AHA-17 bullseye regional plots.
 - Ensure wall thickness is positive by construction with the monotone-epi parameterisation.
-- Compare 10 wall-thickness methods on the same CardioSDF output geometry.
+- Compare four wall-thickness methods on the same CardioSDF output geometry.
 - **From:** What you implemented in `training.ipynb` and `lv_wall_thickness_10_methods.ipynb`.
 
 ### 1.5 Contributions
 - CardioSDF: signed-distance-field INR with monotone-epi decoder (guarantees δ ≥ τ_min).
 - Mixed training regime: synthetic ED (UK Biobank SSM) + real ED/ES (ACDC, M&Ms, M&Ms-2).
 - Local LV wall-thickness estimation from the reconstructed model using analytic δ values and regional AHA-17 visualisation.
-- Systematic comparison of 10 wall-thickness algorithms on model output.
+- Systematic comparison of four wall-thickness algorithms on model output.
 - **From:** `training.ipynb` and `lv_wall_thickness_10_methods.ipynb`.
 
 ### 1.6 Document Structure
@@ -185,17 +185,11 @@ It should be used as a scratch planning file before writing the final LaTeX chap
 - **From:** `datasetED_ssm.ipynb` (SSM), `training.ipynb` (PointNet encoder, INR-SDF).
 
 ### 2.4 Wall-Thickness Measurement Algorithms
-- **Write about:** Brief overview of 10 categories:
-  1. KD-tree nearest neighbour
-  2. Symmetric KD-tree
-  3. Normal rays (BVH intersections)
-  4. EDT boundary sum
-  5. EDT medial axis
-  6. Laplace PDE (∇²ψ=0)
-  7. Geodesic Dijkstra
-  8. SDF cone rays
-  9. Regularised correspondence (Laplacian smoothing)
-  10. Yezzi–Prince (Eulerian PDE: ∇ψ·∇u=−1)
+- **Write about:** Brief survey of the main wall-thickness method families (distance, ray, volumetric/EDT, PDE), then focus on the four evaluated in the thesis:
+  1. Laplace field (∇²ψ=0) — transmural reference
+  2. Yezzi–Prince (Eulerian PDE: ∇ψ·∇u=−1)
+  3. SDF cone rays
+  4. EDT boundary sum — volumetric baseline
 - **From:** `lv_wall_thickness_10_methods.ipynb` — cite the key papers for Laplace and Yezzi–Prince.
 
 ### 2.5 Related Work on LV Reconstruction
@@ -228,7 +222,7 @@ It should be used as a scratch planning file before writing the final LaTeX chap
 - CardioSDF architecture: 4--5 pages.
 - Loss function and training strategy: 3--4 pages.
 - Inference and analytic wall-thickness extraction: 1--2 pages.
-- Ten wall-thickness methods and AHA-17 protocol: 3--4 pages.
+- Four wall-thickness methods and AHA-17 protocol: 3--4 pages.
 
 ### 3.1 Overview
 - **Write about:** High-level pipeline: input (2D SAX contours + phase) → PointNet encoder → latent z → INR decoder → SDF (endo + epi) → marching cubes → watertight mesh → analytic wall thickness.
@@ -387,26 +381,23 @@ It should be used as a scratch planning file before writing the final LaTeX chap
 #### 3.5.1 Analytic Wall-Thickness Extraction
 - **Write about:** The analytic thickness is not a separate post-processing distance query. It comes from the decoder's bounded offset `δ` evaluated at endocardial vertices.
 - **Why it matters:** This directly connects reconstruction to wall-thickness measurement and answers the objective-model research question.
-- **Include:** conversion from normalised units to millimetres and the distinction between analytic CardioSDF thickness and the 10 external measurement methods.
+- **Include:** conversion from normalised units to millimetres and the distinction between analytic CardioSDF thickness and the four external measurement methods.
 
 ### 3.6 Wall-Thickness Measurement Methods
 - **Write about:**
-  - 10 algorithms applied to the model output meshes (not to voxel segmentations directly).
-  - Distance-based: KD-tree (1,2).
-  - Ray-based: Normal rays (3), SDF cone rays (8).
-  - Volumetric: EDT boundary sum (4), EDT medial axis (5).
-  - PDE-based: Laplace field (6, CG solver), Yezzi–Prince (10, Eulerian PDE).
-  - Graph-based: Geodesic Dijkstra (7, 26-neighbour).
-  - Mesh-based: Regularised correspondence (9, Laplacian smoothing).
+  - Four algorithms applied to the model output meshes (not to voxel segmentations directly), spanning the main method families.
+  - PDE-based: Laplace field (CG solver, transmural reference), Yezzi–Prince (Eulerian PDE).
+  - Ray-based: SDF cone rays.
+  - Volumetric: EDT boundary sum (baseline).
   - Key equations:
-    - KD-tree: t_i = min_j ‖p_i − q_j‖₂
+    - EDT boundary sum: t(x) = D_endo(x) + D_epi(x)
     - Laplace: ∇²ψ = 0 with ψ|_endo=0, ψ|_epi=1; t = 1/|∇ψ|
     - Yezzi–Prince: ∇ψ·∇u = −1 (u|_endo=0); t = u + v
     - Cone rays: median of K=7 hits at α=30° half-angle
 - **From:** `lv_wall_thickness_10_methods.ipynb`.
-- **Table:** 10-method implementation table. Columns: #, method, category, input representation, output, local/global, expected weakness.
-- **Equations:** include the main equations for KD-tree, Laplace, Yezzi-Prince, and SDF cone rays. Put longer derivations in Appendix A.
-- **Important wording:** these 10 methods are applied to CardioSDF-generated geometry, not directly to raw segmentation voxels.
+- **Table:** four-method implementation table. Columns: method, category, input representation, output, local/global, expected weakness.
+- **Equations:** include the main equations for EDT boundary sum, Laplace, Yezzi-Prince, and SDF cone rays. Put longer derivations in Appendix A.
+- **Important wording:** these four methods are applied to CardioSDF-generated geometry, not directly to raw segmentation voxels.
 
 ### Chapter 3 deliverables
 - **Figure 3.1:** complete CardioSDF pipeline.
@@ -417,7 +408,7 @@ It should be used as a scratch planning file before writing the final LaTeX chap
 - **Table 3.2:** cache field schema.
 - **Table 3.3:** model hyperparameters.
 - **Table 3.4:** loss terms.
-- **Table 3.5:** 10 wall-thickness methods.
+- **Table 3.5:** four wall-thickness methods.
 - **Equations:** monotone-epi thickness equations, bounded delta, training objective, Chamfer/SDF supervision if needed, and key wall-thickness equations.
 
 ---
@@ -455,7 +446,7 @@ It should be used as a scratch planning file before writing the final LaTeX chap
     - Chamfer distance to GT meshes (mm), separate for endo and epi.
   - Wall thickness:
     - Mean, p5, p95 (analytic δ × scale).
-    - Comparison across 10 methods.
+    - Comparison across four methods.
   - Slice residual: mean |f| on input contour points (mm).
 - **From:** `training.ipynb` evaluation, `lv_wall_thickness_10_methods.ipynb`.
 - **Equations:** define Chamfer distance, slice residual, and the wall-thickness summary statistics. If Hausdorff/HD95 is used, define it too.
@@ -465,7 +456,7 @@ It should be used as a scratch planning file before writing the final LaTeX chap
 - **Write about:** At least one comparison point so the results are not only CardioSDF in isolation.
 - **Preferred baseline:** direct segmentation-derived marching-cubes meshes, with KD-tree or Laplace thickness on those meshes.
 - **Alternative baseline:** older SSM/ray-based reconstruction if outputs exist and are fair to report.
-- **Minimum fallback if no baseline is finished:** explicitly state that the evaluation focuses on internal reconstruction quality and algorithmic comparison of 10 wall-thickness methods on a common CardioSDF geometry.
+- **Minimum fallback if no baseline is finished:** explicitly state that the evaluation focuses on internal reconstruction quality and algorithmic comparison of four wall-thickness methods on a common CardioSDF geometry.
 - **Table:** baseline/reference comparison table. Columns: method, input, output, watertightness, positive-thickness guarantee, local thickness support, main limitation.
 
 ### 4.2 Reconstruction Results
@@ -480,18 +471,18 @@ It should be used as a scratch planning file before writing the final LaTeX chap
 - **Figure:** qualitative ED and ES reconstructions. Show endocardium and epicardium, preferably with input SAX contours overlaid.
 - **Figure optional:** error heat map or point-cloud residual visualization if available.
 
-### 4.3 Wall-Thickness Comparison (10 Methods)
+### 4.3 Wall-Thickness Comparison (Four Methods)
 - **Write about:**
-  - Summary table: 10 methods × (mean, p5, p95, std) wall thickness in mm.
-  - 10-panel 3D colour-map figure (one subplot per method).
-  - AHA-17 bullseye plot for all methods (comparison of regional thickness).
+  - Summary table: four methods × (mean, p5, p95, std) wall thickness in mm.
+  - 3D colour-map figure (one subplot per method).
+  - AHA-17 bullseye plot for the reference method (regional thickness).
   - AHA anatomical QA figure (base/apex direction + septal orientation check).
   - Qualitative comparison: which methods agree, which are outliers?
 - **What was done:** The notebook computes per-endocardial-vertex thickness on the CardioSDF model geometry and produces the summary table, 3D colour maps, AHA-17 bullseye, and anatomical QA figure.
 - **From:** `lv_wall_thickness_10_methods.ipynb` outputs.
-- **Table:** final 10-method comparison. Include CardioSDF analytic δ as its own row if available, then methods 1–10. Columns: method, category, n, mean, median, std, p5, p95, min, max, finite fraction, runtime, warnings.
-- **Figure:** 10-panel 3D colour-map figure.
-- **Figure:** AHA-17 bullseye comparison for all methods.
+- **Table:** final four-method comparison. Include CardioSDF analytic δ as its own row if available, then the four methods. Columns: method, category, n, mean, median, std, p5, p95, min, max, finite fraction, runtime, warnings.
+- **Figure:** 3D colour-map figure.
+- **Figure:** AHA-17 bullseye comparison.
 - **Figure:** AHA anatomical QA figure to verify base/apex and septal orientation.
 - **Text:** explicitly discuss local variation: where thickness is higher/lower, and whether methods agree regionally.
 
@@ -522,11 +513,11 @@ It should be used as a scratch planning file before writing the final LaTeX chap
 - **Table 4.1:** final dataset split/statistics.
 - **Table 4.2:** reconstruction metrics.
 - **Table 4.3:** baseline/reference comparison.
-- **Table 4.4:** CardioSDF analytic thickness + 10-method thickness summary.
+- **Table 4.4:** CardioSDF analytic thickness + four-method thickness summary.
 - **Table 4.5 optional:** method failures/warnings or AHA-17 regional values.
 - **Figure 4.1:** ED/ES qualitative reconstructions.
 - **Figure 4.2:** local wall-thickness colour map on CardioSDF geometry.
-- **Figure 4.3:** 10-method 3D colour-map panel.
+- **Figure 4.3:** four-method 3D colour-map panel.
 - **Figure 4.4:** AHA-17 bullseye plot.
 - **Figure 4.5:** AHA orientation QA.
 - **Figure 4.6 optional:** failure case or baseline visual comparison.
@@ -536,7 +527,7 @@ It should be used as a scratch planning file before writing the final LaTeX chap
 ## Chapter 5: Conclusions
 
 ### 5.1 Summary
-- **Write about:** One-paragraph recap: we proposed CardioSDF (INR-SDF with monotone-epi guarantee), trained on mixed synthetic + real data, and compared 10 wall-thickness methods.
+- **Write about:** One-paragraph recap: we proposed CardioSDF (INR-SDF with monotone-epi guarantee), trained on mixed synthetic + real data, and compared four wall-thickness methods.
 - **From:** High-level summary of Chapters 3 and 4.
 
 ### 5.2 Revisiting the Research Questions
@@ -592,7 +583,7 @@ It should be used as a scratch planning file before writing the final LaTeX chap
 
 ### A.4 Full Result Tables
 - **Write:** Put oversized tables here if they interrupt Chapter 4 flow.
-- **Include if available:** full AHA-17 values for all 10 methods, per-case reconstruction metrics, method warnings, and runtime details.
+- **Include if available:** full AHA-17 values for all four methods, per-case reconstruction metrics, method warnings, and runtime details.
 - **From:** `training.ipynb` and `lv_wall_thickness_10_methods.ipynb`.
 
 ### A.5 Reproducibility Details
@@ -609,7 +600,7 @@ It should be used as a scratch planning file before writing the final LaTeX chap
 | `datasetED_real.ipynb` | Ch3 §3.2.2, Ch4 §4.1.1 | Real ED dataset (ACDC, M&Ms, M&Ms-2), Marching Cubes pipeline, anatomical prechecks |
 | `datasetES_real.ipynb` | Ch3 §3.2.3, Ch4 §4.1.1 | Real ES dataset, same pipeline as ED-real |
 | `training.ipynb` | Ch3 §3.3–3.5, Ch4 §4.1.2–4.2 | CardioSDF architecture (PointNet + INR), loss function, training regime, inference, reconstruction metrics |
-| `lv_wall_thickness_10_methods.ipynb` | Ch2 §2.4, Ch3 §3.6, Ch4 §4.3–4.5, App. A | 10 wall-thickness algorithms, equations, final comparison table, AHA-17 bullseye, colour maps, method warnings |
+| `lv_wall_thickness_10_methods.ipynb` | Ch2 §2.4, Ch3 §3.6, Ch4 §4.3–4.5, App. A | Four wall-thickness methods (selected from a broader survey), equations, final comparison table, AHA-17 bullseye, colour maps, method warnings |
 | Baseline/reference comparison | Ch4 §4.1.4, §4.2, §4.6 | Direct segmentation marching-cubes or older SSM/ray-based comparison if available; otherwise explicitly state as missing clinical/reference limitation |
 
 ---
@@ -620,6 +611,6 @@ It should be used as a scratch planning file before writing the final LaTeX chap
 3. Finish or export the final reconstruction metrics table from `training.ipynb`.
 4. Finish or export the final wall-thickness comparison table from `lv_wall_thickness_10_methods.ipynb`, including runtime, finite fraction, and warnings.
 5. Decide whether a baseline can be reported. If not, state the limitation clearly in Chapter 4 and Chapter 5.
-6. Export the required figures: CardioSDF pipeline, dataset preparation pipeline, model architecture, ED/ES reconstruction examples, local thickness map, 10-method colour map panel, AHA-17 bullseye, and AHA orientation QA.
+6. Export the required figures: CardioSDF pipeline, dataset preparation pipeline, model architecture, ED/ES reconstruction examples, local thickness map, four-method colour map panel, AHA-17 bullseye, and AHA orientation QA.
 7. Add citations to `references.bib` as you write (delegate to thesis-researcher if needed).
 8. Build with `latexmk -pdf main.tex` after each section to catch errors early.

@@ -996,19 +996,16 @@ AHA-17 regional summary.
 \subsection{Selected thickness methods}
 \label{subsec:thickness-methods}
 \noindent
-An exploratory survey implemented ten candidate wall-thickness algorithms on the
-reconstructed geometry, spanning geometric distances, ray intersections,
-volumetric distance fields, graph distances, mesh regularisation, and
-partial-differential-equation (PDE) formulations. Reporting all ten would add
-redundancy without changing the conclusions, because several algorithms are
-minor variants of the same underlying principle. We therefore select three
-representative methods that together capture the accuracy--robustness trade-off
-relevant to a signed-distance reconstruction: the Laplace field method as the
+We evaluate four wall-thickness algorithms on the reconstructed geometry, chosen
+to span the accuracy--robustness trade-off relevant to a signed-distance
+reconstruction across the main methodological families\,---\,volumetric distance
+fields, ray intersections, and partial-differential-equation (PDE) formulations.
+Three are used as the primary estimators: the Laplace field method as the
 established transmural reference, the Yezzi--Prince Eulerian PDE method as a more
 recent and numerically more stable formulation, and the signed-distance cone-ray
 method as a promising surface-based estimator that aligns naturally with the SDF
 geometry produced by CardioSDF. The Euclidean Distance Transform (EDT) boundary
-sum is retained only as a volumetric baseline for context. Each selected method
+sum is retained as a volumetric baseline for context. Each method
 returns local thickness
 values in millimetres at endocardial vertices or projected endocardial
 locations. The outputs are summarised with mean, median, standard deviation,

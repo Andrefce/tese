@@ -135,33 +135,28 @@ $$\mathcal{L} = λ_{surf}·L_{surf} + λ_{eik}·L_{eik} + λ_{off}·L_{off}
 - Wall thickness: mean, p5, p95 (analytic δ × scale).
 - Slice residual (mean |f| on input contour points, in mm).
 
-### 5. Wall-Thickness Measurement — 10 Methods
-**Notebook:** `notebooks/lv_wall_thickness_10_methods.ipynb`
+### 5. Wall-Thickness Measurement — Four Methods
+**Notebook:** `notebooks/lv_wall_thickness_10_methods.ipynb` (broader exploratory
+survey; the thesis reports only the four methods below)
 
-Applies 10 wall-thickness algorithms to the **trained CardioSDF model**
+Applies four wall-thickness algorithms to the **trained CardioSDF model**
 output surfaces (not directly to segmentation voxels):
 
-| # | Method | Category |
-|---|--------|----------|
-| 1 | KD-tree nearest neighbour | Distance |
-| 2 | Symmetric KD-tree | Distance |
-| 3 | Normal rays (BVH) | Ray |
-| 4 | EDT boundary sum | Volumetric |
-| 5 | EDT medial axis | Volumetric |
-| 6 | Laplace field (CG solver) | PDE |
-| 7 | Geodesic Dijkstra (26-neighbour) | Graph |
-| 8 | SDF cone rays (K=7, α=30°) | Ray |
-| 9 | Regularised correspondence (Laplacian smoothing) | Mesh |
-| 10 | Yezzi–Prince (Eulerian PDE, pyezzi) | PDE |
+| # | Method | Category | Role |
+|---|--------|----------|------|
+| 1 | Laplace field (CG solver) | PDE | State-of-the-art transmural reference |
+| 2 | Yezzi–Prince (Eulerian PDE, pyezzi) | PDE | Recent, numerically stable |
+| 3 | SDF cone rays (K=7, α=30°) | Ray / SDF | Promising surface-based estimator |
+| 4 | EDT boundary sum | Volumetric | Baseline |
 
 **Outputs:**
-- Summary table for 10 methods on CardioSDF model geometry.
-- 10-panel 3D wall-thickness colour-map figure.
-- AHA-17 bullseye figure for all methods.
+- Summary table for the four methods on CardioSDF model geometry.
+- 3D wall-thickness colour-map figure.
+- AHA-17 bullseye figure.
 - AHA anatomical QA figure (base/apex direction + septal orientation).
 
 **Key equations the thesis should reference:**
-- KD-tree: t_i = min_j ‖p_i − q_j‖₂
+- EDT boundary sum: t(x) = D_endo(x) + D_epi(x)
 - Laplace: ∇²ψ = 0 with ψ|_endo=0, ψ|_epi=1; t = 1/|∇ψ|
 - Yezzi–Prince: ∇ψ·∇u = −1 (u|_endo=0); t = u + v
 - Cone rays: median of K=7 hits at α=30° half-angle
@@ -233,7 +228,7 @@ add the entry yourself.
     with Fourier PE (L=3) and monotone-epi δ parameterisation.
   - Wall thickness guarantee: τ_min ≈ 1.25 mm (0.05 normalised × 25 mm scale).
   - Grid resolution: 96³ for marching cubes inference.
-  - 10 wall-thickness methods benchmarked on model output.
+  - Four wall-thickness methods benchmarked on model output.
 - **Do not** push to git, force-push, rewrite history, or run destructive
   shell commands. Local edits and `latexmk` are the limit.
 - No emojis, no informal contractions, no marketing language in `.tex`.
