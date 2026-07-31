@@ -1,0 +1,2 @@
+patient,group,ref_mean,slice_residual_mm,vol_ratio_endo,vol_ratio_epi,endo_watertight,epi_watertight,n_vertices
+patient001,DCM,9.455359614695409,3981.6866209229247,0.5627891606080635,0.6539401019541207,True,False,98927
