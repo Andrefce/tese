@@ -1,5 +1,3 @@
-You have to refer to this citation for any use of the ACDC database
-
-O. Bernard, A. Lalande, C. Zotti, F. Cervenansky, et al.
-"Deep Learning Techniques for Automatic MRI Cardiac Multi-structures Segmentation and Diagnosis: Is the Problem Solved ?" in IEEE Transactions on Medical Imaging, vol. 37, no. 11, pp. 2514-2525, Nov. 2018
-doi: 10.1109/TMI.2018.2837502
+version https://git-lfs.github.com/spec/v1
+oid sha256:ea4a16defa44b80fdd822b5c3de02f3d939d1d1db5439248aa546cb6c81c0be5
+size 361
