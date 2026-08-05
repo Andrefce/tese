@@ -13,7 +13,7 @@ from matplotlib import colors, patches
 from matplotlib import patheffects
 from matplotlib.lines import Line2D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-from PIL import Image
+from PIL import Image, ImageDraw
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -253,7 +253,7 @@ def make_clinical_viewer(
         columnspacing=1.7,
     )
 
-    output = OUT_DIR / "patient002_clinical_viewer_ed_es.png"
+    output = OUT_DIR / "acdc_clinical_viewer_ed_es.png"
     fig.savefig(output, dpi=300, facecolor=fig.get_facecolor(), bbox_inches="tight", pad_inches=0.08)
     plt.close(fig)
     return output
@@ -359,9 +359,43 @@ def make_3d_stack(
     ax.set_zlim(-2, (volume.shape[2] - 1) * spacing[2] + 10)
     ax.set_axis_off()
 
-    output = OUT_DIR / "patient002_3d_sax_stack.png"
+    output = OUT_DIR / "acdc_3d_sax_stack.png"
     fig.savefig(output, dpi=300, facecolor=fig.get_facecolor(), bbox_inches="tight", pad_inches=0.08)
     plt.close(fig)
+    return output
+
+
+def make_problem_visualisation_combined(clinical_viewer: Path, stack_3d: Path) -> Path:
+    left = Image.open(clinical_viewer).convert("RGB")
+    right = Image.open(stack_3d).convert("RGB")
+
+    target_height = max(left.height, right.height)
+    if left.height != target_height:
+        left_width = int(round(left.width * (target_height / left.height)))
+        left = left.resize((left_width, target_height), Image.Resampling.LANCZOS)
+    if right.height != target_height:
+        right_width = int(round(right.width * (target_height / right.height)))
+        right = right.resize((right_width, target_height), Image.Resampling.LANCZOS)
+
+    margin = 24
+    gap = 20
+    label_band = 24
+    canvas_width = left.width + right.width + gap + 2 * margin
+    canvas_height = target_height + label_band + 2 * margin
+    canvas = Image.new("RGB", (canvas_width, canvas_height), "white")
+
+    left_x = margin
+    right_x = margin + left.width + gap
+    image_y = margin + label_band
+    canvas.paste(left, (left_x, image_y))
+    canvas.paste(right, (right_x, image_y))
+
+    draw = ImageDraw.Draw(canvas)
+    draw.text((left_x + 2, margin), "(a)", fill="#222222")
+    draw.text((right_x + 2, margin), "(b)", fill="#222222")
+
+    output = OUT_DIR / "acdc_problem_visualisation.png"
+    canvas.save(output)
     return output
 
 
@@ -753,11 +787,14 @@ def main() -> None:
     es_segmentation = es_segmentation.astype(np.uint8)
 
     crop = union_crop(ed_segmentation, es_segmentation)
-    outputs = [
-        make_pipeline_visual_flow(ed_volume, ed_segmentation, spacing, crop),
-        make_clinical_viewer(ed_volume, ed_segmentation, es_volume, es_segmentation, spacing, crop),
-        make_3d_stack(ed_volume, ed_segmentation, spacing, crop),
-    ]
+    pipeline_output = make_pipeline_visual_flow(ed_volume, ed_segmentation, spacing, crop)
+    clinical_output = make_clinical_viewer(
+        ed_volume, ed_segmentation, es_volume, es_segmentation, spacing, crop
+    )
+    stack_output = make_3d_stack(ed_volume, ed_segmentation, spacing, crop)
+    combined_output = make_problem_visualisation_combined(clinical_output, stack_output)
+
+    outputs = [pipeline_output, clinical_output, stack_output, combined_output]
     for output in outputs:
         print(output.relative_to(ROOT))
 

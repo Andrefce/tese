@@ -1,19 +1,35 @@
 % ============================================================
 % !TeX root = ../main.tex
-%  Appendix A — (rename this title)
+%  Appendix A — Supplementary Methodological Details
 % ============================================================
-\chapter{Appendix Title}
-\label{app:appendix-a}
+\chapter{Supplementary Methodological Details}
+\label{app:supplementary-methods}
 
 \noindent
-% TODO: appendices typically contain supplementary material such as:
-%  - extended proofs
-%  - additional experimental results
-%  - source code listings
-%  - large datasets / tables
-%  - questionnaires or interview scripts
+This appendix records supporting methodological material that would otherwise
+repeat information established in the main text.
 
-\section{Section in the Appendix}
-\label{sec:appendix-a-section}
+\section{Training data streams}
+\label{sec:appendix-training-streams}
 \noindent
-% TODO
+All three training streams use the shared cache representation described in
+\cref{subsec:training-cache-representation}. The table below provides a compact
+reference for their source, cardiac phase, and role in the two-stage training
+procedure.
+
+\begin{table}[H]
+	\centering
+	\caption{Data streams sharing the cache schema and their role in training.}
+	\label{tab:method-datasets}
+	\small
+	\renewcommand{\arraystretch}{1.12}
+	\begin{tabular}{p{0.18\textwidth} p{0.10\textwidth} p{0.29\textwidth} p{0.31\textwidth}}
+		\toprule
+		Stream & Phase & Source & Training role \\
+		\midrule
+		Synthetic SSM & ED & UK Digital Heart Project LV SSM & Pre-training to establish a geometric shape prior \\
+		Real MRI & ED & ACDC, M\&Ms, and M\&Ms-2 & Fine-tuning on patient-specific diastolic anatomy \\
+		Real MRI & ES & ACDC, M\&Ms, and M\&Ms-2 & Fine-tuning on systolic anatomy with phase conditioning \\
+		\bottomrule
+	\end{tabular}
+\end{table}
