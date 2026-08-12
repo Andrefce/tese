@@ -1,0 +1,23 @@
+{
+  "patient": "/home/C052246/tese/tese/notebooks/patient002",
+  "model": "/home/C052246/tese/tese/notebooks/inr_sdf_combined_fresh_ed_mix_v1_final.pt",
+  "iso_pitch_mm": 0.75,
+  "sdf_grid_res": 96,
+  "phases": [
+    "ED",
+    "ES"
+  ],
+  "checkpoint": {
+    "epoch": 695,
+    "val_loss": 0.6937803559239135
+  },
+  "analysis_band": [
+    0.04,
+    0.97
+  ],
+  "slice_residual_mm": {
+    "ED": 1.0258219681994525,
+    "ES": 1.1656545670341438
+  },
+  "total_runtime_s": 1022.5
+}

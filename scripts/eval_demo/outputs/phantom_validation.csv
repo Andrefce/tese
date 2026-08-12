@@ -1,0 +1,25 @@
+phantom,method,family,true_mean_mm,n,invalid_fraction,bias_mm,mae_mm,rmse_mm,p95_abs_err_mm,runtime_s
+Concentric sphere,Laplace streamline (symmetric),PDE / streamline,8.0,2562,0.0,0.088,0.218,0.273,0.531,0.6
+Concentric sphere,Laplace local gradient,PDE / local,8.0,2562,0.0,-1.47,1.47,1.524,2.077,0.09
+Concentric sphere,EDT boundary sum,Volumetric baseline,8.0,2562,0.0,0.39,0.39,0.414,0.598,0.23
+Concentric sphere,Morphological sphere propagation,Volumetric baseline,8.0,2562,0.0,1.067,1.139,1.249,2.5,0.34
+Concentric sphere,Symmetric surface correspondence,Mesh-native,8.0,2562,0.0,-0.0,0.0,0.0,0.0,0.4
+Concentric sphere,SDF cone rays,Ray casting,8.0,2562,0.0,0.835,0.835,0.835,0.839,1.79
+Concentric cylinder,Laplace streamline (symmetric),PDE / streamline,7.0,192,0.0,1.996,1.996,2.03,2.562,0.2
+Concentric cylinder,Laplace local gradient,PDE / local,7.0,192,0.0,-1.877,1.877,1.892,2.187,0.11
+Concentric cylinder,EDT boundary sum,Volumetric baseline,7.0,192,0.0,0.767,0.767,0.784,0.975,0.23
+Concentric cylinder,Morphological sphere propagation,Volumetric baseline,7.0,192,0.0,0.5,0.5,0.5,0.5,0.35
+Concentric cylinder,Symmetric surface correspondence,Mesh-native,7.0,192,0.0,1.578,1.578,1.578,1.578,0.04
+Concentric cylinder,SDF cone rays,Ray casting,7.0,192,0.0,1.305,1.305,1.313,1.487,0.08
+Ellipsoidal shell,Laplace streamline (symmetric),PDE / streamline,9.0,2562,0.0,0.101,0.211,0.264,0.469,0.73
+Ellipsoidal shell,Laplace local gradient,PDE / local,9.0,2562,0.0,-1.553,1.556,1.673,2.578,0.17
+Ellipsoidal shell,EDT boundary sum,Volumetric baseline,9.0,2562,0.0,0.407,0.407,0.434,0.71,0.39
+Ellipsoidal shell,Morphological sphere propagation,Volumetric baseline,9.0,2562,0.0,1.148,1.148,1.39,1.5,0.65
+Ellipsoidal shell,Symmetric surface correspondence,Mesh-native,9.0,2562,0.0,-0.0,0.0,0.0,0.0,0.42
+Ellipsoidal shell,SDF cone rays,Ray casting,9.0,2562,0.0,0.95,0.95,0.953,1.039,1.58
+Tapered LV-like shell,Laplace streamline (symmetric),PDE / streamline,8.5,2562,0.0,0.085,0.212,0.262,0.504,0.66
+Tapered LV-like shell,Laplace local gradient,PDE / local,8.5,2562,0.0,-1.475,1.481,1.891,3.925,0.15
+Tapered LV-like shell,EDT boundary sum,Volumetric baseline,8.5,2562,0.0,0.386,0.386,0.413,0.636,0.38
+Tapered LV-like shell,Morphological sphere propagation,Volumetric baseline,8.5,2562,0.0,1.074,1.113,1.313,2.258,0.7
+Tapered LV-like shell,Symmetric surface correspondence,Mesh-native,8.5,2562,0.0,0.0,0.001,0.001,0.001,0.39
+Tapered LV-like shell,SDF cone rays,Ray casting,8.5,2562,0.0,0.766,0.766,0.776,0.913,1.54

@@ -1,0 +1,9 @@
+phase,surface,faces_in,watertight_in,components_in,euler_number_in,repaired_with,faces_out,vertices_out,watertight_out,winding_consistent,euler_number,volume_ml,area_cm2,genus_repair
+ED,model-endo,54272,True,2,2,pymeshfix,51472,25738,True,True,2,265.7891572506277,219.1852979022957,
+ED,model-epi,69876,True,2,2,pymeshfix,69858,34931,True,True,2,442.09718214315706,305.2886554445059,
+ED,voxel-endo,115736,True,1,2,pymeshfix,115736,57870,True,True,2,275.20874480675747,236.46267978973535,
+ED,voxel-epi,152776,True,1,2,pymeshfix,152776,76390,True,True,2,439.0691854122763,317.6038618880926,
+ES,model-endo,46288,True,1,2,pymeshfix,46288,23146,True,True,2,177.4593106036902,166.77019997426018,
+ES,model-epi,72940,True,1,-4,pymeshfix,329712,164858,True,True,2,372.472639070335,279.8919088302866,True
+ES,voxel-endo,94540,True,1,2,pymeshfix,94540,47272,True,True,2,198.5520259953523,194.47529716350525,
+ES,voxel-epi,140664,True,1,2,pymeshfix,140664,70334,True,True,2,397.99540105455105,294.3809087922302,

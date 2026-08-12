@@ -1,0 +1,13 @@
+phase,method,model_mean_mm,voxel_mean_mm,n,bias_mm,sd_diff_mm,loa_lower_mm,loa_upper_mm,mae_mm,rmse_mm,icc_2_1,pearson_r
+ED,Laplace streamline (symmetric),7.737,7.647,17,0.091,1.411,-2.674,2.855,1.162,1.372,0.3885,0.4848
+ED,Laplace local gradient,7.359,7.662,17,-0.302,1.375,-2.998,2.393,1.084,1.368,0.2148,0.2754
+ED,EDT boundary sum,8.016,7.661,17,0.355,1.264,-2.122,2.832,1.047,1.277,0.4011,0.4978
+ED,Morphological sphere propagation,8.738,8.284,17,0.453,1.471,-2.43,3.336,1.236,1.497,0.3298,0.4301
+ED,Symmetric surface correspondence,7.577,6.881,17,0.696,1.172,-1.6,2.992,1.071,1.333,0.3576,0.4848
+ED,SDF cone rays,8.678,8.909,17,-0.231,1.816,-3.791,3.329,1.459,1.777,0.2383,0.2904
+ES,Laplace streamline (symmetric),10.232,10.209,17,0.023,0.663,-1.277,1.323,0.49,0.644,0.7882,0.7851
+ES,Laplace local gradient,9.028,10.171,17,-1.143,2.142,-5.342,3.056,1.414,2.372,0.1714,0.3841
+ES,EDT boundary sum,10.34,9.997,17,0.344,0.566,-0.767,1.454,0.504,0.648,0.7752,0.8187
+ES,Morphological sphere propagation,11.285,10.762,17,0.523,0.705,-0.858,1.904,0.7,0.861,0.6049,0.6982
+ES,Symmetric surface correspondence,9.769,9.05,17,0.718,0.532,-0.325,1.762,0.746,0.885,0.634,0.8299
+ES,SDF cone rays,11.361,12.039,17,-0.678,1.244,-3.117,1.761,0.961,1.385,0.5647,0.7381
