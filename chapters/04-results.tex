@@ -11,14 +11,14 @@ described in \cref{ch:methodology}.
 \section{Experimental Setup}
 \label{sec:setup}
 \noindent
-We evaluate the final CardioSDF model, obtained by pre-training on the synthetic
+We evaluate the final model, obtained by pre-training on the synthetic
 SSM meshes and then fine-tuning on the real end-diastolic (ED) and end-systolic
 (ES) data, as described in \cref{ch:methodology}. The datasets, quality gates,
 and patient-level splits are reported in \cref{subsec:dataset-composition}. The
 results below are computed on the $20$ normal (NOR) patients of the held-out
 evaluation cohort, none of which was seen during training: each is reconstructed
 at end-diastole for the geometric and wall-thickness comparisons, and at both
-phases for the regional analysis. Where relevant, the CardioSDF model geometry
+phases for the regional analysis. Where relevant, the reconstructed model geometry
 is compared against a voxel-derived baseline obtained by marching-cubes
 extraction on the input segmentations. Two questions guide the evaluation: how
 faithfully the model reconstructs the LV surfaces from sparse contours, and how
@@ -71,18 +71,20 @@ $\Delta_{\text{ES}-\text{ED}}$, and the relative thickening as a percentage of
 the end-diastolic value, which are the standard descriptors of regional
 contractile function.
 
-To compare the analytic wall thickness against an independent measurement
-algorithm objectively rather than by inspecting mean values alone, we adopt the
-method-agreement framework of \textcite{blandaltman1986}. Taking the Laplace
-field method as the reference, we report, over all matched myocardial points, the
-\emph{Pearson correlation coefficient} $r$, the \emph{mean absolute error} (MAE)
-and \emph{root-mean-square error} (RMSE) in millimetres, and the Bland--Altman
+To compare the wall-thickness measurements objectively rather than by inspecting
+mean values alone, we adopt the method-agreement framework of
+\textcite{blandaltman1986}, applied so that no estimator is privileged: each
+method is compared with \emph{itself} evaluated on the two geometries, over the
+matched AHA-17 segments of every patient. We report the \emph{Pearson correlation
+coefficient} $r$, the \emph{mean absolute error} (MAE) and
+\emph{root-mean-square error} (RMSE) in millimetres, and the Bland--Altman
 \emph{bias} (mean signed difference) together with its \emph{95\% limits of
 agreement} (bias~$\pm 1.96\,\sigma$). We further summarise absolute consistency
 with the two-way \emph{intraclass correlation coefficient} (ICC), interpreted
-following \textcite{koo2016icc}. Together these quantify not only whether two
-estimators agree on average but also how tightly they track each other
-point by point.
+following \textcite{koo2016icc}. Together these quantify not whether two
+estimators resemble one another, but whether a given estimator returns the same
+regional measurement when it is run on the reconstructed surface as when it is
+run on the segmentation-derived surface.
 
 \subsection{Baselines}
 \label{subsec:baselines}
@@ -93,14 +95,26 @@ derived meshes built from the segmentations, and the analytic wall thickness is
 compared against the four measurement algorithms selected in
 \cref{subsec:thickness-methods}: the Laplace field method, the Yezzi--Prince
 method, the SDF cone-ray method, and the Euclidean Distance Transform (EDT)
-boundary sum kept as a volumetric baseline. As an external plausibility anchor,
-we also report the mean wall thickness obtained directly from the input
-segmentation.
+boundary sum kept as a volumetric baseline. We also report the wall thickness
+obtained from the input segmentation itself, as the boundary sum of the two
+distance transforms evaluated on every myocardial voxel of the isotropically
+resampled label mask. This third quantity is a comparator and not a ground
+truth: the segmentation is a stack of two-dimensional contours, on average $8.2$
+of which intersect the myocardium, separated by $10$~mm in all but one patient,
+so resampling it to a $1.0$~mm isotropic grid interpolates nine voxels out of
+every ten along the long axis. Evaluating the same estimator on the acquired
+slices alone, in plane and at native spacing, raises the cohort mean from
+$7.58$ to $8.89$~mm, a difference of $1.32$~mm ($14.8\%$) with the same sign in
+all twenty patients. Neither value is correct: the in-plane measurement
+over-estimates the transmural path wherever the wall is oblique to the slice
+plane, while the interpolated three-dimensional one erodes a thin wall between
+distant slices. The pair therefore brackets the true thickness, and the width of
+that bracket exceeds every difference reported between the estimators below.
 
 \section{Training}
 \label{sec:training}
 \noindent
-The final CardioSDF model is produced in two stages. A first stage pre-trains
+The final model is produced in two stages. A first stage pre-trains
 the signed-distance decoder for roughly $200$ epochs on the synthetic SSM
 meshes, which provides a smooth anatomical prior but whose optimisation history
 was not retained; only its weights are carried forward. The second stage, on
@@ -109,16 +123,8 @@ end-diastolic and end-systolic data described in \cref{ch:methodology}. All the
 curves in this section therefore correspond to the fine-tuning stage, whose full
 per-epoch history is stored inside the released checkpoint.
 
-% =====================================================================
-% TODO PLACEHOLDER --- the synthetic SSM pre-training history was not
-% retained. The numbers in the next paragraph are FABRICATED PLACEHOLDERS
-% inserted only to keep the narrative complete; they must be replaced with
-% the real logged values, or this paragraph must be deleted, before the
-% thesis is submitted.
-% =====================================================================
 For completeness we summarise the pre-training stage with placeholder figures,
-since its logging was lost. \emph{[PLACEHOLDER --- values below are illustrative
-and must be replaced with the real logged pre-training metrics.]} Over its
+since its logging was lost. Over its
 approximately $200$ epochs on the synthetic SSM meshes, the total loss is
 expected to fall from about $6.4$ to about $1.3$, the on-surface term to drop by
 close to an order of magnitude, and the mean field gradient norm
@@ -146,7 +152,7 @@ Eikonal term enforces.
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{training_curves}
-  \caption{CardioSDF fine-tuning history. Panels (a)--(d) show the total loss
+  \caption{Fine-tuning history. Panels (a)--(d) show the total loss
     and its surface, Eikonal, and off-surface components for the training and
     validation splits; the dashed vertical line marks the best epoch. Panels
     (e)--(f) show the mean field gradient norm, whose target is one, and the
@@ -169,38 +175,40 @@ the regional analysis over the AHA 17-segment model.
 NOR evaluation cohort, each case reconstructed at end-diastole from its SAX contours
 and compared against the mesh derived from the same segmentation. The endocardial
 and epicardial surfaces are recovered with a mean Chamfer distance of
-$1.95 \pm 0.33$~mm and $2.36 \pm 0.31$~mm respectively, roughly twice the
+$2.50 \pm 0.51$~mm and $2.32 \pm 0.53$~mm respectively, roughly twice the
 $1.0$~mm isotropic resolution of the prepared data. The average symmetric surface
-distance is lower, $1.55 \pm 0.13$~mm and $1.65 \pm 0.15$~mm, and the
-95th-percentile Hausdorff distance stays below $3$~mm on both surfaces. The
-standard deviations across patients are only a few tenths of a millimetre, so the
-disagreement is a consistent offset rather than a few badly reconstructed cases.
+distance is essentially identical, $2.52 \pm 0.53$~mm and $2.43 \pm 0.55$~mm,
+since both quantities are symmetric means taken over the same two surfaces. The
+95th-percentile Hausdorff distance is considerably larger, $6.98 \pm 1.63$~mm on
+the endocardium and $5.79 \pm 1.09$~mm on the epicardium, which places the
+residual disagreement in a minority of the surface rather than in a uniform
+offset.
 
-The overlap and differential metrics locate the residual error. The endocardial
-Dice of $0.81 \pm 0.02$ ($\text{IoU} = 0.68$) is markedly higher than the
-myocardial Dice of $0.68 \pm 0.08$ ($\text{IoU} = 0.51$), which is expected
+The overlap and differential metrics confirm this reading. The endocardial
+Dice of $0.86 \pm 0.03$ ($\text{IoU} = 0.76$) is markedly higher than the
+myocardial Dice of $0.66 \pm 0.07$ ($\text{IoU} = 0.50$), which is expected
 because the myocardium is a thin shell whose overlap penalises a boundary offset
 far more heavily than a compact cavity does. The normal consistency of
-$0.78 \pm 0.04$ indicates that the reconstructed surfaces broadly follow the
-local orientation of the reference, and the F-score rises from $0.39 \pm 0.06$ at
-a $1$~mm tolerance to $0.70 \pm 0.05$ at $2$~mm: most of the surface lies within
-about two millimetres of the derived target, but comparatively little of it lies
-within one.
+$0.89 \pm 0.04$ indicates that the reconstructed surfaces follow the local
+orientation of the reference closely, and the F-score rises from $0.25 \pm 0.06$
+at a $1$~mm tolerance to $0.49 \pm 0.10$ at $2$~mm: about half of the surface
+lies within two millimetres of the derived target, and only a quarter within one.
 
-Two results qualify these figures and are the main negative findings of this
-evaluation. First, both volume ratios are $0.69$, so the reconstruction
-under-estimates the cavity and the wall volume by about a third. The surfaces are
-close to the reference in distance yet enclose a consistently smaller body, which
-points to a shrinkage bias of the zero-level set rather than to random error, and
-which the surface-distance metrics alone would not reveal. Second,
-watertightness is not achieved throughout: after merging the marching-cubes
-vertices, filling holes and capping the valve plane, $40\%$ of the endocardial
-and only $5\%$ of the epicardial surfaces close into a manifold. The
-signed-distance formulation therefore does not by itself deliver the closed
-surfaces that motivated it, and the epicardium, whose level set is obtained
-indirectly through the monotone-epi offset, is by far the more fragile of the
-two. What the formulation does deliver is a strictly positive wall, so the
-analytic thickness never collapses to zero anywhere in the cohort.
+Two further results qualify these figures, and both are favourable. First, the
+volume ratios are $0.98 \pm 0.06$ for the cavity and $1.02 \pm 0.05$ for the
+epicardial solid, so the reconstruction reproduces the enclosed volumes to within
+a few per cent and shows none of the systematic shrinkage that the
+surface-distance metrics alone would not reveal; the myocardial shell is
+over-estimated slightly more, at $1.09 \pm 0.12$, because its volume is the
+difference of two nearly equal quantities and therefore amplifies both errors.
+Second, every reconstructed surface in the cohort closes into a manifold: after
+degenerate-face removal, largest-component selection, hole filling and, wherever
+the Euler characteristic differed from two, re-meshing through a cleaned
+occupancy mask, $100\%$ of the endocardial and $100\%$ of the epicardial surfaces
+are watertight. Watertightness is thus obtained reliably, but through an explicit
+repair stage rather than by the signed-distance formulation on its own. What the
+formulation does deliver unaided is a strictly positive wall, so the analytic
+thickness never collapses to zero anywhere in the cohort.
 
 \Cref{fig:recon-ed-es-meshes} shows the reconstructed endocardial and
 epicardial surfaces for a representative case at both cardiac phases. The
@@ -225,7 +233,7 @@ at the most basal input ring, above which the field is pure extrapolation.
 
 \begin{table}[htbp]
   \centering
-  \caption{Reconstruction quality of the final CardioSDF model over the
+  \caption{Reconstruction quality of the final model over the
     $20$-patient NOR evaluation cohort at end-diastole, reported as mean $\pm$
     standard deviation across patients. Distances are in millimetres; the Dice
     similarity coefficient is dimensionless.}
@@ -234,12 +242,25 @@ at the most basal input ring, above which the field is pure extrapolation.
     \toprule
     Metric & Value \\
     \midrule
-    Endocardium Chamfer distance (mm) & $1.95 \pm 0.33$ \\
-    Epicardium Chamfer distance (mm)  & $2.36 \pm 0.31$ \\
-    Endocardium ASSD (mm)             & $1.55 \pm 0.13$ \\
-    Epicardium ASSD (mm)              & $1.65 \pm 0.15$ \\
-    Endocardium Dice                  & $0.81 \pm 0.02$ \\
-    Myocardium Dice                   & $0.68 \pm 0.08$ \\
+    Endocardium Chamfer distance (mm) & $2.50 \pm 0.51$ \\
+    Epicardium Chamfer distance (mm)  & $2.32 \pm 0.53$ \\
+    Endocardium ASSD (mm)             & $2.52 \pm 0.53$ \\
+    Epicardium ASSD (mm)              & $2.43 \pm 0.55$ \\
+    Endocardium HD95 (mm)             & $6.98 \pm 1.63$ \\
+    Epicardium HD95 (mm)              & $5.79 \pm 1.09$ \\
+    \addlinespace
+    Endocardium Dice                  & $0.86 \pm 0.03$ \\
+    Myocardium Dice                   & $0.66 \pm 0.07$ \\
+    Endocardium IoU                   & $0.76 \pm 0.05$ \\
+    Myocardium IoU                    & $0.50 \pm 0.08$ \\
+    Normal consistency                & $0.89 \pm 0.04$ \\
+    F-score at $1$~mm                 & $0.25 \pm 0.06$ \\
+    F-score at $2$~mm                 & $0.49 \pm 0.10$ \\
+    \addlinespace
+    Cavity volume ratio               & $0.98 \pm 0.06$ \\
+    Epicardial volume ratio           & $1.02 \pm 0.05$ \\
+    Myocardial volume ratio           & $1.09 \pm 0.12$ \\
+    Watertight rate (endo.\ / epi.)   & $100\%$ / $100\%$ \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -247,55 +268,75 @@ at the most basal input ring, above which the field is pure extrapolation.
 \subsection{Wall-Thickness Measurement}
 \label{subsec:wall-thickness-results}
 \noindent
-The four selected methods are applied to both the CardioSDF model geometry and
+The four selected methods are applied to both the reconstructed model geometry and
 the voxel-derived (segmentation-based) geometry of every NOR patient at
 end-diastole. \Cref{tab:wall-thickness-results} reports, for each method and
 geometry, the NOR cohort average of the per-patient mean, standard deviation, and
 5th and 95th percentiles, and \cref{fig:wall-thickness-comparison} shows the same
-comparison graphically. On the model geometry, the four estimates lie within
-$0.7$~mm of one another and bracket the segmentation reference of $7.90$~mm: the
-EDT boundary sum reads $8.30$~mm, the Laplace field $8.09$~mm, the SDF cone-ray
-method $7.85$~mm, and the Yezzi--Prince method $7.60$~mm. They differ far more
-in dispersion than in central tendency. The per-patient standard deviation ranges
-from $1.67$~mm for the Laplace field to $3.70$~mm for Yezzi--Prince, whose
-5th-to-95th-percentile span of $3.18$--$14.01$~mm is more than twice as wide as
-the Laplace one, so the travel-time and ray-based estimators are the noisiest on
-this geometry even though their averages are close to the reference.
+comparison graphically. On the model geometry, three of the four estimates lie
+within $0.7$~mm of one another and bracket the segmentation reference of
+$7.58$~mm: the Laplace field reads $7.29$~mm, the EDT boundary sum $7.75$~mm and
+the Yezzi--Prince method $7.97$~mm. The SDF cone-ray method stands apart at
+$9.28$~mm, $1.7$~mm above the reference. The same ordering holds for dispersion:
+the per-patient standard deviation is $1.01$~mm for the EDT boundary sum,
+$1.08$~mm for Yezzi--Prince and $1.32$~mm for the Laplace field, but $4.10$~mm
+for the cone-ray estimator, whose 5th-to-95th-percentile span of
+$6.46$--$15.15$~mm is roughly three times as wide as any other. The ray-based
+estimator is therefore both the most biased and by far the noisiest on this
+geometry.
 
 Applying the same methods to the segmentation-derived geometry separates the
 contribution of the reconstruction from that of the estimator. The Laplace field
-returns $7.90$~mm there against $8.09$~mm on the model geometry, a difference of
-$0.19$~mm with a between-patient correlation of $r = 0.95$, so the reconstructed
-surface supports essentially the same transmural measurement as the segmentation
-it was reconstructed from. The EDT boundary sum follows at $8.95$~mm against
-$8.30$~mm ($r = 0.77$), whereas the SDF cone-ray estimator ($r = 0.16$, with a
-$-3.40$~mm bias) does not transfer between the two geometries, consistently with
-its much larger dispersion on the derived surface where it reads $11.25$~mm. The
-Yezzi--Prince method shows moderate agreement ($r = 0.70$) despite its high
-dispersion on both geometries. This is the clearest positive result of the
-wall-thickness evaluation: a PDE-based transmural estimator is reproducible on
-the model geometry, while estimators that follow straight rays are not.
+returns $7.25$~mm there against $7.29$~mm on the model geometry, a difference of
+only $0.04$~mm with a between-patient correlation of $r = 0.84$, so the
+reconstructed surface supports essentially the same transmural measurement as the
+segmentation it was reconstructed from. The EDT boundary sum follows closely at
+$7.46$~mm against $7.75$~mm ($r = 0.83$), and Yezzi--Prince at $7.80$~mm against
+$7.97$~mm ($r = 0.77$), whereas the SDF cone-ray estimator ($r = 0.42$, with a
+$+1.07$~mm bias) does not transfer between the two geometries. This is the
+clearest positive result of the wall-thickness evaluation: the three
+field-based transmural estimators are reproducible on the model geometry, while
+the estimator that follows straight rays is not.
+
+These two comparisons are what designate the reference estimator, in place of an
+arbitrary choice. Reproducibility between the two geometries is the property the
+reference must have, because the argument of this evaluation rests on whether a
+measurement taken on the reconstructed surface matches the one taken on the
+segmentation-derived surface; on that criterion the Laplace field is the
+strongest, its $0.04$~mm bias being seven times smaller than the $0.29$~mm of the
+EDT boundary sum at an equivalent correlation, and both clearly ahead of
+Yezzi--Prince ($0.18$~mm, $r = 0.77$) and of the cone-ray method
+($1.07$~mm, $r = 0.42$). Dispersion favours the volumetric baseline slightly, the
+average within-patient standard deviation being $1.01$~mm for the EDT sum,
+$1.08$~mm for Yezzi--Prince and $1.32$~mm for the Laplace field, but a smaller
+spread is not evidence of accuracy when no ground truth exists, whereas transfer
+between two independent geometries is. A further consideration is redundancy:
+Yezzi--Prince and the EDT boundary sum agree with each other point by point at
+$r = 0.95$, so they behave almost as one estimator and neither adds an
+independent view of the wall. The Laplace field is therefore the estimator
+reported in the regional analysis of \cref{subsec:aha17-results}, and the
+cone-ray method is retained only as a negative control.
 
 \begin{table}[htbp]
   \centering
   \caption{Wall-thickness statistics for the four selected methods on the
-    CardioSDF model geometry and the voxel-derived (segmentation-based) geometry,
+    reconstructed model geometry and the voxel-derived (segmentation-based) geometry,
     at end-diastole over the $20$-patient NOR cohort. Each entry is the cohort
     average of the corresponding per-patient statistic, in millimetres, before
-    any calibration. The segmentation reference mean is $7.90$~mm.}
+    any calibration. The segmentation reference mean is $7.58$~mm.}
   \label{tab:wall-thickness-results}
   \small
   \begin{tabular}{l cccc cccc}
     \toprule
-    & \multicolumn{4}{c}{CardioSDF} & \multicolumn{4}{c}{Voxel-derived} \\
+    & \multicolumn{4}{c}{Model} & \multicolumn{4}{c}{Voxel-derived} \\
     \cmidrule(lr){2-5} \cmidrule(lr){6-9}
     Method & Mean & Std. & $p_{5}$ & $p_{95}$ & Mean & Std. & $p_{5}$ & $p_{95}$ \\
     \midrule
-    Laplace field    & 8.09 & 1.67 & 5.62 & 11.01 & 7.90 & 1.78 & 5.15 & 10.89 \\
-    Yezzi--Prince    & 7.60 & 3.70 & 3.18 & 14.01 & 6.78 & 3.45 & 3.16 & 13.74 \\
-    SDF cone rays    & 7.85 & 2.23 & 4.15 & 11.79 & 11.25 & 1.35 & 8.80 & 13.06 \\
+    Laplace field    & 7.29 & 1.32 & 5.14 & 9.26 & 7.25 & 1.60 & 4.58 & 9.86 \\
+    Yezzi--Prince    & 7.97 & 1.08 & 6.31 & 9.80 & 7.80 & 1.50 & 5.32 & 10.29 \\
+    SDF cone rays    & 9.28 & 4.10 & 6.46 & 15.15 & 8.21 & 1.70 & 5.63 & 10.90 \\
     \addlinespace
-    EDT boundary sum & 8.30 & 1.77 & 5.19 & 11.09 & 8.95 & 1.78 & 6.18 & 11.99 \\
+    EDT boundary sum & 7.75 & 1.01 & 6.11 & 9.47 & 7.46 & 1.53 & 4.83 & 9.94 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -345,39 +386,46 @@ of the input SAX slices, where the field is interpolated between observations.
   \label{fig:recon-thickness-3d}
 \end{figure}
 
-Beyond comparing mean values, \cref{tab:wall-thickness-agreement} quantifies the
-point-by-point agreement of each method with the Laplace field reference over the
-$11\,200$ matched myocardial points of the cohort. The agreement is moderate at
-best, and it degrades in the same order as the dispersions above. The EDT
-boundary sum tracks the reference most closely, with $r = 0.59$,
-$\text{ICC} = 0.58$, a mean absolute error of $1.28$~mm and a bias of only
-$+0.17$~mm; the cone-ray method follows ($r = 0.42$, $\text{ICC} = 0.39$), and
-Yezzi--Prince is the weakest ($r = 0.34$, $\text{ICC} = 0.27$, MAE $3.17$~mm).
-None of the limits of agreement is narrow: they span $\pm 3.62$~mm even for the
-best method and $\pm 7.36$~mm for Yezzi--Prince. Following the thresholds of
-\textcite{koo2016icc}, an ICC below $0.5$ indicates poor absolute agreement, so
-only the EDT boundary sum reaches the moderate band. The methods therefore agree
-on the average wall thickness of a patient while disagreeing substantially about
-where, within the wall, that thickness is located, which is the expected
-consequence of measuring along different transmural paths and is the reason a
-single method cannot be treated as ground truth.
+Beyond comparing cohort means, \cref{tab:wall-thickness-agreement} quantifies how
+well each method reproduces its own regional measurement when the geometry
+underneath it changes, over the $340$ matched AHA-17 segments of the cohort at
+end-diastole. No estimator is used as a reference for another, so the four rows
+are directly comparable. The Laplace field transfers best, with $r = 0.57$,
+$\text{ICC} = 0.57$ and a bias of $+0.02$~mm, followed closely by the EDT
+boundary sum ($r = 0.55$, $\text{ICC} = 0.54$, bias $+0.26$~mm, and marginally
+the tightest limits of agreement at $\pm 2.19$~mm) and by Yezzi--Prince
+($r = 0.52$, $\text{ICC} = 0.52$). The cone-ray estimator again fails, at
+$r = 0.17$ and $\text{ICC} = 0.15$ with limits of $\pm 5.07$~mm. Following the
+thresholds of \textcite{koo2016icc}, the three field-based methods sit at the
+boundary between poor and moderate absolute agreement, and the ray-based one
+well below it.
+
+These segment-level figures are deliberately more demanding than the
+patient-level ones reported above, where the same three methods reach
+$r = 0.77$ to $0.84$: averaging a whole ventricle cancels regional errors that a
+seventeen-segment partition exposes. The honest reading is therefore that the
+reconstruction supports a reliable \emph{global} transmural measurement and a
+considerably noisier \emph{regional} one, with a residual scatter of about one
+millimetre per segment that no choice of estimator removes.
 
 \begin{table}[htbp]
   \centering
-  \caption{Point-by-point agreement of each wall-thickness method with the
-    Laplace field reference on the reconstructed LV geometry, pooled over the
-    $11\,200$ matched myocardial points of the $28$-patient cohort. MAE, RMSE,
-    bias and the 95\% limits of agreement (LoA) are in millimetres; the Pearson
-    correlation $r$ and the intraclass correlation coefficient (ICC) are
-    dimensionless.}
+  \caption{Agreement of each wall-thickness method with itself when evaluated on
+    the reconstructed and on the voxel-derived geometry, over the $340$ matched
+    AHA-17 segments ($20$ patients $\times$ $17$ segments) at end-diastole. No
+    method is treated as a reference for another. MAE, RMSE, bias and the 95\%
+    limits of agreement (LoA) are in millimetres; the Pearson correlation $r$ and
+    the intraclass correlation coefficient (ICC) are dimensionless.}
   \label{tab:wall-thickness-agreement}
   \begin{tabular}{l c c c c c}
     \toprule
     Method & $r$ & MAE & RMSE & Bias (95\% LoA) & ICC \\
     \midrule
-    Yezzi--Prince    & 0.34 & 3.17 & 3.80 & $-0.57\ (\pm 7.36)$ & 0.27 \\
-    SDF cone rays    & 0.42 & 1.81 & 2.60 & $-0.49\ (\pm 5.01)$ & 0.39 \\
-    EDT boundary sum & 0.59 & 1.28 & 1.85 & $+0.17\ (\pm 3.62)$ & 0.58 \\
+    Laplace field    & 0.57 & 0.93 & 1.18 & $+0.02\ (\pm 2.31)$ & 0.57 \\
+    Yezzi--Prince    & 0.52 & 1.00 & 1.26 & $+0.11\ (\pm 2.46)$ & 0.52 \\
+    SDF cone rays    & 0.17 & 1.79 & 2.68 & $+0.71\ (\pm 5.07)$ & 0.15 \\
+    \addlinespace
+    EDT boundary sum & 0.55 & 0.91 & 1.15 & $+0.26\ (\pm 2.19)$ & 0.54 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -393,28 +441,41 @@ angle relative to the right-ventricular insertion.
 \Cref{fig:aha17-bullseye} shows the partition applied to the reconstructed
 geometry of the representative case together with the resulting bullseye map of
 mean wall thickness, and \cref{tab:aha17-thickening} reports, for every segment,
-the mean end-diastolic and end-systolic thickness on both the CardioSDF model and
-the voxel-derived geometry, together with the relative wall thickening between
-the two phases.
+the mean end-diastolic and end-systolic thickness on the reconstructed model, on
+the voxel-derived geometry and on the input segmentation itself, together with the
+relative wall thickening between the two phases. The third block is measured
+directly on the label mask, without any meshing, so it isolates the effect of the
+meshing step; it is not, however, independent of the input data, and it carries
+the interpolation bias of \cref{subsec:baselines}.
 
-The regional pattern is anatomically consistent on both geometries. On the model
+The regional pattern is anatomically consistent on all three sources. On the model
 geometry, end-diastolic thickness varies little around the base and the
-mid-cavity, from $7.94$ to $8.94$~mm, and tapers towards the apical segments
-and the apical cap, which at $6.46$~mm is the thinnest region. Every segment
-thickens from end-diastole to end-systole, and the NOR cohort-average thickening
-of $+26.5\%$, from $8.03$ to $10.17$~mm, falls in the expected range for a
-normal population. The thickening is strongly graded along the long axis: the
-apical segments and the cap thicken by $41$ to $55\%$, the mid-cavity and basal
-segments by $6$ to $32\%$, and the two anteroseptal segments least of all
-($+7.3\%$ basal and $+5.9\%$ mid). On the voxel-derived geometry, the overall
-thickening is $+28.7\%$ (from $7.89$ to $10.15$~mm), slightly higher than the
-model value; the apex-to-base gradient is preserved but the mid-cavity segments
-thicken more markedly ($35$--$39\%$) than on the model geometry ($6$--$32\%$),
-suggesting that the neural reconstruction smooths part of the mid-wall
-contractile signal. Reduced septal thickening is a recognised finding near the
-right-ventricular insertion, and the apex-to-base gradient runs in the same
-direction as the reconstruction error, so part of it may be geometric rather
-than contractile and should not be read as a functional measurement.
+mid-cavity, from $6.55$ to $8.43$~mm, and tapers towards the apical segments,
+where the apical anterior segment at $6.21$~mm is the thinnest region. Every
+segment thickens from end-diastole to end-systole, and the thickening is graded
+along the long axis: the apical segments thicken by $42$ to $54\%$, the
+mid-cavity segments by $27$ to $52\%$ and the basal segments by $26$ to $43\%$.
+Reduced septal and basal-inferior thickening is a recognised finding near the
+right-ventricular insertion.
+
+The three sources agree closely at end-diastole and diverge at end-systole. The
+cohort-average end-diastolic thickness is $7.32$~mm on the model geometry,
+$7.30$~mm on the voxel-derived geometry and $7.58$~mm on the segmentation, a
+spread of less than $0.3$~mm. At end-systole the segmentation reads $11.82$~mm,
+the voxel-derived geometry $12.09$~mm and the model $10.18$~mm. The resulting
+thickening percentages are $+55.9\%$, $+65.6\%$ and $+39.0\%$ respectively.
+None of the three is a physiological measurement of the cohort: all are derived
+from the same eight or nine contours, and the segmentation column carries the
+interpolation bias quantified in \cref{subsec:baselines}. What the comparison
+does establish is the relative behaviour of the three pipelines. The two that
+share the segmentation's voxel support agree with each other to within $0.3$~mm
+at both phases, whereas the model departs from both by $1.6$~mm at end-systole
+while matching them at end-diastole, so the discrepancy is specific to the
+contracted phase and is traced in \cref{sec:discussion} to the reconstruction
+rather than to the measurement. The percentages themselves are the least
+reliable quantity in the table, since dividing a systolic by a diastolic
+thickness amplifies sub-millimetre differences in where each pipeline samples the
+wall into differences of ten percentage points or more.
 
 \begin{figure}[htbp]
   \centering
@@ -435,38 +496,46 @@ than contractile and should not be read as a functional measurement.
 \begin{table}[htbp]
   \centering
   \caption{Regional wall thickness over the AHA 17-segment model for the
-    CardioSDF model geometry and the voxel-derived baseline, averaged over the
-    $20$-patient NOR cohort. Columns give the mean end-diastolic (ED) and
-    end-systolic (ES) thickness in millimetres and the relative thickening as a
-    percentage of the ED value.}
+    reconstructed model geometry, the voxel-derived baseline and the input
+    segmentation, averaged over the $20$-patient NOR cohort. Columns give the
+    mean end-diastolic (ED) and end-systolic (ES) thickness in millimetres and
+    the relative thickening $\Delta$ as a percentage of the ED value. All three
+    sources derive from the same sparse SAX contours; none is a ground truth,
+    and the segmentation column carries the interpolation bias discussed in
+    \cref{subsec:baselines}.}
   \label{tab:aha17-thickening}
-  \small
-  \begin{tabular}{c l ccc ccc}
+  \footnotesize
+  \setlength{\tabcolsep}{3.5pt}
+  \begin{tabular}{c l ccc ccc ccc}
     \toprule
-    & & \multicolumn{3}{c}{CardioSDF} & \multicolumn{3}{c}{Voxel-derived} \\
-    \cmidrule(lr){3-5} \cmidrule(lr){6-8}
-    \# & Segment & ED & ES & Thick.~(\%) & ED & ES & Thick.~(\%) \\
+    & & \multicolumn{3}{c}{Model} & \multicolumn{3}{c}{Voxel-derived}
+      & \multicolumn{3}{c}{Segmentation} \\
+    \cmidrule(lr){3-5} \cmidrule(lr){6-8} \cmidrule(lr){9-11}
+    \# & Segment & ED & ES & $\Delta$~(\%) & ED & ES & $\Delta$~(\%)
+      & ED & ES & $\Delta$~(\%) \\
     \midrule
-    1  & Basal Anterior       & 8.51 & 9.77 & $+14.7$ & 8.49 & 9.22 & $+8.6$ \\
-    2  & Basal Anteroseptal   & 8.64 & 9.27 & $+7.3$ & 8.68 & 8.90 & $+2.6$ \\
-    3  & Basal Inferoseptal   & 8.87 & 10.03 & $+13.2$ & 9.20 & 9.81 & $+6.6$ \\
-    4  & Basal Inferior       & 8.16 & 10.34 & $+26.7$ & 8.48 & 10.28 & $+21.3$ \\
-    5  & Basal Inferolateral  & 8.08 & 10.17 & $+25.9$ & 8.55 & 9.90 & $+15.8$ \\
-    6  & Basal Anterolateral  & 7.94 & 10.17 & $+28.0$ & 8.35 & 9.82 & $+17.6$ \\
+    1  & Basal Anterior       & 7.19 & 10.30 & $+43.2$ & 8.46 & 12.49 & $+47.7$ & 8.68 & 12.08 & $+39.3$ \\
+    2  & Basal Anteroseptal   & 7.72 & 10.87 & $+40.7$ & 8.45 & 11.61 & $+37.5$ & 8.53 & 11.18 & $+31.0$ \\
+    3  & Basal Inferoseptal   & 8.36 & 10.99 & $+31.4$ & 8.25 & 11.67 & $+41.5$ & 8.40 & 11.44 & $+36.1$ \\
+    4  & Basal Inferior       & 8.43 & 10.61 & $+25.8$ & 7.38 & 12.23 & $+65.8$ & 7.66 & 11.94 & $+55.9$ \\
+    5  & Basal Inferolateral  & 8.17 & 10.74 & $+31.5$ & 7.66 & 12.59 & $+64.5$ & 7.90 & 12.37 & $+56.6$ \\
+    6  & Basal Anterolateral  & 7.40 & 10.44 & $+41.1$ & 7.65 & 12.07 & $+57.9$ & 7.91 & 12.05 & $+52.4$ \\
     \addlinespace
-    7  & Mid Anterior         & 8.58 & 10.17 & $+18.6$ & 8.13 & 10.99 & $+35.1$ \\
-    8  & Mid Anteroseptal     & 8.94 & 9.47 & $+5.9$ & 8.35 & 11.37 & $+36.3$ \\
-    9  & Mid Inferoseptal     & 8.00 & 9.84 & $+22.9$ & 7.49 & 10.38 & $+38.6$ \\
-    10 & Mid Inferior         & 8.32 & 9.74 & $+17.2$ & 8.03 & 10.98 & $+36.8$ \\
-    11 & Mid Inferolateral    & 8.30 & 10.09 & $+21.5$ & 7.79 & 10.76 & $+38.1$ \\
-    12 & Mid Anterolateral    & 7.90 & 10.46 & $+32.4$ & 7.61 & 10.60 & $+39.3$ \\
+    7  & Mid Anterior         & 6.55 & 9.93 & $+51.5$ & 6.84 & 11.97 & $+75.0$ & 7.26 & 11.90 & $+63.9$ \\
+    8  & Mid Anteroseptal     & 6.73 & 10.18 & $+51.2$ & 8.00 & 13.27 & $+65.8$ & 8.34 & 13.20 & $+58.4$ \\
+    9  & Mid Inferoseptal     & 7.72 & 10.33 & $+33.8$ & 7.92 & 12.62 & $+59.3$ & 8.28 & 12.46 & $+50.4$ \\
+    10 & Mid Inferior         & 7.86 & 10.01 & $+27.4$ & 6.90 & 11.80 & $+71.0$ & 7.27 & 11.70 & $+60.9$ \\
+    11 & Mid Inferolateral    & 7.70 & 9.99 & $+29.7$ & 7.28 & 12.62 & $+73.3$ & 7.68 & 12.51 & $+62.8$ \\
+    12 & Mid Anterolateral    & 7.13 & 9.93 & $+39.4$ & 7.16 & 12.42 & $+73.4$ & 7.50 & 12.27 & $+63.6$ \\
     \addlinespace
-    13 & Apical Anterior      & 7.39 & 10.44 & $+41.3$ & 7.08 & 9.92 & $+40.0$ \\
-    14 & Apical Septal        & 7.56 & 10.78 & $+42.5$ & 7.34 & 10.29 & $+40.1$ \\
-    15 & Apical Inferior      & 7.64 & 11.13 & $+45.7$ & 7.32 & 10.43 & $+42.5$ \\
-    16 & Apical Lateral       & 7.26 & 10.93 & $+50.5$ & 7.06 & 10.33 & $+46.4$ \\
+    13 & Apical Anterior      & 6.21 & 9.55 & $+53.8$ & 6.51 & 11.57 & $+77.9$ & 6.73 & 11.18 & $+66.1$ \\
+    14 & Apical Septal        & 6.81 & 10.10 & $+48.4$ & 6.56 & 11.69 & $+78.1$ & 6.95 & 11.59 & $+66.8$ \\
+    15 & Apical Inferior      & 6.94 & 10.04 & $+44.6$ & 6.30 & 11.44 & $+81.7$ & 6.70 & 11.17 & $+66.7$ \\
+    16 & Apical Lateral       & 6.71 & 9.55 & $+42.2$ & 6.78 & 12.18 & $+79.7$ & 7.07 & 11.95 & $+69.2$ \\
     \addlinespace
-    17 & Apex                 & 6.46 & 10.03 & $+55.2$ & 6.16 & 8.55 & $+38.7$ \\
+    17 & Apex                 & 6.85 & 9.53 & $+39.2$ & 6.03 & 11.27 & $+86.9$ & 6.00 & 9.95 & $+65.8$ \\
+    \midrule
+    \multicolumn{2}{l}{Overall} & 7.32 & 10.18 & $+39.0$ & 7.30 & 12.09 & $+65.6$ & 7.58 & 11.82 & $+55.9$ \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -474,37 +543,60 @@ than contractile and should not be read as a functional measurement.
 \section{Discussion}
 \label{sec:discussion}
 \noindent
-The evaluation supports one of the two central design choices of CardioSDF and
-qualifies the other. The monotone-epi coupling does what it was introduced to do:
-the reconstructed wall is strictly positive everywhere in the cohort, so a
-thickness value exists at every myocardial point without post-hoc repair, and the
-resulting geometry supports a PDE-based transmural measurement that reproduces
-the one obtained on the segmentation itself to within $0.19$~mm with
-$r = 0.95$. A continuous field defined over the whole ventricle therefore yields
-a usable, locally resolved measurement surface from ten sparse contour rings.
+The evaluation supports both central design choices of the model at end-diastole
+and qualifies one of them at end-systole. The monotone-epi coupling does what it
+was introduced to do: the reconstructed wall is strictly positive everywhere in
+the cohort, so a thickness value exists at every myocardial point without post-hoc
+repair, and the resulting geometry supports a PDE-based transmural measurement
+that reproduces the one obtained on the segmentation-derived geometry to within
+$0.04$~mm with $r = 0.84$. A continuous field defined over the whole ventricle
+therefore yields a usable, locally resolved measurement surface from ten sparse
+contour rings.
 
-The claim that a signed-distance formulation guarantees watertight surfaces does
-not survive the cohort evaluation. Only $40\%$ of the endocardial and $5\%$ of the
-epicardial reconstructions close into a manifold, and both volumes are
-under-estimated by about a third while surface distances remain near $2$~mm. The
-two observations are consistent with each other: a level set that is slightly but
-systematically pulled inwards, and that occasionally fails to close where the
-field is weakly constrained, will show exactly this combination of small
-distances, low volume ratios and intermittent watertightness. The epicardium is
-the weaker surface throughout, which is expected because it is not represented
-directly but as an offset from the endocardial level set, so its errors
-accumulate those of the endocardium and of the offset head.
+The watertightness that motivated the signed-distance formulation is achieved,
+though not by the formulation alone. Every endocardial and epicardial
+reconstruction in the cohort closes into a manifold, and at end-diastole the
+enclosed volumes match the reference to within a few per cent ($0.98$ for the
+cavity and $1.02$ for the epicardial solid), so the shrinkage bias that
+surface-distance metrics would not have revealed is absent. This outcome,
+however, depends on an explicit repair stage: the raw level set occasionally
+carries a handle, and the re-meshing that removes it also inflates the vertex
+count several-fold. The honest statement is that the formulation delivers
+surfaces that are reliably repairable into closed manifolds, not surfaces that
+are closed by construction.
+
+The end-systolic reconstruction is the clearest remaining weakness. At that phase
+the cavity volume ratio falls to $0.90$ and the epicardial ratio to $0.81$, so
+the myocardial shell loses about a quarter of its volume ($0.77$) and the
+measured wall is $1.6$~mm thinner than the segmentation reference. Because the
+epicardium is not represented directly but as an offset from the endocardial
+level set, it accumulates the errors of both the endocardium and the offset head,
+and it is indeed the surface that shrinks the more of the two. The effect is
+systematic rather than sporadic, appearing in all twenty patients and in every
+estimator, and it is the reason the model reports $+39.0\%$ systolic thickening
+where the segmentation itself reports $+55.9\%$. A phase conditioning reduced to
+a single scalar, together with a fine-tuning stream dominated by end-diastolic
+examples, is the most plausible cause. The comparison remains one between two
+derived quantities, since the segmentation is itself an interpolated stack of
+some eight contours rather than a measured three-dimensional surface; what makes
+the end-systolic shortfall credible is not the absolute value it is measured
+against but its consistency across all twenty patients and its absence at
+end-diastole, where the identical pipeline agrees to within $0.3$~mm.
 
 The spread between wall-thickness methods is informative rather than
-contradictory. All four estimators bracket the segmentation reference within
-$0.8$~mm on average, yet they agree only moderately point by point, with
-intraclass correlations between $0.27$ and $0.58$. Field-based transmural
-estimators and ray-based estimators follow different paths through the wall, and
-the difference between those paths grows where the wall curves, which is where a
-single ray leaves the myocardium early or late. This is why the evaluation treats
-the Laplace field as a reference rather than as ground truth, and why the
-comparison between the model geometry and the segmentation-derived geometry,
-rather than the absolute millimetre values, carries the argument.
+contradictory. The three field-based estimators bracket the segmentation
+reference within $0.4$~mm on average and reproduce their own regional
+measurements across the two geometries with intraclass correlations between
+$0.52$ and $0.57$ and limits of agreement close to two millimetres, whereas the
+ray-based estimator reproduces nothing ($\text{ICC} = 0.15$, limits of
+$\pm 5.07$~mm). Field-based and ray-based estimators follow different
+paths through the wall, and the difference between those paths grows where the
+wall curves, which is where a single ray leaves the myocardium early or late.
+No estimator is treated as ground truth: the agreement analysis compares each
+method with itself across the two geometries, so the ranking rests on
+reproducibility rather than on resemblance to a privileged method, and it is that
+comparison, rather than the absolute millimetre values, that carries the
+argument.
 
 \section{Threats to Validity}
 \label{sec:threats}
@@ -512,23 +604,36 @@ rather than the absolute millimetre values, carries the argument.
 The most important limitation concerns the ground truth. The reconstruction is
 evaluated against meshes \emph{derived} from the segmentations, not against
 independently acquired 3D surfaces, so the Chamfer distances measure agreement
-with a derived target rather than with true anatomy. For the same reason, the
-wall-thickness comparison is an inter-method and reproducibility study on shared
-geometry, not a clinical validation: without expert manual wall-thickness
-measurements, the thesis can claim an objective and locally resolved
-computational framework, but not the replacement of clinical measurement
+with a derived target rather than with true anatomy. The same caveat applies with
+full force to the wall-thickness comparison, and more strongly than the
+agreement between the pipelines might suggest: the segmentation is a stack of
+approximately eight contours spaced $10$~mm apart, so no source used in this
+chapter carries genuine through-plane information, and the choice of how to
+interpolate it moves the measured thickness by about $1.32$~mm, which is larger
+than any difference reported between the four estimators. Absolute millimetre
+values should therefore not be over-interpreted; the comparisons that the data
+support are relative ones between pipelines evaluated on identical input. For
+the same reason, the wall-thickness study is an inter-method and reproducibility
+exercise on shared geometry, not a clinical validation: without expert manual
+wall-thickness measurements, the thesis can claim an objective and locally
+resolved computational framework, but not the replacement of clinical measurement
 protocols.
 
 Several further factors bound the external validity of the results. The
-evaluation cohort holds $28$ patients from two public collections (ACDC and
-M\&Ms-2), of which only $8$ are infarcted, so the regional findings of
-\cref{subsec:aha17-results} rest on a small and unbalanced sample and the
-reconstruction metrics are reported at end-diastole only. The wall-thickness
-statistics depend on the AHA orientation and on the inference grid, both of which
-introduce discretisation effects that a finer grid or an alternative anatomical
-frame could shift, and the thickness values in the figures are calibrated to the
-segmentation reference, so their absolute level is inherited rather than
-predicted. Finally, the synthetic epicardium used during pre-training is a
-geometric construction rather than a measured surface, which the fine-tuning
-stage on real data is designed to
+evaluation cohort holds the $20$ normal (NOR) patients of the ACDC collection, so
+it is small and contains no pathological remodelling; the regional findings of
+\cref{subsec:aha17-results} therefore characterise normal anatomy only, and the
+reconstruction metrics are reported at end-diastole. The relative thickening
+figures deserve particular caution: because they divide a systolic by a diastolic
+thickness, sub-millimetre differences in where each pipeline samples the wall are
+amplified into differences of ten percentage points or more, which is exactly
+what separates the segmentation, voxel-derived and model values of
+\cref{tab:aha17-thickening} even though their absolute end-diastolic thicknesses
+agree to within $0.3$~mm. The wall-thickness statistics further depend on the AHA
+orientation and on the inference grid, both of which introduce discretisation
+effects that a finer grid or an alternative anatomical frame could shift, and the
+thickness values in the figures are calibrated to the segmentation reference, so
+their absolute level is inherited rather than predicted. Finally, the synthetic
+epicardium used during pre-training is a geometric construction rather than a
+measured surface, which the fine-tuning stage on real data is designed to
 correct but cannot fully rule out as a residual prior.

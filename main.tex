@@ -172,6 +172,12 @@
 \frontmatter
 \addtocontents{toc}{\setcounter{tocdepth}{1}}
 
+% frontmatter pieces open on the next page; only numbered chapters force a recto
+\makeatletter
+\let\thesis@cleardoublepage\cleardoublepage
+\makeatother
+\let\cleardoublepage\clearpage
+
 \input{frontmatter/cover}
 \input{frontmatter/dedication}
 
@@ -188,6 +194,10 @@
 
 % ============================================================
 \mainmatter
+
+\makeatletter
+\let\cleardoublepage\thesis@cleardoublepage
+\makeatother
 
 \setcounter{page}{1}
 \pagenumbering{arabic}

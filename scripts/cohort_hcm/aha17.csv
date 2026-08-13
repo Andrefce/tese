@@ -1,0 +1,2721 @@
+patient,phase,geometry,method,segment_id,mean_mm
+patient022,ED,model,Laplace field,1,6.4169675090252705
+patient022,ED,model,Laplace field,2,6.604458917835672
+patient022,ED,model,Laplace field,3,7.467679558011049
+patient022,ED,model,Laplace field,4,6.0837751855779425
+patient022,ED,model,Laplace field,5,6.4307165437302425
+patient022,ED,model,Laplace field,6,6.079470198675497
+patient022,ED,model,Laplace field,7,6.148827726809378
+patient022,ED,model,Laplace field,8,6.2660695468914644
+patient022,ED,model,Laplace field,9,6.567564102564103
+patient022,ED,model,Laplace field,10,5.678516427104722
+patient022,ED,model,Laplace field,11,6.5599015317286655
+patient022,ED,model,Laplace field,12,6.134357541899441
+patient022,ED,model,Laplace field,13,5.815051020408164
+patient022,ED,model,Laplace field,14,6.415884194053208
+patient022,ED,model,Laplace field,15,5.682734604105572
+patient022,ED,model,Laplace field,16,5.927752293577981
+patient022,ED,model,Laplace field,17,6.211805555555555
+patient022,ED,model,Yezzi-Prince,1,6.877454951782089
+patient022,ED,model,Yezzi-Prince,2,7.181697338520883
+patient022,ED,model,Yezzi-Prince,3,8.05580873542069
+patient022,ED,model,Yezzi-Prince,4,6.561567952246074
+patient022,ED,model,Yezzi-Prince,5,6.982823541217157
+patient022,ED,model,Yezzi-Prince,6,6.59961964978062
+patient022,ED,model,Yezzi-Prince,7,6.592376187914616
+patient022,ED,model,Yezzi-Prince,8,6.806444729341722
+patient022,ED,model,Yezzi-Prince,9,7.102234757252228
+patient022,ED,model,Yezzi-Prince,10,6.180370374871475
+patient022,ED,model,Yezzi-Prince,11,7.063446157088165
+patient022,ED,model,Yezzi-Prince,12,6.66716722243325
+patient022,ED,model,Yezzi-Prince,13,6.249240536592445
+patient022,ED,model,Yezzi-Prince,14,6.848768685718471
+patient022,ED,model,Yezzi-Prince,15,6.190489445264038
+patient022,ED,model,Yezzi-Prince,16,6.41811690461745
+patient022,ED,model,Yezzi-Prince,17,6.613298087564421
+patient022,ED,model,SDF cone rays,1,7.014392298481525
+patient022,ED,model,SDF cone rays,2,7.2505351297841045
+patient022,ED,model,SDF cone rays,3,8.134301652961014
+patient022,ED,model,SDF cone rays,4,6.690399304933032
+patient022,ED,model,SDF cone rays,5,7.042055467659857
+patient022,ED,model,SDF cone rays,6,6.665882284278112
+patient022,ED,model,SDF cone rays,7,6.738790917469457
+patient022,ED,model,SDF cone rays,8,6.897268998735949
+patient022,ED,model,SDF cone rays,9,7.171650044367864
+patient022,ED,model,SDF cone rays,10,6.237102799836615
+patient022,ED,model,SDF cone rays,11,7.218817459415294
+patient022,ED,model,SDF cone rays,12,6.765578180984412
+patient022,ED,model,SDF cone rays,13,6.337172794342041
+patient022,ED,model,SDF cone rays,14,6.941739521116158
+patient022,ED,model,SDF cone rays,15,6.1782926925815795
+patient022,ED,model,SDF cone rays,16,6.470242432060592
+patient022,ED,model,SDF cone rays,17,6.650383618997417
+patient022,ED,model,EDT boundary sum,1,6.853305189187776
+patient022,ED,model,EDT boundary sum,2,7.091757289393392
+patient022,ED,model,EDT boundary sum,3,7.88082305265395
+patient022,ED,model,EDT boundary sum,4,6.527102293417031
+patient022,ED,model,EDT boundary sum,5,6.90967537203629
+patient022,ED,model,EDT boundary sum,6,6.508097887264746
+patient022,ED,model,EDT boundary sum,7,6.626911972154779
+patient022,ED,model,EDT boundary sum,8,6.722311593207469
+patient022,ED,model,EDT boundary sum,9,7.003480414366111
+patient022,ED,model,EDT boundary sum,10,6.136691667705591
+patient022,ED,model,EDT boundary sum,11,6.998325957771986
+patient022,ED,model,EDT boundary sum,12,6.575700588332874
+patient022,ED,model,EDT boundary sum,13,6.3037091479009515
+patient022,ED,model,EDT boundary sum,14,6.8447046421689794
+patient022,ED,model,EDT boundary sum,15,6.140961932996151
+patient022,ED,model,EDT boundary sum,16,6.376659639166036
+patient022,ED,model,EDT boundary sum,17,6.665594705971339
+patient022,ED,voxel,Laplace field,1,6.651584507042253
+patient022,ED,voxel,Laplace field,2,9.88558106169297
+patient022,ED,voxel,Laplace field,3,8.87859947643979
+patient022,ED,voxel,Laplace field,4,7.01123395149786
+patient022,ED,voxel,Laplace field,5,5.8933143669985775
+patient022,ED,voxel,Laplace field,6,5.846698113207547
+patient022,ED,voxel,Laplace field,7,6.54275884665793
+patient022,ED,voxel,Laplace field,8,11.844813614262561
+patient022,ED,voxel,Laplace field,9,9.904813218390805
+patient022,ED,voxel,Laplace field,10,8.626282991202347
+patient022,ED,voxel,Laplace field,11,7.068965517241379
+patient022,ED,voxel,Laplace field,12,6.805838557993731
+patient022,ED,voxel,Laplace field,13,8.230582524271844
+patient022,ED,voxel,Laplace field,14,9.896494708994709
+patient022,ED,voxel,Laplace field,15,6.9849683544303796
+patient022,ED,voxel,Laplace field,16,6.181451612903226
+patient022,ED,voxel,Laplace field,17,5.194099378881988
+patient022,ED,voxel,Yezzi-Prince,1,7.170599989823892
+patient022,ED,voxel,Yezzi-Prince,2,10.50140482315545
+patient022,ED,voxel,Yezzi-Prince,3,9.403818325846608
+patient022,ED,voxel,Yezzi-Prince,4,7.496665552237235
+patient022,ED,voxel,Yezzi-Prince,5,6.4682670823201684
+patient022,ED,voxel,Yezzi-Prince,6,6.437589241123799
+patient022,ED,voxel,Yezzi-Prince,7,7.081735225367515
+patient022,ED,voxel,Yezzi-Prince,8,12.341602292980522
+patient022,ED,voxel,Yezzi-Prince,9,10.40622409390307
+patient022,ED,voxel,Yezzi-Prince,10,9.095859696788173
+patient022,ED,voxel,Yezzi-Prince,11,7.618013575355016
+patient022,ED,voxel,Yezzi-Prince,12,7.336643451807268
+patient022,ED,voxel,Yezzi-Prince,13,8.68418713757907
+patient022,ED,voxel,Yezzi-Prince,14,10.255413457830116
+patient022,ED,voxel,Yezzi-Prince,15,7.475192519682873
+patient022,ED,voxel,Yezzi-Prince,16,6.739518477839808
+patient022,ED,voxel,Yezzi-Prince,17,5.782744238342064
+patient022,ED,voxel,SDF cone rays,1,7.753666962704188
+patient022,ED,voxel,SDF cone rays,2,11.47990177009506
+patient022,ED,voxel,SDF cone rays,3,10.158204949339023
+patient022,ED,voxel,SDF cone rays,4,8.000982772946868
+patient022,ED,voxel,SDF cone rays,5,6.7826834274389665
+patient022,ED,voxel,SDF cone rays,6,6.829736452882395
+patient022,ED,voxel,SDF cone rays,7,7.8497821956599525
+patient022,ED,voxel,SDF cone rays,8,13.40193505032136
+patient022,ED,voxel,SDF cone rays,9,11.183278124907922
+patient022,ED,voxel,SDF cone rays,10,10.02990390618176
+patient022,ED,voxel,SDF cone rays,11,8.362762987907297
+patient022,ED,voxel,SDF cone rays,12,7.885671173143536
+patient022,ED,voxel,SDF cone rays,13,9.96400924253618
+patient022,ED,voxel,SDF cone rays,14,12.191498942476102
+patient022,ED,voxel,SDF cone rays,15,8.126060011266153
+patient022,ED,voxel,SDF cone rays,16,7.7143655461649745
+patient022,ED,voxel,SDF cone rays,17,6.081396493358889
+patient022,ED,voxel,EDT boundary sum,1,6.467800566176294
+patient022,ED,voxel,EDT boundary sum,2,9.263857577418323
+patient022,ED,voxel,EDT boundary sum,3,8.523337829799551
+patient022,ED,voxel,EDT boundary sum,4,7.0449599621129275
+patient022,ED,voxel,EDT boundary sum,5,6.041431152294913
+patient022,ED,voxel,EDT boundary sum,6,6.009490099493063
+patient022,ED,voxel,EDT boundary sum,7,6.508458828394879
+patient022,ED,voxel,EDT boundary sum,8,11.646555603806359
+patient022,ED,voxel,EDT boundary sum,9,9.940139034698749
+patient022,ED,voxel,EDT boundary sum,10,8.60257127278012
+patient022,ED,voxel,EDT boundary sum,11,7.125429553547125
+patient022,ED,voxel,EDT boundary sum,12,6.908204032709606
+patient022,ED,voxel,EDT boundary sum,13,7.667323492877306
+patient022,ED,voxel,EDT boundary sum,14,8.754355451417348
+patient022,ED,voxel,EDT boundary sum,15,6.860200969478752
+patient022,ED,voxel,EDT boundary sum,16,6.316802695489699
+patient022,ED,voxel,EDT boundary sum,17,5.566989449487216
+patient022,ES,model,Laplace field,1,8.546052631578947
+patient022,ES,model,Laplace field,2,9.592350746268657
+patient022,ES,model,Laplace field,3,9.778342070773263
+patient022,ES,model,Laplace field,4,9.336593172119487
+patient022,ES,model,Laplace field,5,9.709166666666667
+patient022,ES,model,Laplace field,6,8.961983729662078
+patient022,ES,model,Laplace field,7,8.98306916426513
+patient022,ES,model,Laplace field,8,9.265169902912621
+patient022,ES,model,Laplace field,9,9.271534974093264
+patient022,ES,model,Laplace field,10,8.972318941504179
+patient022,ES,model,Laplace field,11,8.724370503597122
+patient022,ES,model,Laplace field,12,8.891063515509602
+patient022,ES,model,Laplace field,13,8.40625
+patient022,ES,model,Laplace field,14,8.571428571428571
+patient022,ES,model,Laplace field,15,8.786150712830958
+patient022,ES,model,Laplace field,16,8.366648706896552
+patient022,ES,model,Laplace field,17,9.001176470588236
+patient022,ES,model,Yezzi-Prince,1,9.014503237000085
+patient022,ES,model,Yezzi-Prince,2,10.13052975170648
+patient022,ES,model,Yezzi-Prince,3,10.19593804473177
+patient022,ES,model,Yezzi-Prince,4,9.744684725363935
+patient022,ES,model,Yezzi-Prince,5,10.177935857772827
+patient022,ES,model,Yezzi-Prince,6,9.430084979280512
+patient022,ES,model,Yezzi-Prince,7,9.390288743230727
+patient022,ES,model,Yezzi-Prince,8,9.812285386242912
+patient022,ES,model,Yezzi-Prince,9,9.71749124378738
+patient022,ES,model,Yezzi-Prince,10,9.442462659479848
+patient022,ES,model,Yezzi-Prince,11,9.333388148451881
+patient022,ES,model,Yezzi-Prince,12,9.397985144239057
+patient022,ES,model,Yezzi-Prince,13,8.828520579771562
+patient022,ES,model,Yezzi-Prince,14,8.9343875728587
+patient022,ES,model,Yezzi-Prince,15,9.269092113083103
+patient022,ES,model,Yezzi-Prince,16,8.803000121281064
+patient022,ES,model,Yezzi-Prince,17,9.298217246111701
+patient022,ES,model,SDF cone rays,1,9.617630781386431
+patient022,ES,model,SDF cone rays,2,10.568426882331051
+patient022,ES,model,SDF cone rays,3,10.550093935795255
+patient022,ES,model,SDF cone rays,4,10.110012793778356
+patient022,ES,model,SDF cone rays,5,10.46070188999176
+patient022,ES,model,SDF cone rays,6,9.760644222827668
+patient022,ES,model,SDF cone rays,7,9.77882404492293
+patient022,ES,model,SDF cone rays,8,10.024554714030046
+patient022,ES,model,SDF cone rays,9,9.997945910290733
+patient022,ES,model,SDF cone rays,10,9.7718695584778
+patient022,ES,model,SDF cone rays,11,9.535396852081629
+patient022,ES,model,SDF cone rays,12,9.655411555460672
+patient022,ES,model,SDF cone rays,13,9.082848581400784
+patient022,ES,model,SDF cone rays,14,9.292510824859457
+patient022,ES,model,SDF cone rays,15,9.407793940448956
+patient022,ES,model,SDF cone rays,16,8.948932682645731
+patient022,ES,model,SDF cone rays,17,9.312506424398983
+patient022,ES,model,EDT boundary sum,1,8.48018663270133
+patient022,ES,model,EDT boundary sum,2,9.534591523213173
+patient022,ES,model,EDT boundary sum,3,9.736450518411859
+patient022,ES,model,EDT boundary sum,4,9.50750681482372
+patient022,ES,model,EDT boundary sum,5,9.595024959246318
+patient022,ES,model,EDT boundary sum,6,8.915351368160511
+patient022,ES,model,EDT boundary sum,7,9.357044727039613
+patient022,ES,model,EDT boundary sum,8,9.600146184075612
+patient022,ES,model,EDT boundary sum,9,9.64129309827182
+patient022,ES,model,EDT boundary sum,10,9.37437921513422
+patient022,ES,model,EDT boundary sum,11,9.130727997786707
+patient022,ES,model,EDT boundary sum,12,9.270808322038748
+patient022,ES,model,EDT boundary sum,13,8.800018700686367
+patient022,ES,model,EDT boundary sum,14,8.917021229153587
+patient022,ES,model,EDT boundary sum,15,9.119398435604305
+patient022,ES,model,EDT boundary sum,16,8.728335489486826
+patient022,ES,model,EDT boundary sum,17,9.1205567483341
+patient022,ES,voxel,Laplace field,1,9.36518691588785
+patient022,ES,voxel,Laplace field,2,12.099658314350798
+patient022,ES,voxel,Laplace field,3,11.505928853754941
+patient022,ES,voxel,Laplace field,4,10.375210792580102
+patient022,ES,voxel,Laplace field,5,10.161266924564798
+patient022,ES,voxel,Laplace field,6,10.23566398390342
+patient022,ES,voxel,Laplace field,7,10.680494505494506
+patient022,ES,voxel,Laplace field,8,15.86046511627907
+patient022,ES,voxel,Laplace field,9,16.277651515151515
+patient022,ES,voxel,Laplace field,10,16.188550420168067
+patient022,ES,voxel,Laplace field,11,13.469078947368422
+patient022,ES,voxel,Laplace field,12,11.57089552238806
+patient022,ES,voxel,Laplace field,13,13.957236842105264
+patient022,ES,voxel,Laplace field,14,10.715328467153284
+patient022,ES,voxel,Laplace field,15,11.541164658634537
+patient022,ES,voxel,Laplace field,16,16.375
+patient022,ES,voxel,Laplace field,17,6.241367403314917
+patient022,ES,voxel,Yezzi-Prince,1,9.893206714024053
+patient022,ES,voxel,Yezzi-Prince,2,12.704494990085959
+patient022,ES,voxel,Yezzi-Prince,3,12.080518299883062
+patient022,ES,voxel,Yezzi-Prince,4,10.895171802723388
+patient022,ES,voxel,Yezzi-Prince,5,10.704601932079234
+patient022,ES,voxel,Yezzi-Prince,6,10.67706253063271
+patient022,ES,voxel,Yezzi-Prince,7,11.199433807750324
+patient022,ES,voxel,Yezzi-Prince,8,16.143397979958113
+patient022,ES,voxel,Yezzi-Prince,9,16.60186256350893
+patient022,ES,voxel,Yezzi-Prince,10,16.51569338806537
+patient022,ES,voxel,Yezzi-Prince,11,14.051980500472219
+patient022,ES,voxel,Yezzi-Prince,12,11.995522702629886
+patient022,ES,voxel,Yezzi-Prince,13,13.921040284006219
+patient022,ES,voxel,Yezzi-Prince,14,11.404804219294638
+patient022,ES,voxel,Yezzi-Prince,15,12.117131959003617
+patient022,ES,voxel,Yezzi-Prince,16,16.395512342453003
+patient022,ES,voxel,Yezzi-Prince,17,6.892061935603948
+patient022,ES,voxel,SDF cone rays,1,11.056086943528362
+patient022,ES,voxel,SDF cone rays,2,14.332779494396375
+patient022,ES,voxel,SDF cone rays,3,14.702206313845668
+patient022,ES,voxel,SDF cone rays,4,13.532793198628932
+patient022,ES,voxel,SDF cone rays,5,12.718259014059543
+patient022,ES,voxel,SDF cone rays,6,12.157682740232595
+patient022,ES,voxel,SDF cone rays,7,12.69336900291862
+patient022,ES,voxel,SDF cone rays,8,17.051995069481606
+patient022,ES,voxel,SDF cone rays,9,17.596039272077157
+patient022,ES,voxel,SDF cone rays,10,17.350539183416288
+patient022,ES,voxel,SDF cone rays,11,16.314650274577893
+patient022,ES,voxel,SDF cone rays,12,13.771165335356299
+patient022,ES,voxel,SDF cone rays,13,15.919374390652305
+patient022,ES,voxel,SDF cone rays,14,14.569284867196188
+patient022,ES,voxel,SDF cone rays,15,14.431256916628305
+patient022,ES,voxel,SDF cone rays,16,19.570733070373535
+patient022,ES,voxel,SDF cone rays,17,10.947555117844217
+patient022,ES,voxel,EDT boundary sum,1,8.900450941781017
+patient022,ES,voxel,EDT boundary sum,2,10.508655008259558
+patient022,ES,voxel,EDT boundary sum,3,10.360419180082237
+patient022,ES,voxel,EDT boundary sum,4,9.653929018853688
+patient022,ES,voxel,EDT boundary sum,5,9.219024952421798
+patient022,ES,voxel,EDT boundary sum,6,9.368331121486918
+patient022,ES,voxel,EDT boundary sum,7,10.290768001891754
+patient022,ES,voxel,EDT boundary sum,8,14.886739814004233
+patient022,ES,voxel,EDT boundary sum,9,15.39930743304166
+patient022,ES,voxel,EDT boundary sum,10,15.504991086591192
+patient022,ES,voxel,EDT boundary sum,11,13.025890049181486
+patient022,ES,voxel,EDT boundary sum,12,11.328281408281468
+patient022,ES,voxel,EDT boundary sum,13,12.433662715711092
+patient022,ES,voxel,EDT boundary sum,14,9.36069438753337
+patient022,ES,voxel,EDT boundary sum,15,9.897910635155368
+patient022,ES,voxel,EDT boundary sum,16,14.032378196716309
+patient022,ES,voxel,EDT boundary sum,17,6.09124010834246
+patient024,ED,model,Laplace field,1,8.71111372180451
+patient024,ED,model,Laplace field,2,9.689994456762749
+patient024,ED,model,Laplace field,3,10.154166666666667
+patient024,ED,model,Laplace field,4,9.846858638743456
+patient024,ED,model,Laplace field,5,9.872907366071429
+patient024,ED,model,Laplace field,6,8.833617332035054
+patient024,ED,model,Laplace field,7,8.51672281039461
+patient024,ED,model,Laplace field,8,9.327233584499462
+patient024,ED,model,Laplace field,9,9.822780020181634
+patient024,ED,model,Laplace field,10,9.642946787148594
+patient024,ED,model,Laplace field,11,9.248765093304062
+patient024,ED,model,Laplace field,12,8.675329614604463
+patient024,ED,model,Laplace field,13,8.159332321699544
+patient024,ED,model,Laplace field,14,8.935835798816568
+patient024,ED,model,Laplace field,15,8.494459833795014
+patient024,ED,model,Laplace field,16,7.757407407407407
+patient024,ED,model,Laplace field,17,8.026695183776933
+patient024,ED,model,Yezzi-Prince,1,9.226183348132256
+patient024,ED,model,Yezzi-Prince,2,10.26781783188526
+patient024,ED,model,Yezzi-Prince,3,10.622592256526755
+patient024,ED,model,Yezzi-Prince,4,10.376963020244817
+patient024,ED,model,Yezzi-Prince,5,10.423856539385659
+patient024,ED,model,Yezzi-Prince,6,9.269715193996412
+patient024,ED,model,Yezzi-Prince,7,9.022998349958021
+patient024,ED,model,Yezzi-Prince,8,9.882548491331168
+patient024,ED,model,Yezzi-Prince,9,10.294065222369674
+patient024,ED,model,Yezzi-Prince,10,10.196320407361869
+patient024,ED,model,Yezzi-Prince,11,9.808124003111988
+patient024,ED,model,Yezzi-Prince,12,9.127276229084627
+patient024,ED,model,Yezzi-Prince,13,8.607951737318487
+patient024,ED,model,Yezzi-Prince,14,9.373478978343265
+patient024,ED,model,Yezzi-Prince,15,9.006384426867202
+patient024,ED,model,Yezzi-Prince,16,8.244863304562038
+patient024,ED,model,Yezzi-Prince,17,8.713633486526547
+patient024,ED,model,SDF cone rays,1,9.550045080202862
+patient024,ED,model,SDF cone rays,2,10.676677639362817
+patient024,ED,model,SDF cone rays,3,11.03896583306669
+patient024,ED,model,SDF cone rays,4,10.774921781729653
+patient024,ED,model,SDF cone rays,5,10.829760379024915
+patient024,ED,model,SDF cone rays,6,9.680833914031536
+patient024,ED,model,SDF cone rays,7,9.320014694771936
+patient024,ED,model,SDF cone rays,8,10.177237542504514
+patient024,ED,model,SDF cone rays,9,10.728602092754468
+patient024,ED,model,SDF cone rays,10,10.56425137213435
+patient024,ED,model,SDF cone rays,11,10.089860602084682
+patient024,ED,model,SDF cone rays,12,9.576992949897813
+patient024,ED,model,SDF cone rays,13,8.923145826742031
+patient024,ED,model,SDF cone rays,14,9.765746455220782
+patient024,ED,model,SDF cone rays,15,9.320473836069292
+patient024,ED,model,SDF cone rays,16,8.54548463044343
+patient024,ED,model,SDF cone rays,17,10.141264502690923
+patient024,ED,model,EDT boundary sum,1,9.033462417304964
+patient024,ED,model,EDT boundary sum,2,9.89816826092959
+patient024,ED,model,EDT boundary sum,3,10.446792278386125
+patient024,ED,model,EDT boundary sum,4,10.209334749950788
+patient024,ED,model,EDT boundary sum,5,10.119306136454854
+patient024,ED,model,EDT boundary sum,6,9.108677388630452
+patient024,ED,model,EDT boundary sum,7,8.927023628792933
+patient024,ED,model,EDT boundary sum,8,9.707971685797586
+patient024,ED,model,EDT boundary sum,9,10.229249719413811
+patient024,ED,model,EDT boundary sum,10,10.061278567256698
+patient024,ED,model,EDT boundary sum,11,9.619665167857734
+patient024,ED,model,EDT boundary sum,12,9.106595867787608
+patient024,ED,model,EDT boundary sum,13,8.606970373162369
+patient024,ED,model,EDT boundary sum,14,9.364605435252894
+patient024,ED,model,EDT boundary sum,15,8.899137173993436
+patient024,ED,model,EDT boundary sum,16,8.188105706815366
+patient024,ED,model,EDT boundary sum,17,8.732316825779671
+patient024,ED,voxel,Laplace field,1,9.548098434004475
+patient024,ED,voxel,Laplace field,2,11.490844544095665
+patient024,ED,voxel,Laplace field,3,11.060886150234742
+patient024,ED,voxel,Laplace field,4,9.930607187112763
+patient024,ED,voxel,Laplace field,5,10.394033674963397
+patient024,ED,voxel,Laplace field,6,10.647003745318353
+patient024,ED,voxel,Laplace field,7,9.488385598141695
+patient024,ED,voxel,Laplace field,8,13.074906367041198
+patient024,ED,voxel,Laplace field,9,11.492785445420326
+patient024,ED,voxel,Laplace field,10,9.130896226415095
+patient024,ED,voxel,Laplace field,11,9.666029411764706
+patient024,ED,voxel,Laplace field,12,9.026519851116625
+patient024,ED,voxel,Laplace field,13,11.91728280961183
+patient024,ED,voxel,Laplace field,14,13.041590073529411
+patient024,ED,voxel,Laplace field,15,10.260257633587786
+patient024,ED,voxel,Laplace field,16,8.761670124481327
+patient024,ED,voxel,Laplace field,17,10.084670231729055
+patient024,ED,voxel,Yezzi-Prince,1,10.060071788111522
+patient024,ED,voxel,Yezzi-Prince,2,12.06705467155696
+patient024,ED,voxel,Yezzi-Prince,3,11.583607547999547
+patient024,ED,voxel,Yezzi-Prince,4,10.438404620358492
+patient024,ED,voxel,Yezzi-Prince,5,11.03974262687158
+patient024,ED,voxel,Yezzi-Prince,6,11.106505514233001
+patient024,ED,voxel,Yezzi-Prince,7,10.074268320573193
+patient024,ED,voxel,Yezzi-Prince,8,13.62192752328556
+patient024,ED,voxel,Yezzi-Prince,9,11.945428236814186
+patient024,ED,voxel,Yezzi-Prince,10,9.640828340121036
+patient024,ED,voxel,Yezzi-Prince,11,10.247807161106783
+patient024,ED,voxel,Yezzi-Prince,12,9.5037980529274
+patient024,ED,voxel,Yezzi-Prince,13,12.424494563541659
+patient024,ED,voxel,Yezzi-Prince,14,13.494406112853218
+patient024,ED,voxel,Yezzi-Prince,15,10.746108417292588
+patient024,ED,voxel,Yezzi-Prince,16,9.338932119464479
+patient024,ED,voxel,Yezzi-Prince,17,10.470021804173788
+patient024,ED,voxel,SDF cone rays,1,11.486066639556714
+patient024,ED,voxel,SDF cone rays,2,14.09638309692588
+patient024,ED,voxel,SDF cone rays,3,13.23064102337394
+patient024,ED,voxel,SDF cone rays,4,11.325501394094587
+patient024,ED,voxel,SDF cone rays,5,12.470259359954566
+patient024,ED,voxel,SDF cone rays,6,12.147825732808583
+patient024,ED,voxel,SDF cone rays,7,10.709456292594352
+patient024,ED,voxel,SDF cone rays,8,14.375103187322914
+patient024,ED,voxel,SDF cone rays,9,12.907985295974177
+patient024,ED,voxel,SDF cone rays,10,10.340705591552663
+patient024,ED,voxel,SDF cone rays,11,11.085013408660888
+patient024,ED,voxel,SDF cone rays,12,10.136811299596175
+patient024,ED,voxel,SDF cone rays,13,13.40934472956631
+patient024,ED,voxel,SDF cone rays,14,14.560800652293597
+patient024,ED,voxel,SDF cone rays,15,11.433910610111615
+patient024,ED,voxel,SDF cone rays,16,9.779573084407822
+patient024,ED,voxel,SDF cone rays,17,11.213781954345432
+patient024,ED,voxel,EDT boundary sum,1,8.846165145003555
+patient024,ED,voxel,EDT boundary sum,2,10.371813367122314
+patient024,ED,voxel,EDT boundary sum,3,10.29298730691274
+patient024,ED,voxel,EDT boundary sum,4,9.613181060427037
+patient024,ED,voxel,EDT boundary sum,5,9.846234635064054
+patient024,ED,voxel,EDT boundary sum,6,9.749420404136552
+patient024,ED,voxel,EDT boundary sum,7,9.771586664600793
+patient024,ED,voxel,EDT boundary sum,8,13.007504488198498
+patient024,ED,voxel,EDT boundary sum,9,11.515678555932517
+patient024,ED,voxel,EDT boundary sum,10,9.268320988371688
+patient024,ED,voxel,EDT boundary sum,11,9.826688432132496
+patient024,ED,voxel,EDT boundary sum,12,9.281345525982953
+patient024,ED,voxel,EDT boundary sum,13,11.816352579818416
+patient024,ED,voxel,EDT boundary sum,14,12.891551466549144
+patient024,ED,voxel,EDT boundary sum,15,10.582790709633864
+patient024,ED,voxel,EDT boundary sum,16,9.086890564914562
+patient024,ED,voxel,EDT boundary sum,17,9.699902805627561
+patient024,ES,model,Laplace field,1,14.07178631051753
+patient024,ES,model,Laplace field,2,14.882827788649706
+patient024,ES,model,Laplace field,3,14.977818853974123
+patient024,ES,model,Laplace field,4,13.938643926788686
+patient024,ES,model,Laplace field,5,14.213899803536346
+patient024,ES,model,Laplace field,6,14.101775956284152
+patient024,ES,model,Laplace field,7,14.612312030075188
+patient024,ES,model,Laplace field,8,14.983472998137803
+patient024,ES,model,Laplace field,9,14.417567567567568
+patient024,ES,model,Laplace field,10,13.62712947189097
+patient024,ES,model,Laplace field,11,13.783864541832669
+patient024,ES,model,Laplace field,12,13.113185255198488
+patient024,ES,model,Laplace field,13,16.720454545454544
+patient024,ES,model,Laplace field,14,17.523076923076925
+patient024,ES,model,Laplace field,15,18.010563380281692
+patient024,ES,model,Laplace field,16,16.037790697674417
+patient024,ES,model,Laplace field,17,
+patient024,ES,model,Yezzi-Prince,1,14.536150041526069
+patient024,ES,model,Yezzi-Prince,2,15.44498073424845
+patient024,ES,model,Yezzi-Prince,3,15.292022428318665
+patient024,ES,model,Yezzi-Prince,4,14.389933563111825
+patient024,ES,model,Yezzi-Prince,5,14.74290255619641
+patient024,ES,model,Yezzi-Prince,6,14.481476306915283
+patient024,ES,model,Yezzi-Prince,7,15.064798840902801
+patient024,ES,model,Yezzi-Prince,8,15.424589015030106
+patient024,ES,model,Yezzi-Prince,9,14.785820893983583
+patient024,ES,model,Yezzi-Prince,10,14.062313050590138
+patient024,ES,model,Yezzi-Prince,11,14.301208224429553
+patient024,ES,model,Yezzi-Prince,12,13.539831610392984
+patient024,ES,model,Yezzi-Prince,13,17.091278596357867
+patient024,ES,model,Yezzi-Prince,14,17.912569427490233
+patient024,ES,model,Yezzi-Prince,15,18.372686627884985
+patient024,ES,model,Yezzi-Prince,16,16.510264884593877
+patient024,ES,model,Yezzi-Prince,17,
+patient024,ES,model,SDF cone rays,1,15.553926238631565
+patient024,ES,model,SDF cone rays,2,16.39895422724595
+patient024,ES,model,SDF cone rays,3,16.57399326507794
+patient024,ES,model,SDF cone rays,4,15.393102695065211
+patient024,ES,model,SDF cone rays,5,15.768521205849638
+patient024,ES,model,SDF cone rays,6,15.667593973364768
+patient024,ES,model,SDF cone rays,7,15.547437103171097
+patient024,ES,model,SDF cone rays,8,15.879438489065047
+patient024,ES,model,SDF cone rays,9,15.526875088665937
+patient024,ES,model,SDF cone rays,10,14.542344226544719
+patient024,ES,model,SDF cone rays,11,14.655113315202325
+patient024,ES,model,SDF cone rays,12,14.316163881514608
+patient024,ES,model,SDF cone rays,13,16.362991228970614
+patient024,ES,model,SDF cone rays,14,16.87648840684157
+patient024,ES,model,SDF cone rays,15,16.928679815480407
+patient024,ES,model,SDF cone rays,16,15.721614926360374
+patient024,ES,model,SDF cone rays,17,
+patient024,ES,model,EDT boundary sum,1,13.030845938222436
+patient024,ES,model,EDT boundary sum,2,13.868351191690524
+patient024,ES,model,EDT boundary sum,3,13.417870534766404
+patient024,ES,model,EDT boundary sum,4,12.954395244998265
+patient024,ES,model,EDT boundary sum,5,13.19831917187554
+patient024,ES,model,EDT boundary sum,6,12.9305420590663
+patient024,ES,model,EDT boundary sum,7,14.832671260475216
+patient024,ES,model,EDT boundary sum,8,15.250020856519873
+patient024,ES,model,EDT boundary sum,9,14.71898782919119
+patient024,ES,model,EDT boundary sum,10,13.82918569542074
+patient024,ES,model,EDT boundary sum,11,13.98698553526069
+patient024,ES,model,EDT boundary sum,12,13.343014706285329
+patient024,ES,model,EDT boundary sum,13,15.722959397055886
+patient024,ES,model,EDT boundary sum,14,16.325283358647273
+patient024,ES,model,EDT boundary sum,15,16.156053207290004
+patient024,ES,model,EDT boundary sum,16,15.001744070718456
+patient024,ES,model,EDT boundary sum,17,
+patient024,ES,voxel,Laplace field,1,16.156894329896907
+patient024,ES,voxel,Laplace field,2,15.809819413092551
+patient024,ES,voxel,Laplace field,3,16.20204262877442
+patient024,ES,voxel,Laplace field,4,16.142782426778243
+patient024,ES,voxel,Laplace field,5,15.705610021786493
+patient024,ES,voxel,Laplace field,6,14.616292134831461
+patient024,ES,voxel,Laplace field,7,17.94203629032258
+patient024,ES,voxel,Laplace field,8,19.006265664160402
+patient024,ES,voxel,Laplace field,9,19.232246376811595
+patient024,ES,voxel,Laplace field,10,18.473984771573605
+patient024,ES,voxel,Laplace field,11,19.578989361702128
+patient024,ES,voxel,Laplace field,12,20.18979357798165
+patient024,ES,voxel,Laplace field,13,18.29549180327869
+patient024,ES,voxel,Laplace field,14,19.28176229508197
+patient024,ES,voxel,Laplace field,15,19.878048780487806
+patient024,ES,voxel,Laplace field,16,18.942139737991265
+patient024,ES,voxel,Laplace field,17,17.010854341736696
+patient024,ES,voxel,Yezzi-Prince,1,16.729529208743696
+patient024,ES,voxel,Yezzi-Prince,2,16.41122703035583
+patient024,ES,voxel,Yezzi-Prince,3,16.62578368483386
+patient024,ES,voxel,Yezzi-Prince,4,16.61789977600385
+patient024,ES,voxel,Yezzi-Prince,5,16.065026291575048
+patient024,ES,voxel,Yezzi-Prince,6,15.073691814936948
+patient024,ES,voxel,Yezzi-Prince,7,18.401191315343304
+patient024,ES,voxel,Yezzi-Prince,8,19.479933803242847
+patient024,ES,voxel,Yezzi-Prince,9,19.51554054039112
+patient024,ES,voxel,Yezzi-Prince,10,18.97873810221096
+patient024,ES,voxel,Yezzi-Prince,11,20.012826623307898
+patient024,ES,voxel,Yezzi-Prince,12,20.45563815055637
+patient024,ES,voxel,Yezzi-Prince,13,18.694497086571864
+patient024,ES,voxel,Yezzi-Prince,14,19.592251777648926
+patient024,ES,voxel,Yezzi-Prince,15,20.288253853960736
+patient024,ES,voxel,Yezzi-Prince,16,19.36524595235633
+patient024,ES,voxel,Yezzi-Prince,17,17.240735366564838
+patient024,ES,voxel,SDF cone rays,1,20.085507058605707
+patient024,ES,voxel,SDF cone rays,2,19.861241306192987
+patient024,ES,voxel,SDF cone rays,3,19.48464656426682
+patient024,ES,voxel,SDF cone rays,4,20.122019296909475
+patient024,ES,voxel,SDF cone rays,5,18.787895869585423
+patient024,ES,voxel,SDF cone rays,6,17.971184104747987
+patient024,ES,voxel,SDF cone rays,7,19.607725739479065
+patient024,ES,voxel,SDF cone rays,8,20.410338385063305
+patient024,ES,voxel,SDF cone rays,9,20.713191162330517
+patient024,ES,voxel,SDF cone rays,10,20.77088382159393
+patient024,ES,voxel,SDF cone rays,11,23.240742139613374
+patient024,ES,voxel,SDF cone rays,12,22.32965001272499
+patient024,ES,voxel,SDF cone rays,13,20.14734091836898
+patient024,ES,voxel,SDF cone rays,14,21.74701151300649
+patient024,ES,voxel,SDF cone rays,15,21.50207575356088
+patient024,ES,voxel,SDF cone rays,16,20.250007279575133
+patient024,ES,voxel,SDF cone rays,17,19.440092663805025
+patient024,ES,voxel,EDT boundary sum,1,13.498785975053138
+patient024,ES,voxel,EDT boundary sum,2,13.234749613174197
+patient024,ES,voxel,EDT boundary sum,3,13.336529203248913
+patient024,ES,voxel,EDT boundary sum,4,13.045863361039421
+patient024,ES,voxel,EDT boundary sum,5,13.384635855689288
+patient024,ES,voxel,EDT boundary sum,6,12.956487957815106
+patient024,ES,voxel,EDT boundary sum,7,17.900978040310644
+patient024,ES,voxel,EDT boundary sum,8,18.88833855746085
+patient024,ES,voxel,EDT boundary sum,9,19.20003142978834
+patient024,ES,voxel,EDT boundary sum,10,18.382014681240022
+patient024,ES,voxel,EDT boundary sum,11,19.210630061778616
+patient024,ES,voxel,EDT boundary sum,12,19.92616938232282
+patient024,ES,voxel,EDT boundary sum,13,17.55754075597544
+patient024,ES,voxel,EDT boundary sum,14,18.718212643607718
+patient024,ES,voxel,EDT boundary sum,15,19.502909730120404
+patient024,ES,voxel,EDT boundary sum,16,18.863165980343215
+patient024,ES,voxel,EDT boundary sum,17,14.557883869032231
+patient023,ED,model,Laplace field,1,11.238354275206865
+patient023,ED,model,Laplace field,2,10.691595324333223
+patient023,ED,model,Laplace field,3,10.23352218321098
+patient023,ED,model,Laplace field,4,11.084529656214583
+patient023,ED,model,Laplace field,5,11.456766917293233
+patient023,ED,model,Laplace field,6,11.26133997620464
+patient023,ED,model,Laplace field,7,10.353562421185371
+patient023,ED,model,Laplace field,8,10.642800404390526
+patient023,ED,model,Laplace field,9,11.2083084279737
+patient023,ED,model,Laplace field,10,11.24671875
+patient023,ED,model,Laplace field,11,10.71962358151121
+patient023,ED,model,Laplace field,12,10.117212460063898
+patient023,ED,model,Laplace field,13,9.886293949304989
+patient023,ED,model,Laplace field,14,10.27140410958904
+patient023,ED,model,Laplace field,15,9.566925965665236
+patient023,ED,model,Laplace field,16,9.0151154268963
+patient023,ED,model,Laplace field,17,8.71260714804591
+patient023,ED,model,Yezzi-Prince,1,11.696925378379156
+patient023,ED,model,Yezzi-Prince,2,11.04661177772419
+patient023,ED,model,Yezzi-Prince,3,10.667327540239663
+patient023,ED,model,Yezzi-Prince,4,11.566629857984543
+patient023,ED,model,Yezzi-Prince,5,11.813696112277487
+patient023,ED,model,Yezzi-Prince,6,11.739882292171663
+patient023,ED,model,Yezzi-Prince,7,10.885810731308156
+patient023,ED,model,Yezzi-Prince,8,11.120090368095676
+patient023,ED,model,Yezzi-Prince,9,11.771969271361721
+patient023,ED,model,Yezzi-Prince,10,11.832335769534112
+patient023,ED,model,Yezzi-Prince,11,11.18852652547896
+patient023,ED,model,Yezzi-Prince,12,10.622851541121038
+patient023,ED,model,Yezzi-Prince,13,10.389555119727346
+patient023,ED,model,Yezzi-Prince,14,10.743780907573852
+patient023,ED,model,Yezzi-Prince,15,10.089914434116457
+patient023,ED,model,Yezzi-Prince,16,9.465044630713933
+patient023,ED,model,Yezzi-Prince,17,9.2045498785196
+patient023,ED,model,SDF cone rays,1,12.531452981233961
+patient023,ED,model,SDF cone rays,2,11.90361226841459
+patient023,ED,model,SDF cone rays,3,11.554280745423796
+patient023,ED,model,SDF cone rays,4,12.388921003410129
+patient023,ED,model,SDF cone rays,5,12.665274672856986
+patient023,ED,model,SDF cone rays,6,12.52642272867524
+patient023,ED,model,SDF cone rays,7,11.438858469738184
+patient023,ED,model,SDF cone rays,8,11.646706895426062
+patient023,ED,model,SDF cone rays,9,12.270979257949582
+patient023,ED,model,SDF cone rays,10,12.384612911641598
+patient023,ED,model,SDF cone rays,11,11.873712012024095
+patient023,ED,model,SDF cone rays,12,11.075299338410838
+patient023,ED,model,SDF cone rays,13,10.909750313809536
+patient023,ED,model,SDF cone rays,14,11.354392483153616
+patient023,ED,model,SDF cone rays,15,10.659629991978877
+patient023,ED,model,SDF cone rays,16,10.052887722964511
+patient023,ED,model,SDF cone rays,17,10.447589353023531
+patient023,ED,model,EDT boundary sum,1,11.040651586791544
+patient023,ED,model,EDT boundary sum,2,10.67236252006905
+patient023,ED,model,EDT boundary sum,3,10.201881072485444
+patient023,ED,model,EDT boundary sum,4,11.074273852163502
+patient023,ED,model,EDT boundary sum,5,11.346079023912681
+patient023,ED,model,EDT boundary sum,6,11.16065117108687
+patient023,ED,model,EDT boundary sum,7,10.717477706101022
+patient023,ED,model,EDT boundary sum,8,11.030365521338963
+patient023,ED,model,EDT boundary sum,9,11.630204861419186
+patient023,ED,model,EDT boundary sum,10,11.641683598458767
+patient023,ED,model,EDT boundary sum,11,11.129987375643191
+patient023,ED,model,EDT boundary sum,12,10.487489296097598
+patient023,ED,model,EDT boundary sum,13,10.221505558305555
+patient023,ED,model,EDT boundary sum,14,10.655217037324693
+patient023,ED,model,EDT boundary sum,15,9.967788602831709
+patient023,ED,model,EDT boundary sum,16,9.389616623428026
+patient023,ED,model,EDT boundary sum,17,9.109911650466863
+patient023,ED,voxel,Laplace field,1,14.982572115384615
+patient023,ED,voxel,Laplace field,2,11.081453068592058
+patient023,ED,voxel,Laplace field,3,13.470195729537366
+patient023,ED,voxel,Laplace field,4,13.219444444444445
+patient023,ED,voxel,Laplace field,5,12.02664298401421
+patient023,ED,voxel,Laplace field,6,15.544628751974724
+patient023,ED,voxel,Laplace field,7,13.627673796791443
+patient023,ED,voxel,Laplace field,8,13.442964480874316
+patient023,ED,voxel,Laplace field,9,12.609555984555984
+patient023,ED,voxel,Laplace field,10,11.185243055555556
+patient023,ED,voxel,Laplace field,11,10.192528735632184
+patient023,ED,voxel,Laplace field,12,10.347050754458161
+patient023,ED,voxel,Laplace field,13,9.049310064935066
+patient023,ED,voxel,Laplace field,14,10.699860074626866
+patient023,ED,voxel,Laplace field,15,9.93116554054054
+patient023,ED,voxel,Laplace field,16,7.706205985915493
+patient023,ED,voxel,Laplace field,17,8.477536472148541
+patient023,ED,voxel,Yezzi-Prince,1,15.460847483995634
+patient023,ED,voxel,Yezzi-Prince,2,11.568214648897467
+patient023,ED,voxel,Yezzi-Prince,3,13.965820332014689
+patient023,ED,voxel,Yezzi-Prince,4,13.784515239927504
+patient023,ED,voxel,Yezzi-Prince,5,12.516531834593886
+patient023,ED,voxel,Yezzi-Prince,6,15.950773551000802
+patient023,ED,voxel,Yezzi-Prince,7,14.12510312241029
+patient023,ED,voxel,Yezzi-Prince,8,13.854563931949803
+patient023,ED,voxel,Yezzi-Prince,9,13.156926670589963
+patient023,ED,voxel,Yezzi-Prince,10,11.76248876783583
+patient023,ED,voxel,Yezzi-Prince,11,10.692609075842233
+patient023,ED,voxel,Yezzi-Prince,12,11.012936529962777
+patient023,ED,voxel,Yezzi-Prince,13,9.542551535290556
+patient023,ED,voxel,Yezzi-Prince,14,11.231615616314446
+patient023,ED,voxel,Yezzi-Prince,15,10.412655080492431
+patient023,ED,voxel,Yezzi-Prince,16,8.279656294366005
+patient023,ED,voxel,Yezzi-Prince,17,9.036029289192482
+patient023,ED,voxel,SDF cone rays,1,20.493747922090385
+patient023,ED,voxel,SDF cone rays,2,13.040131599033783
+patient023,ED,voxel,SDF cone rays,3,15.783804371687866
+patient023,ED,voxel,SDF cone rays,4,15.527252786954245
+patient023,ED,voxel,SDF cone rays,5,13.969666474242405
+patient023,ED,voxel,SDF cone rays,6,19.15486581479957
+patient023,ED,voxel,SDF cone rays,7,15.215793897123898
+patient023,ED,voxel,SDF cone rays,8,14.693848603410148
+patient023,ED,voxel,SDF cone rays,9,13.856471438512225
+patient023,ED,voxel,SDF cone rays,10,12.37195072836346
+patient023,ED,voxel,SDF cone rays,11,11.274253920577038
+patient023,ED,voxel,SDF cone rays,12,11.903971593566393
+patient023,ED,voxel,SDF cone rays,13,10.0437508449926
+patient023,ED,voxel,SDF cone rays,14,11.807750502629066
+patient023,ED,voxel,SDF cone rays,15,10.822021332946983
+patient023,ED,voxel,SDF cone rays,16,8.430152548031069
+patient023,ED,voxel,SDF cone rays,17,9.821995226394593
+patient023,ED,voxel,EDT boundary sum,1,11.98839232019889
+patient023,ED,voxel,EDT boundary sum,2,10.431781281633068
+patient023,ED,voxel,EDT boundary sum,3,12.231294455477352
+patient023,ED,voxel,EDT boundary sum,4,12.107256915834215
+patient023,ED,voxel,EDT boundary sum,5,11.17339328508394
+patient023,ED,voxel,EDT boundary sum,6,13.174671342587583
+patient023,ED,voxel,EDT boundary sum,7,13.014558561982955
+patient023,ED,voxel,EDT boundary sum,8,13.361360486087904
+patient023,ED,voxel,EDT boundary sum,9,12.762656554292068
+patient023,ED,voxel,EDT boundary sum,10,11.47206505007214
+patient023,ED,voxel,EDT boundary sum,11,10.460373833261688
+patient023,ED,voxel,EDT boundary sum,12,10.436495733849796
+patient023,ED,voxel,EDT boundary sum,13,9.048656982260866
+patient023,ED,voxel,EDT boundary sum,14,10.875868396082922
+patient023,ED,voxel,EDT boundary sum,15,9.913209727487049
+patient023,ED,voxel,EDT boundary sum,16,8.102696991302597
+patient023,ED,voxel,EDT boundary sum,17,8.718230604493018
+patient023,ES,model,Laplace field,1,13.55712788259958
+patient023,ES,model,Laplace field,2,14.25899446494465
+patient023,ES,model,Laplace field,3,13.639810426540285
+patient023,ES,model,Laplace field,4,11.836864406779661
+patient023,ES,model,Laplace field,5,12.893664047151278
+patient023,ES,model,Laplace field,6,13.602618243243244
+patient023,ES,model,Laplace field,7,14.043127306273062
+patient023,ES,model,Laplace field,8,14.448822463768115
+patient023,ES,model,Laplace field,9,14.58287617554859
+patient023,ES,model,Laplace field,10,13.135436893203883
+patient023,ES,model,Laplace field,11,13.260141093474427
+patient023,ES,model,Laplace field,12,14.599460132890366
+patient023,ES,model,Laplace field,13,15.033244680851064
+patient023,ES,model,Laplace field,14,16.219618055555557
+patient023,ES,model,Laplace field,15,16.739637305699482
+patient023,ES,model,Laplace field,16,16.13503086419753
+patient023,ES,model,Laplace field,17,
+patient023,ES,model,Yezzi-Prince,1,14.029510987879595
+patient023,ES,model,Yezzi-Prince,2,14.687315482495016
+patient023,ES,model,Yezzi-Prince,3,14.084891326807876
+patient023,ES,model,Yezzi-Prince,4,12.40035736257747
+patient023,ES,model,Yezzi-Prince,5,13.340694301957466
+patient023,ES,model,Yezzi-Prince,6,14.131752264660758
+patient023,ES,model,Yezzi-Prince,7,14.511239379094535
+patient023,ES,model,Yezzi-Prince,8,14.84030528690504
+patient023,ES,model,Yezzi-Prince,9,15.03906393798541
+patient023,ES,model,Yezzi-Prince,10,13.675242846220442
+patient023,ES,model,Yezzi-Prince,11,13.686776344528063
+patient023,ES,model,Yezzi-Prince,12,15.037207465631225
+patient023,ES,model,Yezzi-Prince,13,15.351659490707073
+patient023,ES,model,Yezzi-Prince,14,16.439231124189163
+patient023,ES,model,Yezzi-Prince,15,16.95850913882873
+patient023,ES,model,Yezzi-Prince,16,16.375291070820374
+patient023,ES,model,Yezzi-Prince,17,
+patient023,ES,model,SDF cone rays,1,15.098368894629008
+patient023,ES,model,SDF cone rays,2,16.005200232087027
+patient023,ES,model,SDF cone rays,3,15.324995638258272
+patient023,ES,model,SDF cone rays,4,13.424821770797342
+patient023,ES,model,SDF cone rays,5,14.451090065107364
+patient023,ES,model,SDF cone rays,6,15.36112760369842
+patient023,ES,model,SDF cone rays,7,15.07642401452434
+patient023,ES,model,SDF cone rays,8,15.600607866826264
+patient023,ES,model,SDF cone rays,9,15.569687169173669
+patient023,ES,model,SDF cone rays,10,14.16862428350356
+patient023,ES,model,SDF cone rays,11,14.322364236942676
+patient023,ES,model,SDF cone rays,12,15.617521135513964
+patient023,ES,model,SDF cone rays,13,15.579138532597968
+patient023,ES,model,SDF cone rays,14,16.6165052652359
+patient023,ES,model,SDF cone rays,15,16.74387706993775
+patient023,ES,model,SDF cone rays,16,16.55541134469303
+patient023,ES,model,SDF cone rays,17,
+patient023,ES,model,EDT boundary sum,1,12.830152771507919
+patient023,ES,model,EDT boundary sum,2,13.1365137355354
+patient023,ES,model,EDT boundary sum,3,12.559683265655904
+patient023,ES,model,EDT boundary sum,4,11.488691431991125
+patient023,ES,model,EDT boundary sum,5,12.129584467012897
+patient023,ES,model,EDT boundary sum,6,12.46843563865971
+patient023,ES,model,EDT boundary sum,7,14.378307909103338
+patient023,ES,model,EDT boundary sum,8,14.771704006886136
+patient023,ES,model,EDT boundary sum,9,14.73729163800661
+patient023,ES,model,EDT boundary sum,10,13.418950343826442
+patient023,ES,model,EDT boundary sum,11,13.537370362189291
+patient023,ES,model,EDT boundary sum,12,14.617806011656194
+patient023,ES,model,EDT boundary sum,13,14.920813540194898
+patient023,ES,model,EDT boundary sum,14,15.907607124911415
+patient023,ES,model,EDT boundary sum,15,15.996547407436864
+patient023,ES,model,EDT boundary sum,16,15.701669104305314
+patient023,ES,model,EDT boundary sum,17,
+patient023,ES,voxel,Laplace field,1,17.06861413043478
+patient023,ES,voxel,Laplace field,2,13.72
+patient023,ES,voxel,Laplace field,3,17.77386934673367
+patient023,ES,voxel,Laplace field,4,15.77183734939759
+patient023,ES,voxel,Laplace field,5,16.206521739130434
+patient023,ES,voxel,Laplace field,6,19.262108262108264
+patient023,ES,voxel,Laplace field,7,20.188911704312115
+patient023,ES,voxel,Laplace field,8,19.244277108433735
+patient023,ES,voxel,Laplace field,9,19.579373650107993
+patient023,ES,voxel,Laplace field,10,17.193181818181817
+patient023,ES,voxel,Laplace field,11,17.965027700831026
+patient023,ES,voxel,Laplace field,12,19.60272988505747
+patient023,ES,voxel,Laplace field,13,17.588658146964857
+patient023,ES,voxel,Laplace field,14,17.2245
+patient023,ES,voxel,Laplace field,15,13.861858974358974
+patient023,ES,voxel,Laplace field,16,15.787912912912914
+patient023,ES,voxel,Laplace field,17,15.661270491803279
+patient023,ES,voxel,Yezzi-Prince,1,17.574802765379783
+patient023,ES,voxel,Yezzi-Prince,2,14.252264578501384
+patient023,ES,voxel,Yezzi-Prince,3,18.161635188002084
+patient023,ES,voxel,Yezzi-Prince,4,16.41053506552455
+patient023,ES,voxel,Yezzi-Prince,5,16.707343618420587
+patient023,ES,voxel,Yezzi-Prince,6,19.82729724601463
+patient023,ES,voxel,Yezzi-Prince,7,20.581023645107262
+patient023,ES,voxel,Yezzi-Prince,8,19.608337944674204
+patient023,ES,voxel,Yezzi-Prince,9,19.983502777297346
+patient023,ES,voxel,Yezzi-Prince,10,17.778180634679874
+patient023,ES,voxel,Yezzi-Prince,11,18.330563410497437
+patient023,ES,voxel,Yezzi-Prince,12,20.201330738506098
+patient023,ES,voxel,Yezzi-Prince,13,17.959519005431154
+patient023,ES,voxel,Yezzi-Prince,14,17.74613000488281
+patient023,ES,voxel,Yezzi-Prince,15,14.342585485409467
+patient023,ES,voxel,Yezzi-Prince,16,16.264099387435227
+patient023,ES,voxel,Yezzi-Prince,17,16.113405182322516
+patient023,ES,voxel,SDF cone rays,1,21.558765766413316
+patient023,ES,voxel,SDF cone rays,2,16.926898690541584
+patient023,ES,voxel,SDF cone rays,3,24.87469119163015
+patient023,ES,voxel,SDF cone rays,4,19.74378768794508
+patient023,ES,voxel,SDF cone rays,5,19.397615088587223
+patient023,ES,voxel,SDF cone rays,6,24.6004781926799
+patient023,ES,voxel,SDF cone rays,7,21.740180679415285
+patient023,ES,voxel,SDF cone rays,8,20.64102978074407
+patient023,ES,voxel,SDF cone rays,9,21.283103271385507
+patient023,ES,voxel,SDF cone rays,10,18.877255116612456
+patient023,ES,voxel,SDF cone rays,11,19.87262544077189
+patient023,ES,voxel,SDF cone rays,12,21.81006494609789
+patient023,ES,voxel,SDF cone rays,13,19.204334228564374
+patient023,ES,voxel,SDF cone rays,14,19.205580276489258
+patient023,ES,voxel,SDF cone rays,15,15.316593539409148
+patient023,ES,voxel,SDF cone rays,16,17.193015909051752
+patient023,ES,voxel,SDF cone rays,17,17.926941483919737
+patient023,ES,voxel,EDT boundary sum,1,13.497806025587995
+patient023,ES,voxel,EDT boundary sum,2,12.126854174296062
+patient023,ES,voxel,EDT boundary sum,3,11.841953022396146
+patient023,ES,voxel,EDT boundary sum,4,12.991835222186813
+patient023,ES,voxel,EDT boundary sum,5,13.632503304965255
+patient023,ES,voxel,EDT boundary sum,6,14.002135803896477
+patient023,ES,voxel,EDT boundary sum,7,19.664332705111963
+patient023,ES,voxel,EDT boundary sum,8,18.758431436929357
+patient023,ES,voxel,EDT boundary sum,9,19.144325346977613
+patient023,ES,voxel,EDT boundary sum,10,17.295571700272152
+patient023,ES,voxel,EDT boundary sum,11,18.055253205867356
+patient023,ES,voxel,EDT boundary sum,12,19.206801324055114
+patient023,ES,voxel,EDT boundary sum,13,17.12589397978859
+patient023,ES,voxel,EDT boundary sum,14,17.236379940032958
+patient023,ES,voxel,EDT boundary sum,15,13.456482955736991
+patient023,ES,voxel,EDT boundary sum,16,15.519488386205724
+patient023,ES,voxel,EDT boundary sum,17,15.040354641148301
+patient021,ED,model,Laplace field,1,11.726903007980356
+patient021,ED,model,Laplace field,2,12.15529888329319
+patient021,ED,model,Laplace field,3,12.856246337175229
+patient021,ED,model,Laplace field,4,12.357620462746763
+patient021,ED,model,Laplace field,5,13.225632757361888
+patient021,ED,model,Laplace field,6,12.063835978835979
+patient021,ED,model,Laplace field,7,10.937992495309569
+patient021,ED,model,Laplace field,8,11.67546362339515
+patient021,ED,model,Laplace field,9,12.498634764901889
+patient021,ED,model,Laplace field,10,12.212193528938906
+patient021,ED,model,Laplace field,11,12.478040898495443
+patient021,ED,model,Laplace field,12,11.706110687750048
+patient021,ED,model,Laplace field,13,10.181777440706012
+patient021,ED,model,Laplace field,14,11.943814953810623
+patient021,ED,model,Laplace field,15,11.530581143321593
+patient021,ED,model,Laplace field,16,10.238536707592083
+patient021,ED,model,Laplace field,17,10.60166144200627
+patient021,ED,model,Yezzi-Prince,1,12.193468581930075
+patient021,ED,model,Yezzi-Prince,2,12.750629772522895
+patient021,ED,model,Yezzi-Prince,3,13.350828576912333
+patient021,ED,model,Yezzi-Prince,4,12.81090414050885
+patient021,ED,model,Yezzi-Prince,5,13.756880960490008
+patient021,ED,model,Yezzi-Prince,6,12.495831892225478
+patient021,ED,model,Yezzi-Prince,7,11.41444573160855
+patient021,ED,model,Yezzi-Prince,8,12.261352380861789
+patient021,ED,model,Yezzi-Prince,9,12.981430519426015
+patient021,ED,model,Yezzi-Prince,10,12.686526585430194
+patient021,ED,model,Yezzi-Prince,11,13.064223559889458
+patient021,ED,model,Yezzi-Prince,12,12.204167645825592
+patient021,ED,model,Yezzi-Prince,13,10.615429078421405
+patient021,ED,model,Yezzi-Prince,14,12.371333357092965
+patient021,ED,model,Yezzi-Prince,15,12.014148126931346
+patient021,ED,model,Yezzi-Prince,16,10.748262598472142
+patient021,ED,model,Yezzi-Prince,17,10.985807797901309
+patient021,ED,model,SDF cone rays,1,12.967700088880338
+patient021,ED,model,SDF cone rays,2,13.33907311412159
+patient021,ED,model,SDF cone rays,3,14.013117705268957
+patient021,ED,model,SDF cone rays,4,13.58226564415851
+patient021,ED,model,SDF cone rays,5,14.411770735439172
+patient021,ED,model,SDF cone rays,6,13.273276929905805
+patient021,ED,model,SDF cone rays,7,11.993107049237048
+patient021,ED,model,SDF cone rays,8,12.876255132769625
+patient021,ED,model,SDF cone rays,9,13.679832140722349
+patient021,ED,model,SDF cone rays,10,13.522672792531287
+patient021,ED,model,SDF cone rays,11,13.799883935632886
+patient021,ED,model,SDF cone rays,12,12.96401813348649
+patient021,ED,model,SDF cone rays,13,11.216335948106668
+patient021,ED,model,SDF cone rays,14,13.02058842385889
+patient021,ED,model,SDF cone rays,15,12.681217172933252
+patient021,ED,model,SDF cone rays,16,11.267527728175137
+patient021,ED,model,SDF cone rays,17,11.501827274310552
+patient021,ED,model,EDT boundary sum,1,11.78824161161107
+patient021,ED,model,EDT boundary sum,2,12.307752446061233
+patient021,ED,model,EDT boundary sum,3,13.067422141645029
+patient021,ED,model,EDT boundary sum,4,12.604242361672389
+patient021,ED,model,EDT boundary sum,5,13.220532464412448
+patient021,ED,model,EDT boundary sum,6,12.09570507755986
+patient021,ED,model,EDT boundary sum,7,11.33108711868916
+patient021,ED,model,EDT boundary sum,8,12.041226379249935
+patient021,ED,model,EDT boundary sum,9,12.879083738641269
+patient021,ED,model,EDT boundary sum,10,12.59232879739099
+patient021,ED,model,EDT boundary sum,11,12.83174845595864
+patient021,ED,model,EDT boundary sum,12,12.105631804870502
+patient021,ED,model,EDT boundary sum,13,10.60416535652611
+patient021,ED,model,EDT boundary sum,14,12.342188911404952
+patient021,ED,model,EDT boundary sum,15,11.89876097077375
+patient021,ED,model,EDT boundary sum,16,10.623758603982298
+patient021,ED,model,EDT boundary sum,17,10.961544191127286
+patient021,ED,voxel,Laplace field,1,15.602129337539433
+patient021,ED,voxel,Laplace field,2,17.73292220113852
+patient021,ED,voxel,Laplace field,3,17.5451581027668
+patient021,ED,voxel,Laplace field,4,10.508207070707071
+patient021,ED,voxel,Laplace field,5,9.616232227488151
+patient021,ED,voxel,Laplace field,6,12.320785776997367
+patient021,ED,voxel,Laplace field,7,10.616438356164384
+patient021,ED,voxel,Laplace field,8,15.568981481481481
+patient021,ED,voxel,Laplace field,9,18.465307429547394
+patient021,ED,voxel,Laplace field,10,12.87836185819071
+patient021,ED,voxel,Laplace field,11,12.594518190757128
+patient021,ED,voxel,Laplace field,12,12.974198592650508
+patient021,ED,voxel,Laplace field,13,10.290437158469945
+patient021,ED,voxel,Laplace field,14,9.818495038588754
+patient021,ED,voxel,Laplace field,15,11.444429198682766
+patient021,ED,voxel,Laplace field,16,13.214324917672887
+patient021,ED,voxel,Laplace field,17,9.096422338568935
+patient021,ED,voxel,Yezzi-Prince,1,16.040448687054006
+patient021,ED,voxel,Yezzi-Prince,2,18.411618569770393
+patient021,ED,voxel,Yezzi-Prince,3,17.998088600324547
+patient021,ED,voxel,Yezzi-Prince,4,11.014833853300974
+patient021,ED,voxel,Yezzi-Prince,5,10.236854792771181
+patient021,ED,voxel,Yezzi-Prince,6,12.844382119869538
+patient021,ED,voxel,Yezzi-Prince,7,11.173643559625704
+patient021,ED,voxel,Yezzi-Prince,8,16.214742183685303
+patient021,ED,voxel,Yezzi-Prince,9,18.88341189448799
+patient021,ED,voxel,Yezzi-Prince,10,13.371819137846831
+patient021,ED,voxel,Yezzi-Prince,11,13.176765948270274
+patient021,ED,voxel,Yezzi-Prince,12,13.477927038686364
+patient021,ED,voxel,Yezzi-Prince,13,10.790782417755961
+patient021,ED,voxel,Yezzi-Prince,14,10.361624857556597
+patient021,ED,voxel,Yezzi-Prince,15,11.897412879537672
+patient021,ED,voxel,Yezzi-Prince,16,13.63841921830413
+patient021,ED,voxel,Yezzi-Prince,17,9.543575819458221
+patient021,ED,voxel,SDF cone rays,1,18.666739329178625
+patient021,ED,voxel,SDF cone rays,2,23.461856252102066
+patient021,ED,voxel,SDF cone rays,3,21.0297193285976
+patient021,ED,voxel,SDF cone rays,4,12.16653205288781
+patient021,ED,voxel,SDF cone rays,5,11.08874757278587
+patient021,ED,voxel,SDF cone rays,6,14.382084762767494
+patient021,ED,voxel,SDF cone rays,7,12.14377513062464
+patient021,ED,voxel,SDF cone rays,8,18.05948899851905
+patient021,ED,voxel,SDF cone rays,9,20.560447837836104
+patient021,ED,voxel,SDF cone rays,10,14.080529540169987
+patient021,ED,voxel,SDF cone rays,11,13.842029378360234
+patient021,ED,voxel,SDF cone rays,12,14.462677593991755
+patient021,ED,voxel,SDF cone rays,13,11.486413419963233
+patient021,ED,voxel,SDF cone rays,14,11.229250884240097
+patient021,ED,voxel,SDF cone rays,15,12.773622093033188
+patient021,ED,voxel,SDF cone rays,16,14.51690930200068
+patient021,ED,voxel,SDF cone rays,17,10.579206676695359
+patient021,ED,voxel,EDT boundary sum,1,13.910747147885031
+patient021,ED,voxel,EDT boundary sum,2,15.01969107821499
+patient021,ED,voxel,EDT boundary sum,3,14.60450803960265
+patient021,ED,voxel,EDT boundary sum,4,10.14184067747007
+patient021,ED,voxel,EDT boundary sum,5,9.235125006092668
+patient021,ED,voxel,EDT boundary sum,6,11.686536662928152
+patient021,ED,voxel,EDT boundary sum,7,10.673854715530187
+patient021,ED,voxel,EDT boundary sum,8,14.947224576384933
+patient021,ED,voxel,EDT boundary sum,9,17.574744304360536
+patient021,ED,voxel,EDT boundary sum,10,13.011220038957292
+patient021,ED,voxel,EDT boundary sum,11,12.781359650978532
+patient021,ED,voxel,EDT boundary sum,12,13.27515967102886
+patient021,ED,voxel,EDT boundary sum,13,10.393237512098635
+patient021,ED,voxel,EDT boundary sum,14,9.716384441350497
+patient021,ED,voxel,EDT boundary sum,15,11.277743367803346
+patient021,ED,voxel,EDT boundary sum,16,13.247309984150624
+patient021,ED,voxel,EDT boundary sum,17,8.768799002778051
+patient021,ES,model,Laplace field,1,16.74302973977695
+patient021,ES,model,Laplace field,2,17.301440329218106
+patient021,ES,model,Laplace field,3,17.660831960461284
+patient021,ES,model,Laplace field,4,16.052860696517413
+patient021,ES,model,Laplace field,5,16.542091836734695
+patient021,ES,model,Laplace field,6,16.940257352941178
+patient021,ES,model,Laplace field,7,17.183098591549296
+patient021,ES,model,Laplace field,8,17.407809611829943
+patient021,ES,model,Laplace field,9,17.383868243243242
+patient021,ES,model,Laplace field,10,16.067778716216218
+patient021,ES,model,Laplace field,11,16.34777462121212
+patient021,ES,model,Laplace field,12,16.478346456692915
+patient021,ES,model,Laplace field,13,17.620071684587813
+patient021,ES,model,Laplace field,14,17.375753012048193
+patient021,ES,model,Laplace field,15,17.76851851851852
+patient021,ES,model,Laplace field,16,18.110294117647058
+patient021,ES,model,Laplace field,17,
+patient021,ES,model,Yezzi-Prince,1,17.112966175859302
+patient021,ES,model,Yezzi-Prince,2,17.89345276012342
+patient021,ES,model,Yezzi-Prince,3,18.008588462527932
+patient021,ES,model,Yezzi-Prince,4,16.394625894663545
+patient021,ES,model,Yezzi-Prince,5,17.064263949102283
+patient021,ES,model,Yezzi-Prince,6,17.400289286585416
+patient021,ES,model,Yezzi-Prince,7,17.562616261704612
+patient021,ES,model,Yezzi-Prince,8,17.916620148748656
+patient021,ES,model,Yezzi-Prince,9,17.740330824980866
+patient021,ES,model,Yezzi-Prince,10,16.46465294425552
+patient021,ES,model,Yezzi-Prince,11,16.94234978791439
+patient021,ES,model,Yezzi-Prince,12,16.959259162362166
+patient021,ES,model,Yezzi-Prince,13,17.92460860659145
+patient021,ES,model,Yezzi-Prince,14,17.715039597936425
+patient021,ES,model,Yezzi-Prince,15,17.97017294263083
+patient021,ES,model,Yezzi-Prince,16,18.40250716819895
+patient021,ES,model,Yezzi-Prince,17,
+patient021,ES,model,SDF cone rays,1,18.880636424380164
+patient021,ES,model,SDF cone rays,2,19.640617425549667
+patient021,ES,model,SDF cone rays,3,19.574343264986695
+patient021,ES,model,SDF cone rays,4,17.898094422386258
+patient021,ES,model,SDF cone rays,5,18.427503356155086
+patient021,ES,model,SDF cone rays,6,19.207783676245633
+patient021,ES,model,SDF cone rays,7,18.49710979372123
+patient021,ES,model,SDF cone rays,8,18.679357874195148
+patient021,ES,model,SDF cone rays,9,18.539287618688636
+patient021,ES,model,SDF cone rays,10,17.514932445577674
+patient021,ES,model,SDF cone rays,11,17.496320634177238
+patient021,ES,model,SDF cone rays,12,17.799119871244656
+patient021,ES,model,SDF cone rays,13,18.389600193201428
+patient021,ES,model,SDF cone rays,14,18.35198855112834
+patient021,ES,model,SDF cone rays,15,18.441904703776043
+patient021,ES,model,SDF cone rays,16,18.654270581308122
+patient021,ES,model,SDF cone rays,17,
+patient021,ES,model,EDT boundary sum,1,15.205310741764904
+patient021,ES,model,EDT boundary sum,2,16.035408366364216
+patient021,ES,model,EDT boundary sum,3,15.50096260381884
+patient021,ES,model,EDT boundary sum,4,14.65594477914459
+patient021,ES,model,EDT boundary sum,5,15.070591544131844
+patient021,ES,model,EDT boundary sum,6,15.224810217233266
+patient021,ES,model,EDT boundary sum,7,17.473774407018144
+patient021,ES,model,EDT boundary sum,8,17.684836181386782
+patient021,ES,model,EDT boundary sum,9,17.638159922651344
+patient021,ES,model,EDT boundary sum,10,16.261587531179995
+patient021,ES,model,EDT boundary sum,11,16.624485662489228
+patient021,ES,model,EDT boundary sum,12,16.6341969542616
+patient021,ES,model,EDT boundary sum,13,17.656065240128495
+patient021,ES,model,EDT boundary sum,14,17.551227431699456
+patient021,ES,model,EDT boundary sum,15,17.569836712388135
+patient021,ES,model,EDT boundary sum,16,17.77802130095274
+patient021,ES,model,EDT boundary sum,17,
+patient021,ES,voxel,Laplace field,1,21.019553072625698
+patient021,ES,voxel,Laplace field,2,23.110787172011662
+patient021,ES,voxel,Laplace field,3,23.00448275862069
+patient021,ES,voxel,Laplace field,4,19.655280649926144
+patient021,ES,voxel,Laplace field,5,21.329673423423422
+patient021,ES,voxel,Laplace field,6,21.731521739130436
+patient021,ES,voxel,Laplace field,7,18.86716621253406
+patient021,ES,voxel,Laplace field,8,22.58073394495413
+patient021,ES,voxel,Laplace field,9,21.969926350245498
+patient021,ES,voxel,Laplace field,10,18.410570469798657
+patient021,ES,voxel,Laplace field,11,21.193199088145896
+patient021,ES,voxel,Laplace field,12,22.56989465153971
+patient021,ES,voxel,Laplace field,13,20.088350785340314
+patient021,ES,voxel,Laplace field,14,17.400714285714287
+patient021,ES,voxel,Laplace field,15,15.860085227272727
+patient021,ES,voxel,Laplace field,16,21.99508426966292
+patient021,ES,voxel,Laplace field,17,15.49524456521739
+patient021,ES,voxel,Yezzi-Prince,1,21.485523592826375
+patient021,ES,voxel,Yezzi-Prince,2,23.621972015925817
+patient021,ES,voxel,Yezzi-Prince,3,23.21214666958513
+patient021,ES,voxel,Yezzi-Prince,4,20.0084845262581
+patient021,ES,voxel,Yezzi-Prince,5,21.798329892459215
+patient021,ES,voxel,Yezzi-Prince,6,22.054487253272015
+patient021,ES,voxel,Yezzi-Prince,7,19.407837389600374
+patient021,ES,voxel,Yezzi-Prince,8,23.07867969897909
+patient021,ES,voxel,Yezzi-Prince,9,22.300453785398393
+patient021,ES,voxel,Yezzi-Prince,10,18.9021390876514
+patient021,ES,voxel,Yezzi-Prince,11,21.729914995674665
+patient021,ES,voxel,Yezzi-Prince,12,22.975639772956143
+patient021,ES,voxel,Yezzi-Prince,13,20.598931050425424
+patient021,ES,voxel,Yezzi-Prince,14,17.757084407806396
+patient021,ES,voxel,Yezzi-Prince,15,16.221362018223964
+patient021,ES,voxel,Yezzi-Prince,16,22.36607693732901
+patient021,ES,voxel,Yezzi-Prince,17,15.826301255433457
+patient021,ES,voxel,SDF cone rays,1,23.59969551736416
+patient021,ES,voxel,SDF cone rays,2,26.054965603108307
+patient021,ES,voxel,SDF cone rays,3,25.338793098186624
+patient021,ES,voxel,SDF cone rays,4,22.25897576009505
+patient021,ES,voxel,SDF cone rays,5,23.90421964026786
+patient021,ES,voxel,SDF cone rays,6,24.050055780825407
+patient021,ES,voxel,SDF cone rays,7,21.358615805082813
+patient021,ES,voxel,SDF cone rays,8,24.677420817383933
+patient021,ES,voxel,SDF cone rays,9,24.119637840508243
+patient021,ES,voxel,SDF cone rays,10,20.423973119338886
+patient021,ES,voxel,SDF cone rays,11,23.112642122981757
+patient021,ES,voxel,SDF cone rays,12,24.702310815622585
+patient021,ES,voxel,SDF cone rays,13,22.588388393062573
+patient021,ES,voxel,SDF cone rays,14,19.855912927900043
+patient021,ES,voxel,SDF cone rays,15,17.31123873501113
+patient021,ES,voxel,SDF cone rays,16,23.563634290230855
+patient021,ES,voxel,SDF cone rays,17,17.8185186209886
+patient021,ES,voxel,EDT boundary sum,1,18.156626951761087
+patient021,ES,voxel,EDT boundary sum,2,19.98548392860257
+patient021,ES,voxel,EDT boundary sum,3,19.33650399964431
+patient021,ES,voxel,EDT boundary sum,4,17.341603966548135
+patient021,ES,voxel,EDT boundary sum,5,18.57384309253177
+patient021,ES,voxel,EDT boundary sum,6,19.363607857745627
+patient021,ES,voxel,EDT boundary sum,7,18.90568803506586
+patient021,ES,voxel,EDT boundary sum,8,22.079035025780353
+patient021,ES,voxel,EDT boundary sum,9,21.121283161269467
+patient021,ES,voxel,EDT boundary sum,10,18.095487584363696
+patient021,ES,voxel,EDT boundary sum,11,21.060882043693567
+patient021,ES,voxel,EDT boundary sum,12,22.686333197249006
+patient021,ES,voxel,EDT boundary sum,13,19.286447227937387
+patient021,ES,voxel,EDT boundary sum,14,16.18183053970337
+patient021,ES,voxel,EDT boundary sum,15,15.225683297171738
+patient021,ES,voxel,EDT boundary sum,16,21.2306554862176
+patient021,ES,voxel,EDT boundary sum,17,14.253172162304754
+patient025,ED,model,Laplace field,1,9.87610394021739
+patient025,ED,model,Laplace field,2,9.994372605363985
+patient025,ED,model,Laplace field,3,10.364903502501788
+patient025,ED,model,Laplace field,4,10.499167283493708
+patient025,ED,model,Laplace field,5,10.541666666666666
+patient025,ED,model,Laplace field,6,9.61845757335448
+patient025,ED,model,Laplace field,7,9.270343839541548
+patient025,ED,model,Laplace field,8,9.18996901626646
+patient025,ED,model,Laplace field,9,10.578951149425288
+patient025,ED,model,Laplace field,10,10.573533681765388
+patient025,ED,model,Laplace field,11,9.982721382289418
+patient025,ED,model,Laplace field,12,9.242458279845957
+patient025,ED,model,Laplace field,13,8.793494897959183
+patient025,ED,model,Laplace field,14,9.456018518518519
+patient025,ED,model,Laplace field,15,9.31308520599251
+patient025,ED,model,Laplace field,16,8.694402985074626
+patient025,ED,model,Laplace field,17,8.594824789097988
+patient025,ED,model,Yezzi-Prince,1,10.401698486312576
+patient025,ED,model,Yezzi-Prince,2,10.624430726771154
+patient025,ED,model,Yezzi-Prince,3,10.917013717089661
+patient025,ED,model,Yezzi-Prince,4,11.001031320770965
+patient025,ED,model,Yezzi-Prince,5,11.094102419115352
+patient025,ED,model,Yezzi-Prince,6,10.161531051315078
+patient025,ED,model,Yezzi-Prince,7,9.75731245439852
+patient025,ED,model,Yezzi-Prince,8,9.768345962837627
+patient025,ED,model,Yezzi-Prince,9,11.112391312368985
+patient025,ED,model,Yezzi-Prince,10,11.090644002929936
+patient025,ED,model,Yezzi-Prince,11,10.559928612540832
+patient025,ED,model,Yezzi-Prince,12,9.759209115636823
+patient025,ED,model,Yezzi-Prince,13,9.273978138943107
+patient025,ED,model,Yezzi-Prince,14,9.940938437426531
+patient025,ED,model,Yezzi-Prince,15,9.92218165897698
+patient025,ED,model,Yezzi-Prince,16,9.20115204853798
+patient025,ED,model,Yezzi-Prince,17,10.831269246881659
+patient025,ED,model,SDF cone rays,1,11.03310553923897
+patient025,ED,model,SDF cone rays,2,11.01350624990646
+patient025,ED,model,SDF cone rays,3,11.469521979249487
+patient025,ED,model,SDF cone rays,4,11.666551938328718
+patient025,ED,model,SDF cone rays,5,11.477918904855711
+patient025,ED,model,SDF cone rays,6,10.649908557380598
+patient025,ED,model,SDF cone rays,7,10.48277910500338
+patient025,ED,model,SDF cone rays,8,10.20747094039858
+patient025,ED,model,SDF cone rays,9,12.021894612257508
+patient025,ED,model,SDF cone rays,10,12.269950096338606
+patient025,ED,model,SDF cone rays,11,11.199753586210905
+patient025,ED,model,SDF cone rays,12,10.316845874884315
+patient025,ED,model,SDF cone rays,13,10.010408659370578
+patient025,ED,model,SDF cone rays,14,10.426092496884415
+patient025,ED,model,SDF cone rays,15,10.9988560114014
+patient025,ED,model,SDF cone rays,16,9.796666753588624
+patient025,ED,model,SDF cone rays,17,18.90293155251812
+patient025,ED,model,EDT boundary sum,1,10.231218526868716
+patient025,ED,model,EDT boundary sum,2,10.361965721137679
+patient025,ED,model,EDT boundary sum,3,10.774350203131675
+patient025,ED,model,EDT boundary sum,4,10.799607467510187
+patient025,ED,model,EDT boundary sum,5,10.659217465543602
+patient025,ED,model,EDT boundary sum,6,9.973815997756729
+patient025,ED,model,EDT boundary sum,7,9.616604743782634
+patient025,ED,model,EDT boundary sum,8,9.526633111198773
+patient025,ED,model,EDT boundary sum,9,10.91081260648267
+patient025,ED,model,EDT boundary sum,10,10.921605232562198
+patient025,ED,model,EDT boundary sum,11,10.34783535882498
+patient025,ED,model,EDT boundary sum,12,9.62272852773997
+patient025,ED,model,EDT boundary sum,13,9.12293980267583
+patient025,ED,model,EDT boundary sum,14,9.838672276415856
+patient025,ED,model,EDT boundary sum,15,9.783882652775626
+patient025,ED,model,EDT boundary sum,16,9.067290044661185
+patient025,ED,model,EDT boundary sum,17,10.002539694154418
+patient025,ED,voxel,Laplace field,1,17.01086956521739
+patient025,ED,voxel,Laplace field,2,11.677375565610859
+patient025,ED,voxel,Laplace field,3,11.449736611062335
+patient025,ED,voxel,Laplace field,4,7.650883838383838
+patient025,ED,voxel,Laplace field,5,6.989614614614615
+patient025,ED,voxel,Laplace field,6,10.09155616224649
+patient025,ED,voxel,Laplace field,7,9.131832797427652
+patient025,ED,voxel,Laplace field,8,8.43422619047619
+patient025,ED,voxel,Laplace field,9,15.970752089136491
+patient025,ED,voxel,Laplace field,10,11.98947482638889
+patient025,ED,voxel,Laplace field,11,9.488880652335062
+patient025,ED,voxel,Laplace field,12,12.454592363261094
+patient025,ED,voxel,Laplace field,13,9.105504587155963
+patient025,ED,voxel,Laplace field,14,13.323599726775956
+patient025,ED,voxel,Laplace field,15,10.624188311688311
+patient025,ED,voxel,Laplace field,16,6.039242219215156
+patient025,ED,voxel,Laplace field,17,8.707215598609041
+patient025,ED,voxel,Yezzi-Prince,1,17.479183608851365
+patient025,ED,voxel,Yezzi-Prince,2,12.325527081554291
+patient025,ED,voxel,Yezzi-Prince,3,11.951070169695017
+patient025,ED,voxel,Yezzi-Prince,4,8.162908795104686
+patient025,ED,voxel,Yezzi-Prince,5,7.575487188868098
+patient025,ED,voxel,Yezzi-Prince,6,10.636842405554285
+patient025,ED,voxel,Yezzi-Prince,7,9.746790617991874
+patient025,ED,voxel,Yezzi-Prince,8,9.098293151174273
+patient025,ED,voxel,Yezzi-Prince,9,16.363145579423968
+patient025,ED,voxel,Yezzi-Prince,10,12.530764345493582
+patient025,ED,voxel,Yezzi-Prince,11,10.021874282517373
+patient025,ED,voxel,Yezzi-Prince,12,12.971582792122666
+patient025,ED,voxel,Yezzi-Prince,13,9.652189960329748
+patient025,ED,voxel,Yezzi-Prince,14,13.735157019453622
+patient025,ED,voxel,Yezzi-Prince,15,11.077774709230894
+patient025,ED,voxel,Yezzi-Prince,16,6.617109813612756
+patient025,ED,voxel,Yezzi-Prince,17,9.265024496913252
+patient025,ED,voxel,SDF cone rays,1,22.170938958116725
+patient025,ED,voxel,SDF cone rays,2,14.860389238676873
+patient025,ED,voxel,SDF cone rays,3,13.365964994815696
+patient025,ED,voxel,SDF cone rays,4,8.623921386320584
+patient025,ED,voxel,SDF cone rays,5,7.897703342848234
+patient025,ED,voxel,SDF cone rays,6,13.039718030209475
+patient025,ED,voxel,SDF cone rays,7,11.61383429792533
+patient025,ED,voxel,SDF cone rays,8,10.978681321181949
+patient025,ED,voxel,SDF cone rays,9,18.612590966893215
+patient025,ED,voxel,SDF cone rays,10,13.968308947152561
+patient025,ED,voxel,SDF cone rays,11,11.043386748846237
+patient025,ED,voxel,SDF cone rays,12,15.360718126759563
+patient025,ED,voxel,SDF cone rays,13,10.427703533697565
+patient025,ED,voxel,SDF cone rays,14,14.521644617038998
+patient025,ED,voxel,SDF cone rays,15,11.779784480008212
+patient025,ED,voxel,SDF cone rays,16,6.825789937469731
+patient025,ED,voxel,SDF cone rays,17,10.361110482592519
+patient025,ED,voxel,EDT boundary sum,1,11.632563419876154
+patient025,ED,voxel,EDT boundary sum,2,10.385008852082679
+patient025,ED,voxel,EDT boundary sum,3,10.963068185509874
+patient025,ED,voxel,EDT boundary sum,4,7.850293790049826
+patient025,ED,voxel,EDT boundary sum,5,7.287609087454306
+patient025,ED,voxel,EDT boundary sum,6,9.066632459390554
+patient025,ED,voxel,EDT boundary sum,7,8.933529961914111
+patient025,ED,voxel,EDT boundary sum,8,8.522315104424008
+patient025,ED,voxel,EDT boundary sum,9,15.748211564017096
+patient025,ED,voxel,EDT boundary sum,10,11.922897524717781
+patient025,ED,voxel,EDT boundary sum,11,9.346242032287915
+patient025,ED,voxel,EDT boundary sum,12,11.53435169777019
+patient025,ED,voxel,EDT boundary sum,13,9.369830580245152
+patient025,ED,voxel,EDT boundary sum,14,12.715653601891356
+patient025,ED,voxel,EDT boundary sum,15,10.395076788865127
+patient025,ED,voxel,EDT boundary sum,16,6.4591494748653675
+patient025,ED,voxel,EDT boundary sum,17,8.375328866273565
+patient025,ES,model,Laplace field,1,13.374652294853965
+patient025,ES,model,Laplace field,2,13.665290880503145
+patient025,ES,model,Laplace field,3,13.442033678756477
+patient025,ES,model,Laplace field,4,12.661077844311377
+patient025,ES,model,Laplace field,5,13.490602836879432
+patient025,ES,model,Laplace field,6,13.418502202643172
+patient025,ES,model,Laplace field,7,13.548759864712514
+patient025,ES,model,Laplace field,8,13.609433374844334
+patient025,ES,model,Laplace field,9,13.853888213851763
+patient025,ES,model,Laplace field,10,13.071448703494926
+patient025,ES,model,Laplace field,11,13.116333333333333
+patient025,ES,model,Laplace field,12,12.985379177377892
+patient025,ES,model,Laplace field,13,13.718315301391035
+patient025,ES,model,Laplace field,14,13.904396186440678
+patient025,ES,model,Laplace field,15,14.024396929824562
+patient025,ES,model,Laplace field,16,13.22294776119403
+patient025,ES,model,Laplace field,17,14.807332677165354
+patient025,ES,model,Yezzi-Prince,1,13.777883079353725
+patient025,ES,model,Yezzi-Prince,2,14.234973486114598
+patient025,ES,model,Yezzi-Prince,3,13.856189612897566
+patient025,ES,model,Yezzi-Prince,4,13.084638376293068
+patient025,ES,model,Yezzi-Prince,5,14.048547880700294
+patient025,ES,model,Yezzi-Prince,6,13.879923475996513
+patient025,ES,model,Yezzi-Prince,7,13.99278591719394
+patient025,ES,model,Yezzi-Prince,8,14.17297184779071
+patient025,ES,model,Yezzi-Prince,9,14.29829095026992
+patient025,ES,model,Yezzi-Prince,10,13.491460729209788
+patient025,ES,model,Yezzi-Prince,11,13.658858435312906
+patient025,ES,model,Yezzi-Prince,12,13.496400130745071
+patient025,ES,model,Yezzi-Prince,13,14.125031892814814
+patient025,ES,model,Yezzi-Prince,14,14.287898591009236
+patient025,ES,model,Yezzi-Prince,15,14.373421725473905
+patient025,ES,model,Yezzi-Prince,16,13.659161880834779
+patient025,ES,model,Yezzi-Prince,17,14.957984453111184
+patient025,ES,model,SDF cone rays,1,14.908493572548135
+patient025,ES,model,SDF cone rays,2,15.184586007640046
+patient025,ES,model,SDF cone rays,3,14.712372034942549
+patient025,ES,model,SDF cone rays,4,13.995743565359515
+patient025,ES,model,SDF cone rays,5,14.806415958269268
+patient025,ES,model,SDF cone rays,6,14.936273263939677
+patient025,ES,model,SDF cone rays,7,14.72081520269796
+patient025,ES,model,SDF cone rays,8,14.760204584779656
+patient025,ES,model,SDF cone rays,9,14.986984752363018
+patient025,ES,model,SDF cone rays,10,14.245658894939917
+patient025,ES,model,SDF cone rays,11,14.206407344818116
+patient025,ES,model,SDF cone rays,12,14.221146795620955
+patient025,ES,model,SDF cone rays,13,14.749337787421815
+patient025,ES,model,SDF cone rays,14,14.978742074158232
+patient025,ES,model,SDF cone rays,15,14.936310111430654
+patient025,ES,model,SDF cone rays,16,14.2199211761133
+patient025,ES,model,SDF cone rays,17,15.16221773906017
+patient025,ES,model,EDT boundary sum,1,12.505866136935557
+patient025,ES,model,EDT boundary sum,2,13.302764714139062
+patient025,ES,model,EDT boundary sum,3,13.145662236707816
+patient025,ES,model,EDT boundary sum,4,12.468161782247577
+patient025,ES,model,EDT boundary sum,5,13.177100889733497
+patient025,ES,model,EDT boundary sum,6,12.76600049700856
+patient025,ES,model,EDT boundary sum,7,13.886111283114152
+patient025,ES,model,EDT boundary sum,8,13.98178915068934
+patient025,ES,model,EDT boundary sum,9,14.202007583395678
+patient025,ES,model,EDT boundary sum,10,13.367103385280192
+patient025,ES,model,EDT boundary sum,11,13.436088718414307
+patient025,ES,model,EDT boundary sum,12,13.29151046551898
+patient025,ES,model,EDT boundary sum,13,14.051050143411391
+patient025,ES,model,EDT boundary sum,14,14.255921804298788
+patient025,ES,model,EDT boundary sum,15,14.263777916891533
+patient025,ES,model,EDT boundary sum,16,13.522043411411456
+patient025,ES,model,EDT boundary sum,17,14.706970075922689
+patient025,ES,voxel,Laplace field,1,18.119720319634702
+patient025,ES,voxel,Laplace field,2,13.313668866886688
+patient025,ES,voxel,Laplace field,3,11.522752192982455
+patient025,ES,voxel,Laplace field,4,10.652868318122556
+patient025,ES,voxel,Laplace field,5,16.255079505300355
+patient025,ES,voxel,Laplace field,6,17.85282874617737
+patient025,ES,voxel,Laplace field,7,13.698072139303482
+patient025,ES,voxel,Laplace field,8,15.78000764525994
+patient025,ES,voxel,Laplace field,9,20.548728813559322
+patient025,ES,voxel,Laplace field,10,17.55034722222222
+patient025,ES,voxel,Laplace field,11,16.841016859852477
+patient025,ES,voxel,Laplace field,12,18.102202472952087
+patient025,ES,voxel,Laplace field,13,16.56821766561514
+patient025,ES,voxel,Laplace field,14,19.63239875389408
+patient025,ES,voxel,Laplace field,15,15.662701612903225
+patient025,ES,voxel,Laplace field,16,11.843470483005367
+patient025,ES,voxel,Laplace field,17,16.00294117647059
+patient025,ES,voxel,Yezzi-Prince,1,18.71701992864478
+patient025,ES,voxel,Yezzi-Prince,2,13.85250194080592
+patient025,ES,voxel,Yezzi-Prince,3,12.072958868062287
+patient025,ES,voxel,Yezzi-Prince,4,11.14305953221029
+patient025,ES,voxel,Yezzi-Prince,5,16.7260884716317
+patient025,ES,voxel,Yezzi-Prince,6,18.362704100594243
+patient025,ES,voxel,Yezzi-Prince,7,14.232353674238594
+patient025,ES,voxel,Yezzi-Prince,8,16.451159117054136
+patient025,ES,voxel,Yezzi-Prince,9,20.941324883506553
+patient025,ES,voxel,Yezzi-Prince,10,18.04993910038913
+patient025,ES,voxel,Yezzi-Prince,11,17.348862898236707
+patient025,ES,voxel,Yezzi-Prince,12,18.631885096684123
+patient025,ES,voxel,Yezzi-Prince,13,17.026102186377493
+patient025,ES,voxel,Yezzi-Prince,14,19.924938041473105
+patient025,ES,voxel,Yezzi-Prince,15,16.065483563946138
+patient025,ES,voxel,Yezzi-Prince,16,12.476030905899293
+patient025,ES,voxel,Yezzi-Prince,17,16.26201774270777
+patient025,ES,voxel,SDF cone rays,1,24.966806739432627
+patient025,ES,voxel,SDF cone rays,2,15.988321533035261
+patient025,ES,voxel,SDF cone rays,3,13.888297746056004
+patient025,ES,voxel,SDF cone rays,4,12.266145147898051
+patient025,ES,voxel,SDF cone rays,5,20.49865131243379
+patient025,ES,voxel,SDF cone rays,6,27.92451535087842
+patient025,ES,voxel,SDF cone rays,7,17.367115553338728
+patient025,ES,voxel,SDF cone rays,8,21.52047244926476
+patient025,ES,voxel,SDF cone rays,9,25.05098488371251
+patient025,ES,voxel,SDF cone rays,10,20.245993284163653
+patient025,ES,voxel,SDF cone rays,11,20.354061496521574
+patient025,ES,voxel,SDF cone rays,12,20.934568835557705
+patient025,ES,voxel,SDF cone rays,13,17.971302474710843
+patient025,ES,voxel,SDF cone rays,14,21.36061111640336
+patient025,ES,voxel,SDF cone rays,15,17.461370112819058
+patient025,ES,voxel,SDF cone rays,16,14.453928759784732
+patient025,ES,voxel,SDF cone rays,17,17.395232888084045
+patient025,ES,voxel,EDT boundary sum,1,11.95195217001928
+patient025,ES,voxel,EDT boundary sum,2,12.019661770664294
+patient025,ES,voxel,EDT boundary sum,3,10.402528612760076
+patient025,ES,voxel,EDT boundary sum,4,10.514701450352874
+patient025,ES,voxel,EDT boundary sum,5,13.3944102968007
+patient025,ES,voxel,EDT boundary sum,6,11.843053712757355
+patient025,ES,voxel,EDT boundary sum,7,12.987999771364885
+patient025,ES,voxel,EDT boundary sum,8,14.887007576245416
+patient025,ES,voxel,EDT boundary sum,9,20.09728021871511
+patient025,ES,voxel,EDT boundary sum,10,17.216879030068714
+patient025,ES,voxel,EDT boundary sum,11,15.925200266380832
+patient025,ES,voxel,EDT boundary sum,12,16.904273681699586
+patient025,ES,voxel,EDT boundary sum,13,16.04301998066225
+patient025,ES,voxel,EDT boundary sum,14,18.13924613251493
+patient025,ES,voxel,EDT boundary sum,15,14.848920356073688
+patient025,ES,voxel,EDT boundary sum,16,11.95642603190086
+patient025,ES,voxel,EDT boundary sum,17,13.837174928634562
+patient027,ED,model,Laplace field,1,11.572977582846004
+patient027,ED,model,Laplace field,2,11.678571428571429
+patient027,ED,model,Laplace field,3,11.214864864864865
+patient027,ED,model,Laplace field,4,11.650651927437641
+patient027,ED,model,Laplace field,5,11.770533880903491
+patient027,ED,model,Laplace field,6,10.979788877445932
+patient027,ED,model,Laplace field,7,10.9319176882662
+patient027,ED,model,Laplace field,8,11.386108617594255
+patient027,ED,model,Laplace field,9,12.194526627218934
+patient027,ED,model,Laplace field,10,11.538302277432713
+patient027,ED,model,Laplace field,11,10.78046875
+patient027,ED,model,Laplace field,12,10.317577733199599
+patient027,ED,model,Laplace field,13,10.442397660818713
+patient027,ED,model,Laplace field,14,11.30611313868613
+patient027,ED,model,Laplace field,15,10.363004362050164
+patient027,ED,model,Laplace field,16,9.430212014134275
+patient027,ED,model,Laplace field,17,8.951775431861805
+patient027,ED,model,Yezzi-Prince,1,12.048186180884379
+patient027,ED,model,Yezzi-Prince,2,12.138786325032562
+patient027,ED,model,Yezzi-Prince,3,11.80448048359639
+patient027,ED,model,Yezzi-Prince,4,12.114097448163022
+patient027,ED,model,Yezzi-Prince,5,12.205089036444129
+patient027,ED,model,Yezzi-Prince,6,11.53345789059797
+patient027,ED,model,Yezzi-Prince,7,11.431654416533569
+patient027,ED,model,Yezzi-Prince,8,11.911078567778828
+patient027,ED,model,Yezzi-Prince,9,12.817309947643995
+patient027,ED,model,Yezzi-Prince,10,12.062712840165164
+patient027,ED,model,Yezzi-Prince,11,11.271542658976147
+patient027,ED,model,Yezzi-Prince,12,10.926792327475285
+patient027,ED,model,Yezzi-Prince,13,10.919851512797395
+patient027,ED,model,Yezzi-Prince,14,11.826237570630372
+patient027,ED,model,Yezzi-Prince,15,10.869932916198199
+patient027,ED,model,Yezzi-Prince,16,9.935694875368943
+patient027,ED,model,Yezzi-Prince,17,9.717687330959855
+patient027,ED,model,SDF cone rays,1,12.75089853130586
+patient027,ED,model,SDF cone rays,2,12.795591524189387
+patient027,ED,model,SDF cone rays,3,12.280113360430743
+patient027,ED,model,SDF cone rays,4,12.856329669217134
+patient027,ED,model,SDF cone rays,5,12.870006741439537
+patient027,ED,model,SDF cone rays,6,12.034749925811798
+patient027,ED,model,SDF cone rays,7,11.982658408777935
+patient027,ED,model,SDF cone rays,8,12.518946777768367
+patient027,ED,model,SDF cone rays,9,13.416390253477077
+patient027,ED,model,SDF cone rays,10,12.681226925820297
+patient027,ED,model,SDF cone rays,11,11.880005729198455
+patient027,ED,model,SDF cone rays,12,11.292310829506954
+patient027,ED,model,SDF cone rays,13,11.442118225320739
+patient027,ED,model,SDF cone rays,14,12.307891772611297
+patient027,ED,model,SDF cone rays,15,11.40428239932627
+patient027,ED,model,SDF cone rays,16,10.32894893641747
+patient027,ED,model,SDF cone rays,17,12.22923170188567
+patient027,ED,model,EDT boundary sum,1,11.723777079907542
+patient027,ED,model,EDT boundary sum,2,11.90779147013812
+patient027,ED,model,EDT boundary sum,3,11.517846909084836
+patient027,ED,model,EDT boundary sum,4,11.81118478580397
+patient027,ED,model,EDT boundary sum,5,11.79664121222447
+patient027,ED,model,EDT boundary sum,6,11.237132371515496
+patient027,ED,model,EDT boundary sum,7,11.321517999451967
+patient027,ED,model,EDT boundary sum,8,11.772812592490999
+patient027,ED,model,EDT boundary sum,9,12.593503531619643
+patient027,ED,model,EDT boundary sum,10,11.935059476343001
+patient027,ED,model,EDT boundary sum,11,11.160647277321134
+patient027,ED,model,EDT boundary sum,12,10.697904397396291
+patient027,ED,model,EDT boundary sum,13,10.787984684057403
+patient027,ED,model,EDT boundary sum,14,11.685591766143947
+patient027,ED,model,EDT boundary sum,15,10.769304594790793
+patient027,ED,model,EDT boundary sum,16,9.827400502945144
+patient027,ED,model,EDT boundary sum,17,9.445110021031063
+patient027,ED,voxel,Laplace field,1,14.829218600191755
+patient027,ED,voxel,Laplace field,2,11.408168574401666
+patient027,ED,voxel,Laplace field,3,11.274117971334068
+patient027,ED,voxel,Laplace field,4,10.758625265392782
+patient027,ED,voxel,Laplace field,5,10.340046777546778
+patient027,ED,voxel,Laplace field,6,12.010268762677486
+patient027,ED,voxel,Laplace field,7,12.945290858725762
+patient027,ED,voxel,Laplace field,8,16.115455020920503
+patient027,ED,voxel,Laplace field,9,15.292829643888354
+patient027,ED,voxel,Laplace field,10,13.967768791627021
+patient027,ED,voxel,Laplace field,11,10.771113243761997
+patient027,ED,voxel,Laplace field,12,10.898615635179153
+patient027,ED,voxel,Laplace field,13,9.765083217753121
+patient027,ED,voxel,Laplace field,14,12.067657342657343
+patient027,ED,voxel,Laplace field,15,10.949513729977117
+patient027,ED,voxel,Laplace field,16,8.84981884057971
+patient027,ED,voxel,Laplace field,17,8.96122152205526
+patient027,ED,voxel,Yezzi-Prince,1,15.380928126871872
+patient027,ED,voxel,Yezzi-Prince,2,11.951022320309738
+patient027,ED,voxel,Yezzi-Prince,3,11.85600471496582
+patient027,ED,voxel,Yezzi-Prince,4,11.257862587137081
+patient027,ED,voxel,Yezzi-Prince,5,10.836741033066335
+patient027,ED,voxel,Yezzi-Prince,6,12.567132740426983
+patient027,ED,voxel,Yezzi-Prince,7,13.483954269359867
+patient027,ED,voxel,Yezzi-Prince,8,16.57913735022605
+patient027,ED,voxel,Yezzi-Prince,9,15.855334588492342
+patient027,ED,voxel,Yezzi-Prince,10,14.495103862374085
+patient027,ED,voxel,Yezzi-Prince,11,11.288392616096248
+patient027,ED,voxel,Yezzi-Prince,12,11.607711757821447
+patient027,ED,voxel,Yezzi-Prince,13,10.365738358808457
+patient027,ED,voxel,Yezzi-Prince,14,12.62946575805024
+patient027,ED,voxel,Yezzi-Prince,15,11.43731333080091
+patient027,ED,voxel,Yezzi-Prince,16,9.529585096110468
+patient027,ED,voxel,Yezzi-Prince,17,9.422700619847811
+patient027,ED,voxel,SDF cone rays,1,18.5100733833825
+patient027,ED,voxel,SDF cone rays,2,14.300607603869006
+patient027,ED,voxel,SDF cone rays,3,12.72787837708798
+patient027,ED,voxel,SDF cone rays,4,12.344552157031503
+patient027,ED,voxel,SDF cone rays,5,11.899907563183758
+patient027,ED,voxel,SDF cone rays,6,13.750283903330867
+patient027,ED,voxel,SDF cone rays,7,15.735020984462974
+patient027,ED,voxel,SDF cone rays,8,17.841881141502988
+patient027,ED,voxel,SDF cone rays,9,17.246584726137193
+patient027,ED,voxel,SDF cone rays,10,15.400700772409774
+patient027,ED,voxel,SDF cone rays,11,11.985317698824657
+patient027,ED,voxel,SDF cone rays,12,12.57791808373765
+patient027,ED,voxel,SDF cone rays,13,10.734055259852733
+patient027,ED,voxel,SDF cone rays,14,13.370785258366512
+patient027,ED,voxel,SDF cone rays,15,12.047839349140018
+patient027,ED,voxel,SDF cone rays,16,10.009941025056701
+patient027,ED,voxel,SDF cone rays,17,10.067145597917387
+patient027,ED,voxel,EDT boundary sum,1,13.112143116509355
+patient027,ED,voxel,EDT boundary sum,2,10.949915172406216
+patient027,ED,voxel,EDT boundary sum,3,11.255829771140707
+patient027,ED,voxel,EDT boundary sum,4,10.763378050676577
+patient027,ED,voxel,EDT boundary sum,5,10.156989088177433
+patient027,ED,voxel,EDT boundary sum,6,11.3788862508886
+patient027,ED,voxel,EDT boundary sum,7,12.935850862871137
+patient027,ED,voxel,EDT boundary sum,8,15.72116987874817
+patient027,ED,voxel,EDT boundary sum,9,14.802412406657037
+patient027,ED,voxel,EDT boundary sum,10,14.203214993826215
+patient027,ED,voxel,EDT boundary sum,11,11.104519417098295
+patient027,ED,voxel,EDT boundary sum,12,11.165136887636299
+patient027,ED,voxel,EDT boundary sum,13,10.086816194484038
+patient027,ED,voxel,EDT boundary sum,14,12.29633702498216
+patient027,ED,voxel,EDT boundary sum,15,11.001090816829516
+patient027,ED,voxel,EDT boundary sum,16,9.126597863349362
+patient027,ED,voxel,EDT boundary sum,17,8.705954021004526
+patient027,ES,model,Laplace field,1,14.209327086882453
+patient027,ES,model,Laplace field,2,15.444061962134251
+patient027,ES,model,Laplace field,3,15.277254374158815
+patient027,ES,model,Laplace field,4,13.764358108108109
+patient027,ES,model,Laplace field,5,14.53864421416235
+patient027,ES,model,Laplace field,6,14.48811475409836
+patient027,ES,model,Laplace field,7,14.763140161725067
+patient027,ES,model,Laplace field,8,15.050342465753424
+patient027,ES,model,Laplace field,9,14.842800289435601
+patient027,ES,model,Laplace field,10,13.488813920454545
+patient027,ES,model,Laplace field,11,13.553079710144928
+patient027,ES,model,Laplace field,12,14.424259259259259
+patient027,ES,model,Laplace field,13,14.486575178997613
+patient027,ES,model,Laplace field,14,14.393990929705215
+patient027,ES,model,Laplace field,15,14.486641221374045
+patient027,ES,model,Laplace field,16,14.687028657616892
+patient027,ES,model,Laplace field,17,15.017045454545455
+patient027,ES,model,Yezzi-Prince,1,14.622533539897132
+patient027,ES,model,Yezzi-Prince,2,15.830060236630464
+patient027,ES,model,Yezzi-Prince,3,15.637016305371537
+patient027,ES,model,Yezzi-Prince,4,14.240923678552782
+patient027,ES,model,Yezzi-Prince,5,14.939975857117016
+patient027,ES,model,Yezzi-Prince,6,14.930227071730817
+patient027,ES,model,Yezzi-Prince,7,15.224894952902575
+patient027,ES,model,Yezzi-Prince,8,15.445691498011758
+patient027,ES,model,Yezzi-Prince,9,15.331527970806734
+patient027,ES,model,Yezzi-Prince,10,13.998510630293326
+patient027,ES,model,Yezzi-Prince,11,14.035313031293343
+patient027,ES,model,Yezzi-Prince,12,14.95754559693513
+patient027,ES,model,Yezzi-Prince,13,14.812876819710743
+patient027,ES,model,Yezzi-Prince,14,14.745765296780334
+patient027,ES,model,Yezzi-Prince,15,14.842936392048843
+patient027,ES,model,Yezzi-Prince,16,14.993748066472072
+patient027,ES,model,Yezzi-Prince,17,15.227031311431489
+patient027,ES,model,SDF cone rays,1,15.620484555194082
+patient027,ES,model,SDF cone rays,2,16.876626206757486
+patient027,ES,model,SDF cone rays,3,16.4691600953586
+patient027,ES,model,SDF cone rays,4,15.006251802315584
+patient027,ES,model,SDF cone rays,5,15.833171361880392
+patient027,ES,model,SDF cone rays,6,15.74529188343736
+patient027,ES,model,SDF cone rays,7,15.919766509629325
+patient027,ES,model,SDF cone rays,8,16.210924168155618
+patient027,ES,model,SDF cone rays,9,16.068627529999972
+patient027,ES,model,SDF cone rays,10,14.706992706114596
+patient027,ES,model,SDF cone rays,11,14.712946056974108
+patient027,ES,model,SDF cone rays,12,15.619340912147804
+patient027,ES,model,SDF cone rays,13,15.466642086147408
+patient027,ES,model,SDF cone rays,14,15.272180914067897
+patient027,ES,model,SDF cone rays,15,15.34341259585082
+patient027,ES,model,SDF cone rays,16,15.689622680525973
+patient027,ES,model,SDF cone rays,17,15.43545776837832
+patient027,ES,model,EDT boundary sum,1,13.721143749341039
+patient027,ES,model,EDT boundary sum,2,14.783127631254738
+patient027,ES,model,EDT boundary sum,3,14.728462356577651
+patient027,ES,model,EDT boundary sum,4,13.502072403559813
+patient027,ES,model,EDT boundary sum,5,13.996445505936117
+patient027,ES,model,EDT boundary sum,6,13.574770628038
+patient027,ES,model,EDT boundary sum,7,15.120871024633033
+patient027,ES,model,EDT boundary sum,8,15.388121641498723
+patient027,ES,model,EDT boundary sum,9,15.076937384267275
+patient027,ES,model,EDT boundary sum,10,13.861308788711375
+patient027,ES,model,EDT boundary sum,11,13.907367009701936
+patient027,ES,model,EDT boundary sum,12,14.663098309834798
+patient027,ES,model,EDT boundary sum,13,14.786040622465366
+patient027,ES,model,EDT boundary sum,14,14.643247952536932
+patient027,ES,model,EDT boundary sum,15,14.665994299580426
+patient027,ES,model,EDT boundary sum,16,14.895284598049894
+patient027,ES,model,EDT boundary sum,17,15.082963652424999
+patient027,ES,voxel,Laplace field,1,18.901350174216027
+patient027,ES,voxel,Laplace field,2,15.64051724137931
+patient027,ES,voxel,Laplace field,3,19.736759425493716
+patient027,ES,voxel,Laplace field,4,20.620359628770302
+patient027,ES,voxel,Laplace field,5,20.4223044397463
+patient027,ES,voxel,Laplace field,6,21.42441291585127
+patient027,ES,voxel,Laplace field,7,22.91628086419753
+patient027,ES,voxel,Laplace field,8,22.59808394160584
+patient027,ES,voxel,Laplace field,9,22.374521072796934
+patient027,ES,voxel,Laplace field,10,21.720195086705203
+patient027,ES,voxel,Laplace field,11,20.303041543026705
+patient027,ES,voxel,Laplace field,12,19.472689075630253
+patient027,ES,voxel,Laplace field,13,16.412337662337663
+patient027,ES,voxel,Laplace field,14,21.223297213622292
+patient027,ES,voxel,Laplace field,15,19.11434659090909
+patient027,ES,voxel,Laplace field,16,16.125797872340424
+patient027,ES,voxel,Laplace field,17,13.014397905759163
+patient027,ES,voxel,Yezzi-Prince,1,19.44622506164923
+patient027,ES,voxel,Yezzi-Prince,2,16.293969085298734
+patient027,ES,voxel,Yezzi-Prince,3,20.151475685503154
+patient027,ES,voxel,Yezzi-Prince,4,20.91824062905013
+patient027,ES,voxel,Yezzi-Prince,5,20.801578158808056
+patient027,ES,voxel,Yezzi-Prince,6,21.718382477060455
+patient027,ES,voxel,Yezzi-Prince,7,23.386682198371417
+patient027,ES,voxel,Yezzi-Prince,8,23.058397668991645
+patient027,ES,voxel,Yezzi-Prince,9,22.81718861006229
+patient027,ES,voxel,Yezzi-Prince,10,22.16263552759424
+patient027,ES,voxel,Yezzi-Prince,11,20.698274932204793
+patient027,ES,voxel,Yezzi-Prince,12,19.99801864944586
+patient027,ES,voxel,Yezzi-Prince,13,16.97289485435981
+patient027,ES,voxel,Yezzi-Prince,14,21.467203119590923
+patient027,ES,voxel,Yezzi-Prince,15,19.435632969393875
+patient027,ES,voxel,Yezzi-Prince,16,16.57237377166748
+patient027,ES,voxel,Yezzi-Prince,17,13.446354076292295
+patient027,ES,voxel,SDF cone rays,1,24.455854039574334
+patient027,ES,voxel,SDF cone rays,2,22.703801831212537
+patient027,ES,voxel,SDF cone rays,3,22.643971448312755
+patient027,ES,voxel,SDF cone rays,4,22.821533486350784
+patient027,ES,voxel,SDF cone rays,5,22.81286024694463
+patient027,ES,voxel,SDF cone rays,6,23.833702628626515
+patient027,ES,voxel,SDF cone rays,7,26.462131264769
+patient027,ES,voxel,SDF cone rays,8,25.9860084839981
+patient027,ES,voxel,SDF cone rays,9,26.29145067587666
+patient027,ES,voxel,SDF cone rays,10,23.484184314749832
+patient027,ES,voxel,SDF cone rays,11,22.513002944629342
+patient027,ES,voxel,SDF cone rays,12,21.785770027577374
+patient027,ES,voxel,SDF cone rays,13,20.486921218772988
+patient027,ES,voxel,SDF cone rays,14,25.677967248686326
+patient027,ES,voxel,SDF cone rays,15,21.45120219750838
+patient027,ES,voxel,SDF cone rays,16,17.432192918087573
+patient027,ES,voxel,SDF cone rays,17,14.702456710642338
+patient027,ES,voxel,EDT boundary sum,1,15.62944035829152
+patient027,ES,voxel,EDT boundary sum,2,14.003275633844837
+patient027,ES,voxel,EDT boundary sum,3,17.54775958172509
+patient027,ES,voxel,EDT boundary sum,4,18.555096046553963
+patient027,ES,voxel,EDT boundary sum,5,18.042499489814485
+patient027,ES,voxel,EDT boundary sum,6,17.900456969752003
+patient027,ES,voxel,EDT boundary sum,7,21.99591201028706
+patient027,ES,voxel,EDT boundary sum,8,21.264587645983173
+patient027,ES,voxel,EDT boundary sum,9,21.330353057247468
+patient027,ES,voxel,EDT boundary sum,10,21.343371824033
+patient027,ES,voxel,EDT boundary sum,11,20.276069533577306
+patient027,ES,voxel,EDT boundary sum,12,19.608529838193366
+patient027,ES,voxel,EDT boundary sum,13,15.852635492597308
+patient027,ES,voxel,EDT boundary sum,14,18.427651411239577
+patient027,ES,voxel,EDT boundary sum,15,17.152713950836297
+patient027,ES,voxel,EDT boundary sum,16,15.984194171175044
+patient027,ES,voxel,EDT boundary sum,17,12.613669064240513
+patient026,ED,model,Laplace field,1,13.411311875435743
+patient026,ED,model,Laplace field,2,13.055963604472703
+patient026,ED,model,Laplace field,3,12.725545311445918
+patient026,ED,model,Laplace field,4,13.226636302294198
+patient026,ED,model,Laplace field,5,13.350425436632333
+patient026,ED,model,Laplace field,6,12.56503179463024
+patient026,ED,model,Laplace field,7,12.878703703703703
+patient026,ED,model,Laplace field,8,12.758192337611824
+patient026,ED,model,Laplace field,9,13.263303941908713
+patient026,ED,model,Laplace field,10,12.660990239934932
+patient026,ED,model,Laplace field,11,12.609499163529904
+patient026,ED,model,Laplace field,12,11.969191270860078
+patient026,ED,model,Laplace field,13,11.735855728429986
+patient026,ED,model,Laplace field,14,12.541706730769231
+patient026,ED,model,Laplace field,15,11.17036496350365
+patient026,ED,model,Laplace field,16,10.416512915129152
+patient026,ED,model,Laplace field,17,10.811254345307068
+patient026,ED,model,Yezzi-Prince,1,13.87893398567712
+patient026,ED,model,Yezzi-Prince,2,13.490150707381202
+patient026,ED,model,Yezzi-Prince,3,13.269152177862567
+patient026,ED,model,Yezzi-Prince,4,13.710975130238191
+patient026,ED,model,Yezzi-Prince,5,13.728910029334868
+patient026,ED,model,Yezzi-Prince,6,13.113667399154426
+patient026,ED,model,Yezzi-Prince,7,13.401955550330298
+patient026,ED,model,Yezzi-Prince,8,13.215272100367745
+patient026,ED,model,Yezzi-Prince,9,13.816078102143473
+patient026,ED,model,Yezzi-Prince,10,13.176427148909722
+patient026,ED,model,Yezzi-Prince,11,13.065697615937378
+patient026,ED,model,Yezzi-Prince,12,12.603721673334569
+patient026,ED,model,Yezzi-Prince,13,12.19292799101186
+patient026,ED,model,Yezzi-Prince,14,12.981601545443901
+patient026,ED,model,Yezzi-Prince,15,11.640864887376772
+patient026,ED,model,Yezzi-Prince,16,10.8996580885031
+patient026,ED,model,Yezzi-Prince,17,11.297262323054627
+patient026,ED,model,SDF cone rays,1,14.753381973140716
+patient026,ED,model,SDF cone rays,2,14.34699192174666
+patient026,ED,model,SDF cone rays,3,13.91191736660514
+patient026,ED,model,SDF cone rays,4,14.608533584476321
+patient026,ED,model,SDF cone rays,5,14.587430458350722
+patient026,ED,model,SDF cone rays,6,13.769411667416357
+patient026,ED,model,SDF cone rays,7,14.092966212978116
+patient026,ED,model,SDF cone rays,8,14.013766777464408
+patient026,ED,model,SDF cone rays,9,14.524546698811639
+patient026,ED,model,SDF cone rays,10,13.971447690030626
+patient026,ED,model,SDF cone rays,11,13.894754900786728
+patient026,ED,model,SDF cone rays,12,13.215369732603335
+patient026,ED,model,SDF cone rays,13,12.83006085283854
+patient026,ED,model,SDF cone rays,14,13.694387108546037
+patient026,ED,model,SDF cone rays,15,12.315210067025067
+patient026,ED,model,SDF cone rays,16,11.398870662192515
+patient026,ED,model,SDF cone rays,17,12.555199600675016
+patient026,ED,model,EDT boundary sum,1,13.26486652329055
+patient026,ED,model,EDT boundary sum,2,13.063840601690451
+patient026,ED,model,EDT boundary sum,3,12.909780452458918
+patient026,ED,model,EDT boundary sum,4,13.26747025716321
+patient026,ED,model,EDT boundary sum,5,13.309637403680346
+patient026,ED,model,EDT boundary sum,6,12.570627526971904
+patient026,ED,model,EDT boundary sum,7,13.243799244725071
+patient026,ED,model,EDT boundary sum,8,13.124176535982883
+patient026,ED,model,EDT boundary sum,9,13.62174349860037
+patient026,ED,model,EDT boundary sum,10,13.027298605795941
+patient026,ED,model,EDT boundary sum,11,12.967393616062486
+patient026,ED,model,EDT boundary sum,12,12.381799226547848
+patient026,ED,model,EDT boundary sum,13,12.091646031510543
+patient026,ED,model,EDT boundary sum,14,12.894997173089248
+patient026,ED,model,EDT boundary sum,15,11.549205571752395
+patient026,ED,model,EDT boundary sum,16,10.784450087600089
+patient026,ED,model,EDT boundary sum,17,11.196520334378592
+patient026,ED,voxel,Laplace field,1,14.95223752151463
+patient026,ED,voxel,Laplace field,2,16.57136237256719
+patient026,ED,voxel,Laplace field,3,16.55210101867572
+patient026,ED,voxel,Laplace field,4,15.162759131293189
+patient026,ED,voxel,Laplace field,5,13.193202146690519
+patient026,ED,voxel,Laplace field,6,12.366788321167883
+patient026,ED,voxel,Laplace field,7,14.249731951393853
+patient026,ED,voxel,Laplace field,8,20.103116079923883
+patient026,ED,voxel,Laplace field,9,19.669393455706306
+patient026,ED,voxel,Laplace field,10,14.04314072327044
+patient026,ED,voxel,Laplace field,11,11.071324143692564
+patient026,ED,voxel,Laplace field,12,10.557129798903107
+patient026,ED,voxel,Laplace field,13,12.842180962343097
+patient026,ED,voxel,Laplace field,14,13.771265560165975
+patient026,ED,voxel,Laplace field,15,10.53052016985138
+patient026,ED,voxel,Laplace field,16,9.627104922279793
+patient026,ED,voxel,Laplace field,17,10.573955613577024
+patient026,ED,voxel,Yezzi-Prince,1,15.404589493385485
+patient026,ED,voxel,Yezzi-Prince,2,17.11820316491467
+patient026,ED,voxel,Yezzi-Prince,3,17.00733916261605
+patient026,ED,voxel,Yezzi-Prince,4,15.710773756567606
+patient026,ED,voxel,Yezzi-Prince,5,13.716654735728966
+patient026,ED,voxel,Yezzi-Prince,6,12.985294778851697
+patient026,ED,voxel,Yezzi-Prince,7,14.761816994814978
+patient026,ED,voxel,Yezzi-Prince,8,20.537545140644802
+patient026,ED,voxel,Yezzi-Prince,9,20.125636197430367
+patient026,ED,voxel,Yezzi-Prince,10,14.555802698405284
+patient026,ED,voxel,Yezzi-Prince,11,11.579884048691369
+patient026,ED,voxel,Yezzi-Prince,12,11.229300938315104
+patient026,ED,voxel,Yezzi-Prince,13,13.216383163899058
+patient026,ED,voxel,Yezzi-Prince,14,14.298196684440306
+patient026,ED,voxel,Yezzi-Prince,15,11.03731428235453
+patient026,ED,voxel,Yezzi-Prince,16,10.260750971927544
+patient026,ED,voxel,Yezzi-Prince,17,10.96536965980231
+patient026,ED,voxel,SDF cone rays,1,19.17798023872244
+patient026,ED,voxel,SDF cone rays,2,24.7621080272169
+patient026,ED,voxel,SDF cone rays,3,19.56936443438959
+patient026,ED,voxel,SDF cone rays,4,18.034535073339644
+patient026,ED,voxel,SDF cone rays,5,15.653474800915113
+patient026,ED,voxel,SDF cone rays,6,14.822760406201773
+patient026,ED,voxel,SDF cone rays,7,16.355656061451974
+patient026,ED,voxel,SDF cone rays,8,22.433783853314925
+patient026,ED,voxel,SDF cone rays,9,22.17494124178875
+patient026,ED,voxel,SDF cone rays,10,15.817372124899858
+patient026,ED,voxel,SDF cone rays,11,13.609490910070383
+patient026,ED,voxel,SDF cone rays,12,13.004426870747066
+patient026,ED,voxel,SDF cone rays,13,14.321435113332262
+patient026,ED,voxel,SDF cone rays,14,15.88290897015879
+patient026,ED,voxel,SDF cone rays,15,12.2660222175015
+patient026,ED,voxel,SDF cone rays,16,10.844052437055915
+patient026,ED,voxel,SDF cone rays,17,11.853475657331103
+patient026,ED,voxel,EDT boundary sum,1,12.908207318458622
+patient026,ED,voxel,EDT boundary sum,2,13.739133694748618
+patient026,ED,voxel,EDT boundary sum,3,15.03798018610943
+patient026,ED,voxel,EDT boundary sum,4,13.673011623977557
+patient026,ED,voxel,EDT boundary sum,5,12.078697608493949
+patient026,ED,voxel,EDT boundary sum,6,11.362926575389222
+patient026,ED,voxel,EDT boundary sum,7,14.063232826112934
+patient026,ED,voxel,EDT boundary sum,8,19.47976025346344
+patient026,ED,voxel,EDT boundary sum,9,18.678345556175433
+patient026,ED,voxel,EDT boundary sum,10,14.098484737318266
+patient026,ED,voxel,EDT boundary sum,11,11.295165520064913
+patient026,ED,voxel,EDT boundary sum,12,10.656250727895845
+patient026,ED,voxel,EDT boundary sum,13,12.846565069015057
+patient026,ED,voxel,EDT boundary sum,14,13.453377781072593
+patient026,ED,voxel,EDT boundary sum,15,10.467353010886287
+patient026,ED,voxel,EDT boundary sum,16,9.95272664579085
+patient026,ED,voxel,EDT boundary sum,17,10.238950975881233
+patient026,ES,model,Laplace field,1,16.0339558573854
+patient026,ES,model,Laplace field,2,17.162014563106798
+patient026,ES,model,Laplace field,3,16.59597875569044
+patient026,ES,model,Laplace field,4,15.537360890302066
+patient026,ES,model,Laplace field,5,16.394323671497585
+patient026,ES,model,Laplace field,6,15.42179700499168
+patient026,ES,model,Laplace field,7,15.875171703296703
+patient026,ES,model,Laplace field,8,16.41917808219178
+patient026,ES,model,Laplace field,9,15.953928046989722
+patient026,ES,model,Laplace field,10,14.913446676970633
+patient026,ES,model,Laplace field,11,14.572209653092006
+patient026,ES,model,Laplace field,12,15.672852983988355
+patient026,ES,model,Laplace field,13,15.912581699346406
+patient026,ES,model,Laplace field,14,16.480609418282548
+patient026,ES,model,Laplace field,15,15.848290598290598
+patient026,ES,model,Laplace field,16,15.82995951417004
+patient026,ES,model,Laplace field,17,
+patient026,ES,model,Yezzi-Prince,1,16.468111381465995
+patient026,ES,model,Yezzi-Prince,2,17.539047929461333
+patient026,ES,model,Yezzi-Prince,3,17.01433265987043
+patient026,ES,model,Yezzi-Prince,4,15.964929853600045
+patient026,ES,model,Yezzi-Prince,5,16.77803100671937
+patient026,ES,model,Yezzi-Prince,6,15.9066682060229
+patient026,ES,model,Yezzi-Prince,7,16.36616930070814
+patient026,ES,model,Yezzi-Prince,8,16.78773912534322
+patient026,ES,model,Yezzi-Prince,9,16.451682237801574
+patient026,ES,model,Yezzi-Prince,10,15.379772127319525
+patient026,ES,model,Yezzi-Prince,11,15.04214882598923
+patient026,ES,model,Yezzi-Prince,12,16.21503314111257
+patient026,ES,model,Yezzi-Prince,13,16.215425748970514
+patient026,ES,model,Yezzi-Prince,14,16.7654133371369
+patient026,ES,model,Yezzi-Prince,15,16.153377022159066
+patient026,ES,model,Yezzi-Prince,16,16.095632539586983
+patient026,ES,model,Yezzi-Prince,17,
+patient026,ES,model,SDF cone rays,1,17.897444202053933
+patient026,ES,model,SDF cone rays,2,19.187938131560784
+patient026,ES,model,SDF cone rays,3,18.024980096426287
+patient026,ES,model,SDF cone rays,4,17.040973582972782
+patient026,ES,model,SDF cone rays,5,17.914709367613863
+patient026,ES,model,SDF cone rays,6,17.061425915176976
+patient026,ES,model,SDF cone rays,7,17.135309861256527
+patient026,ES,model,SDF cone rays,8,17.773090958268675
+patient026,ES,model,SDF cone rays,9,17.401128374007303
+patient026,ES,model,SDF cone rays,10,16.30144236297843
+patient026,ES,model,SDF cone rays,11,15.909525990665948
+patient026,ES,model,SDF cone rays,12,17.00519173079356
+patient026,ES,model,SDF cone rays,13,16.920687752351782
+patient026,ES,model,SDF cone rays,14,17.405165125458524
+patient026,ES,model,SDF cone rays,15,16.683662947086866
+patient026,ES,model,SDF cone rays,16,16.59467491736779
+patient026,ES,model,SDF cone rays,17,
+patient026,ES,model,EDT boundary sum,1,15.130849545192232
+patient026,ES,model,EDT boundary sum,2,15.590842034052876
+patient026,ES,model,EDT boundary sum,3,15.32652038435292
+patient026,ES,model,EDT boundary sum,4,14.760349830118006
+patient026,ES,model,EDT boundary sum,5,15.207231131536757
+patient026,ES,model,EDT boundary sum,6,14.45271716379683
+patient026,ES,model,EDT boundary sum,7,16.23665912596734
+patient026,ES,model,EDT boundary sum,8,16.74022671294539
+patient026,ES,model,EDT boundary sum,9,16.19301447259172
+patient026,ES,model,EDT boundary sum,10,15.20473349333915
+patient026,ES,model,EDT boundary sum,11,14.898926045919795
+patient026,ES,model,EDT boundary sum,12,15.982671818184887
+patient026,ES,model,EDT boundary sum,13,16.239368046031277
+patient026,ES,model,EDT boundary sum,14,16.705837329008574
+patient026,ES,model,EDT boundary sum,15,15.974512102936748
+patient026,ES,model,EDT boundary sum,16,15.963324081559895
+patient026,ES,model,EDT boundary sum,17,
+patient026,ES,voxel,Laplace field,1,17.891098484848484
+patient026,ES,voxel,Laplace field,2,18.606275303643724
+patient026,ES,voxel,Laplace field,3,20.283943329397875
+patient026,ES,voxel,Laplace field,4,19.78179190751445
+patient026,ES,voxel,Laplace field,5,21.123833333333334
+patient026,ES,voxel,Laplace field,6,21.215543644716693
+patient026,ES,voxel,Laplace field,7,15.73914708886619
+patient026,ES,voxel,Laplace field,8,19.99499354005168
+patient026,ES,voxel,Laplace field,9,20.103805073431243
+patient026,ES,voxel,Laplace field,10,19.225161290322582
+patient026,ES,voxel,Laplace field,11,21.228960396039604
+patient026,ES,voxel,Laplace field,12,18.8939556509299
+patient026,ES,voxel,Laplace field,13,14.994823619631902
+patient026,ES,voxel,Laplace field,14,16.66092995169082
+patient026,ES,voxel,Laplace field,15,14.982251908396947
+patient026,ES,voxel,Laplace field,16,19.296818181818182
+patient026,ES,voxel,Laplace field,17,15.154022157996147
+patient026,ES,voxel,Yezzi-Prince,1,18.343943900532192
+patient026,ES,voxel,Yezzi-Prince,2,19.14078050296799
+patient026,ES,voxel,Yezzi-Prince,3,20.702270601265827
+patient026,ES,voxel,Yezzi-Prince,4,20.218766603855727
+patient026,ES,voxel,Yezzi-Prince,5,21.467917130788166
+patient026,ES,voxel,Yezzi-Prince,6,21.6964228850594
+patient026,ES,voxel,Yezzi-Prince,7,16.280096615176642
+patient026,ES,voxel,Yezzi-Prince,8,20.295026255516426
+patient026,ES,voxel,Yezzi-Prince,9,20.681232605184192
+patient026,ES,voxel,Yezzi-Prince,10,19.65530538743542
+patient026,ES,voxel,Yezzi-Prince,11,21.56924287163385
+patient026,ES,voxel,Yezzi-Prince,12,19.616997234470002
+patient026,ES,voxel,Yezzi-Prince,13,15.513285455528212
+patient026,ES,voxel,Yezzi-Prince,14,17.057299726827132
+patient026,ES,voxel,Yezzi-Prince,15,15.395763222497838
+patient026,ES,voxel,Yezzi-Prince,16,19.723377030112527
+patient026,ES,voxel,Yezzi-Prince,17,15.553719056594348
+patient026,ES,voxel,SDF cone rays,1,20.375662579680935
+patient026,ES,voxel,SDF cone rays,2,22.52359245341477
+patient026,ES,voxel,SDF cone rays,3,22.794144866880305
+patient026,ES,voxel,SDF cone rays,4,22.10299049498718
+patient026,ES,voxel,SDF cone rays,5,23.499095926920575
+patient026,ES,voxel,SDF cone rays,6,23.639730050406815
+patient026,ES,voxel,SDF cone rays,7,18.124224364696655
+patient026,ES,voxel,SDF cone rays,8,22.334960656572683
+patient026,ES,voxel,SDF cone rays,9,22.683578656735186
+patient026,ES,voxel,SDF cone rays,10,20.981754140546244
+patient026,ES,voxel,SDF cone rays,11,23.145922925212595
+patient026,ES,voxel,SDF cone rays,12,21.084310313321662
+patient026,ES,voxel,SDF cone rays,13,17.64031756728705
+patient026,ES,voxel,SDF cone rays,14,18.521096616551496
+patient026,ES,voxel,SDF cone rays,15,17.55777256652599
+patient026,ES,voxel,SDF cone rays,16,20.988446148959074
+patient026,ES,voxel,SDF cone rays,17,17.354479868747365
+patient026,ES,voxel,EDT boundary sum,1,15.954479563115823
+patient026,ES,voxel,EDT boundary sum,2,16.795067404928478
+patient026,ES,voxel,EDT boundary sum,3,18.05238651469297
+patient026,ES,voxel,EDT boundary sum,4,17.266730210684628
+patient026,ES,voxel,EDT boundary sum,5,17.67322694651286
+patient026,ES,voxel,EDT boundary sum,6,17.704869737668936
+patient026,ES,voxel,EDT boundary sum,7,15.359760699403664
+patient026,ES,voxel,EDT boundary sum,8,18.924252968425897
+patient026,ES,voxel,EDT boundary sum,9,19.147090018034298
+patient026,ES,voxel,EDT boundary sum,10,18.793098912392892
+patient026,ES,voxel,EDT boundary sum,11,21.00466496165436
+patient026,ES,voxel,EDT boundary sum,12,19.068904336429974
+patient026,ES,voxel,EDT boundary sum,13,14.67036168414391
+patient026,ES,voxel,EDT boundary sum,14,15.743446955934239
+patient026,ES,voxel,EDT boundary sum,15,14.073406164154752
+patient026,ES,voxel,EDT boundary sum,16,19.072185949845746
+patient026,ES,voxel,EDT boundary sum,17,14.180307190771966
+patient028,ED,model,Laplace field,1,11.194547134935306
+patient028,ED,model,Laplace field,2,11.446826280623608
+patient028,ED,model,Laplace field,3,11.551835573940021
+patient028,ED,model,Laplace field,4,11.60287610619469
+patient028,ED,model,Laplace field,5,11.970915841584159
+patient028,ED,model,Laplace field,6,10.809142561983471
+patient028,ED,model,Laplace field,7,10.166530944625407
+patient028,ED,model,Laplace field,8,10.739954221770091
+patient028,ED,model,Laplace field,9,11.619113573407203
+patient028,ED,model,Laplace field,10,11.52017583408476
+patient028,ED,model,Laplace field,11,11.013524590163934
+patient028,ED,model,Laplace field,12,10.11188340807175
+patient028,ED,model,Laplace field,13,9.739276139410189
+patient028,ED,model,Laplace field,14,10.46996855345912
+patient028,ED,model,Laplace field,15,10.089578454332553
+patient028,ED,model,Laplace field,16,9.074179292929292
+patient028,ED,model,Laplace field,17,9.181844957587183
+patient028,ED,model,Yezzi-Prince,1,11.66924672162026
+patient028,ED,model,Yezzi-Prince,2,11.955153051091727
+patient028,ED,model,Yezzi-Prince,3,12.10847025696716
+patient028,ED,model,Yezzi-Prince,4,12.058426011980107
+patient028,ED,model,Yezzi-Prince,5,12.458815678511515
+patient028,ED,model,Yezzi-Prince,6,11.3323852129219
+patient028,ED,model,Yezzi-Prince,7,10.645033987803258
+patient028,ED,model,Yezzi-Prince,8,11.264775509994367
+patient028,ED,model,Yezzi-Prince,9,12.192739041998555
+patient028,ED,model,Yezzi-Prince,10,12.02425886210931
+patient028,ED,model,Yezzi-Prince,11,11.545486068725586
+patient028,ED,model,Yezzi-Prince,12,10.65932072267404
+patient028,ED,model,Yezzi-Prince,13,10.174223672288992
+patient028,ED,model,Yezzi-Prince,14,10.953925620984732
+patient028,ED,model,Yezzi-Prince,15,10.608228881130174
+patient028,ED,model,Yezzi-Prince,16,9.555147711676781
+patient028,ED,model,Yezzi-Prince,17,9.648544924760293
+patient028,ED,model,SDF cone rays,1,12.233193924598906
+patient028,ED,model,SDF cone rays,2,12.582288830211274
+patient028,ED,model,SDF cone rays,3,12.55558553476738
+patient028,ED,model,SDF cone rays,4,12.694017085353885
+patient028,ED,model,SDF cone rays,5,13.075730578734143
+patient028,ED,model,SDF cone rays,6,11.861408690775722
+patient028,ED,model,SDF cone rays,7,11.042888906180664
+patient028,ED,model,SDF cone rays,8,11.768668893637516
+patient028,ED,model,SDF cone rays,9,12.71626356588066
+patient028,ED,model,SDF cone rays,10,12.602320470715343
+patient028,ED,model,SDF cone rays,11,12.12335651272633
+patient028,ED,model,SDF cone rays,12,11.1313094613798
+patient028,ED,model,SDF cone rays,13,10.6294914723721
+patient028,ED,model,SDF cone rays,14,11.450950053952775
+patient028,ED,model,SDF cone rays,15,11.058319384376114
+patient028,ED,model,SDF cone rays,16,9.933721780776978
+patient028,ED,model,SDF cone rays,17,10.441736980163187
+patient028,ED,model,EDT boundary sum,1,11.2959938873425
+patient028,ED,model,EDT boundary sum,2,11.578113201731828
+patient028,ED,model,EDT boundary sum,3,11.849986442242438
+patient028,ED,model,EDT boundary sum,4,11.751811941640566
+patient028,ED,model,EDT boundary sum,5,11.993223352007346
+patient028,ED,model,EDT boundary sum,6,11.075583169282961
+patient028,ED,model,EDT boundary sum,7,10.556099405506146
+patient028,ED,model,EDT boundary sum,8,11.124281300169285
+patient028,ED,model,EDT boundary sum,9,12.009868841092011
+patient028,ED,model,EDT boundary sum,10,11.917982065322917
+patient028,ED,model,EDT boundary sum,11,11.391321253125133
+patient028,ED,model,EDT boundary sum,12,10.533161902320758
+patient028,ED,model,EDT boundary sum,13,10.103840126109187
+patient028,ED,model,EDT boundary sum,14,10.86031594306418
+patient028,ED,model,EDT boundary sum,15,10.483955288380036
+patient028,ED,model,EDT boundary sum,16,9.485467619366116
+patient028,ED,model,EDT boundary sum,17,9.533265146638401
+patient028,ED,voxel,Laplace field,1,11.824654491609081
+patient028,ED,voxel,Laplace field,2,13.470380818053597
+patient028,ED,voxel,Laplace field,3,13.300947319778189
+patient028,ED,voxel,Laplace field,4,12.66343930635838
+patient028,ED,voxel,Laplace field,5,11.504421768707482
+patient028,ED,voxel,Laplace field,6,11.15484865470852
+patient028,ED,voxel,Laplace field,7,10.4446044546851
+patient028,ED,voxel,Laplace field,8,14.143244873341375
+patient028,ED,voxel,Laplace field,9,15.229850746268657
+patient028,ED,voxel,Laplace field,10,12.353743961352658
+patient028,ED,voxel,Laplace field,11,10.415128205128205
+patient028,ED,voxel,Laplace field,12,10.933544303797468
+patient028,ED,voxel,Laplace field,13,11.635037878787879
+patient028,ED,voxel,Laplace field,14,14.036490683229813
+patient028,ED,voxel,Laplace field,15,12.3006993006993
+patient028,ED,voxel,Laplace field,16,10.93373745819398
+patient028,ED,voxel,Laplace field,17,10.939772727272727
+patient028,ED,voxel,Yezzi-Prince,1,12.340883952608701
+patient028,ED,voxel,Yezzi-Prince,2,14.069768788616143
+patient028,ED,voxel,Yezzi-Prince,3,13.798655012398683
+patient028,ED,voxel,Yezzi-Prince,4,13.181398334392922
+patient028,ED,voxel,Yezzi-Prince,5,12.052719843468699
+patient028,ED,voxel,Yezzi-Prince,6,11.688125388504679
+patient028,ED,voxel,Yezzi-Prince,7,10.993611944802163
+patient028,ED,voxel,Yezzi-Prince,8,14.731382233098563
+patient028,ED,voxel,Yezzi-Prince,9,15.671801998840635
+patient028,ED,voxel,Yezzi-Prince,10,12.871334718160583
+patient028,ED,voxel,Yezzi-Prince,11,10.966807562999236
+patient028,ED,voxel,Yezzi-Prince,12,11.471343738775058
+patient028,ED,voxel,Yezzi-Prince,13,12.097828956083818
+patient028,ED,voxel,Yezzi-Prince,14,14.429395429836298
+patient028,ED,voxel,Yezzi-Prince,15,12.754276842504115
+patient028,ED,voxel,Yezzi-Prince,16,11.448614849294707
+patient028,ED,voxel,Yezzi-Prince,17,11.395594381976437
+patient028,ED,voxel,SDF cone rays,1,13.90521415670909
+patient028,ED,voxel,SDF cone rays,2,16.40618813357333
+patient028,ED,voxel,SDF cone rays,3,15.318469202232007
+patient028,ED,voxel,SDF cone rays,4,14.813226950650959
+patient028,ED,voxel,SDF cone rays,5,13.525626716484018
+patient028,ED,voxel,SDF cone rays,6,13.035252694057242
+patient028,ED,voxel,SDF cone rays,7,11.870951841503794
+patient028,ED,voxel,SDF cone rays,8,15.595144895362624
+patient028,ED,voxel,SDF cone rays,9,16.714433304706024
+patient028,ED,voxel,SDF cone rays,10,13.726522103830236
+patient028,ED,voxel,SDF cone rays,11,11.802919877859262
+patient028,ED,voxel,SDF cone rays,12,12.1850997345357
+patient028,ED,voxel,SDF cone rays,13,13.000297060879793
+patient028,ED,voxel,SDF cone rays,14,15.352909182909853
+patient028,ED,voxel,SDF cone rays,15,13.530270375071705
+patient028,ED,voxel,SDF cone rays,16,12.393933412622049
+patient028,ED,voxel,SDF cone rays,17,12.367918509941596
+patient028,ED,voxel,EDT boundary sum,1,11.007326701786534
+patient028,ED,voxel,EDT boundary sum,2,12.47870265680913
+patient028,ED,voxel,EDT boundary sum,3,12.531197361496591
+patient028,ED,voxel,EDT boundary sum,4,11.938935938046846
+patient028,ED,voxel,EDT boundary sum,5,10.60409220611157
+patient028,ED,voxel,EDT boundary sum,6,10.088693879644968
+patient028,ED,voxel,EDT boundary sum,7,10.561333679750035
+patient028,ED,voxel,EDT boundary sum,8,14.271552534529038
+patient028,ED,voxel,EDT boundary sum,9,15.272778870691708
+patient028,ED,voxel,EDT boundary sum,10,12.631486630094225
+patient028,ED,voxel,EDT boundary sum,11,10.684579699589657
+patient028,ED,voxel,EDT boundary sum,12,11.226046288257216
+patient028,ED,voxel,EDT boundary sum,13,11.565999851804792
+patient028,ED,voxel,EDT boundary sum,14,13.498185570936025
+patient028,ED,voxel,EDT boundary sum,15,12.38129710484218
+patient028,ED,voxel,EDT boundary sum,16,10.935894415928768
+patient028,ED,voxel,EDT boundary sum,17,10.897146656915739
+patient028,ES,model,Laplace field,1,14.9184
+patient028,ES,model,Laplace field,2,15.89440734557596
+patient028,ES,model,Laplace field,3,15.89149560117302
+patient028,ES,model,Laplace field,4,13.9375
+patient028,ES,model,Laplace field,5,14.485694183864915
+patient028,ES,model,Laplace field,6,15.17921686746988
+patient028,ES,model,Laplace field,7,15.140712290502794
+patient028,ES,model,Laplace field,8,15.471014492753623
+patient028,ES,model,Laplace field,9,16.169291338582678
+patient028,ES,model,Laplace field,10,14.477785145888594
+patient028,ES,model,Laplace field,11,14.503544776119403
+patient028,ES,model,Laplace field,12,14.776358344113842
+patient028,ES,model,Laplace field,13,16.53375
+patient028,ES,model,Laplace field,14,17.34735576923077
+patient028,ES,model,Laplace field,15,17.232217573221757
+patient028,ES,model,Laplace field,16,16.527527075812273
+patient028,ES,model,Laplace field,17,
+patient028,ES,model,Yezzi-Prince,1,15.303826164245605
+patient028,ES,model,Yezzi-Prince,2,16.365858062081823
+patient028,ES,model,Yezzi-Prince,3,16.305364240998745
+patient028,ES,model,Yezzi-Prince,4,14.359638972493975
+patient028,ES,model,Yezzi-Prince,5,14.931239543220563
+patient028,ES,model,Yezzi-Prince,6,15.58776226306331
+patient028,ES,model,Yezzi-Prince,7,15.503988372547001
+patient028,ES,model,Yezzi-Prince,8,15.902130311238016
+patient028,ES,model,Yezzi-Prince,9,16.91579105222006
+patient028,ES,model,Yezzi-Prince,10,15.402699072101704
+patient028,ES,model,Yezzi-Prince,11,14.977481373744224
+patient028,ES,model,Yezzi-Prince,12,15.398820321896098
+patient028,ES,model,Yezzi-Prince,13,16.83837652206421
+patient028,ES,model,Yezzi-Prince,14,17.836620422510002
+patient028,ES,model,Yezzi-Prince,15,18.15632620615939
+patient028,ES,model,Yezzi-Prince,16,17.563854131457607
+patient028,ES,model,Yezzi-Prince,17,
+patient028,ES,model,SDF cone rays,1,16.4213602142334
+patient028,ES,model,SDF cone rays,2,17.422373507377102
+patient028,ES,model,SDF cone rays,3,17.295771457582624
+patient028,ES,model,SDF cone rays,4,15.359671027993993
+patient028,ES,model,SDF cone rays,5,15.80629562213318
+patient028,ES,model,SDF cone rays,6,16.622203881071684
+patient028,ES,model,SDF cone rays,7,16.23191275942925
+patient028,ES,model,SDF cone rays,8,16.72732853697502
+patient028,ES,model,SDF cone rays,9,18.258700283180698
+patient028,ES,model,SDF cone rays,10,17.413394940626716
+patient028,ES,model,SDF cone rays,11,15.628673832452119
+patient028,ES,model,SDF cone rays,12,16.43012143661874
+patient028,ES,model,SDF cone rays,13,17.11926685333252
+patient028,ES,model,SDF cone rays,14,19.731176486382118
+patient028,ES,model,SDF cone rays,15,19.409847850081313
+patient028,ES,model,SDF cone rays,16,19.75945138759131
+patient028,ES,model,SDF cone rays,17,
+patient028,ES,model,EDT boundary sum,1,14.152122838592529
+patient028,ES,model,EDT boundary sum,2,14.966090012870369
+patient028,ES,model,EDT boundary sum,3,14.619393552852866
+patient028,ES,model,EDT boundary sum,4,13.391984324406438
+patient028,ES,model,EDT boundary sum,5,13.735738658547177
+patient028,ES,model,EDT boundary sum,6,13.91183906496084
+patient028,ES,model,EDT boundary sum,7,15.43453574180603
+patient028,ES,model,EDT boundary sum,8,15.755127648800467
+patient028,ES,model,EDT boundary sum,9,16.65018606185913
+patient028,ES,model,EDT boundary sum,10,15.19011033561565
+patient028,ES,model,EDT boundary sum,11,14.732719018566074
+patient028,ES,model,EDT boundary sum,12,15.050779685628676
+patient028,ES,model,EDT boundary sum,13,16.442332172393797
+patient028,ES,model,EDT boundary sum,14,17.510705140920784
+patient028,ES,model,EDT boundary sum,15,17.529347128449125
+patient028,ES,model,EDT boundary sum,16,16.83639261954958
+patient028,ES,model,EDT boundary sum,17,
+patient028,ES,voxel,Laplace field,1,19.11295681063123
+patient028,ES,voxel,Laplace field,2,15.852614896988907
+patient028,ES,voxel,Laplace field,3,17.615944881889764
+patient028,ES,voxel,Laplace field,4,20.30285843920145
+patient028,ES,voxel,Laplace field,5,18.31682389937107
+patient028,ES,voxel,Laplace field,6,17.982731958762887
+patient028,ES,voxel,Laplace field,7,19.82918149466192
+patient028,ES,voxel,Laplace field,8,20.637899262899264
+patient028,ES,voxel,Laplace field,9,19.568714821763603
+patient028,ES,voxel,Laplace field,10,17.347961730449253
+patient028,ES,voxel,Laplace field,11,19.812389380530973
+patient028,ES,voxel,Laplace field,12,19.628477588871714
+patient028,ES,voxel,Laplace field,13,22.360549132947977
+patient028,ES,voxel,Laplace field,14,22.96875
+patient028,ES,voxel,Laplace field,15,19.768904320987655
+patient028,ES,voxel,Laplace field,16,23.02777777777778
+patient028,ES,voxel,Laplace field,17,22.895833333333332
+patient028,ES,voxel,Yezzi-Prince,1,19.60975119758682
+patient028,ES,voxel,Yezzi-Prince,2,16.480541336555298
+patient028,ES,voxel,Yezzi-Prince,3,18.150095974178765
+patient028,ES,voxel,Yezzi-Prince,4,20.743220163992657
+patient028,ES,voxel,Yezzi-Prince,5,18.911249438671696
+patient028,ES,voxel,Yezzi-Prince,6,18.587452108835436
+patient028,ES,voxel,Yezzi-Prince,7,20.252594937633365
+patient028,ES,voxel,Yezzi-Prince,8,21.14371380817685
+patient028,ES,voxel,Yezzi-Prince,9,19.92163712893373
+patient028,ES,voxel,Yezzi-Prince,10,17.807116506897074
+patient028,ES,voxel,Yezzi-Prince,11,20.309143728070556
+patient028,ES,voxel,Yezzi-Prince,12,20.108849108311272
+patient028,ES,voxel,Yezzi-Prince,13,22.64884982908392
+patient028,ES,voxel,Yezzi-Prince,14,22.991082698106766
+patient028,ES,voxel,Yezzi-Prince,15,20.183144345695588
+patient028,ES,voxel,Yezzi-Prince,16,23.298115569036366
+patient028,ES,voxel,Yezzi-Prince,17,22.885602279945655
+patient028,ES,voxel,SDF cone rays,1,24.253403061648143
+patient028,ES,voxel,SDF cone rays,2,20.06136145040086
+patient028,ES,voxel,SDF cone rays,3,21.171438924534115
+patient028,ES,voxel,SDF cone rays,4,25.02787174979485
+patient028,ES,voxel,SDF cone rays,5,23.61388600347427
+patient028,ES,voxel,SDF cone rays,6,22.38503655109209
+patient028,ES,voxel,SDF cone rays,7,21.949552132141548
+patient028,ES,voxel,SDF cone rays,8,24.43726176887531
+patient028,ES,voxel,SDF cone rays,9,22.68957225377296
+patient028,ES,voxel,SDF cone rays,10,20.13176840593335
+patient028,ES,voxel,SDF cone rays,11,21.560010150470564
+patient028,ES,voxel,SDF cone rays,12,21.327654456797486
+patient028,ES,voxel,SDF cone rays,13,24.262793292889015
+patient028,ES,voxel,SDF cone rays,14,24.321980625391006
+patient028,ES,voxel,SDF cone rays,15,21.36692413871671
+patient028,ES,voxel,SDF cone rays,16,24.78417286435187
+patient028,ES,voxel,SDF cone rays,17,23.3314085242189
+patient028,ES,voxel,EDT boundary sum,1,14.02172911682002
+patient028,ES,voxel,EDT boundary sum,2,13.202433112306187
+patient028,ES,voxel,EDT boundary sum,3,13.535024054970329
+patient028,ES,voxel,EDT boundary sum,4,14.172376387781327
+patient028,ES,voxel,EDT boundary sum,5,13.760280101304284
+patient028,ES,voxel,EDT boundary sum,6,14.78298563711422
+patient028,ES,voxel,EDT boundary sum,7,19.746930746845504
+patient028,ES,voxel,EDT boundary sum,8,20.318331903556054
+patient028,ES,voxel,EDT boundary sum,9,18.353919215318633
+patient028,ES,voxel,EDT boundary sum,10,16.757893402048833
+patient028,ES,voxel,EDT boundary sum,11,19.340742555128788
+patient028,ES,voxel,EDT boundary sum,12,19.61122656974026
+patient028,ES,voxel,EDT boundary sum,13,21.476193576878895
+patient028,ES,voxel,EDT boundary sum,14,21.143530637025833
+patient028,ES,voxel,EDT boundary sum,15,18.892249331062224
+patient028,ES,voxel,EDT boundary sum,16,21.508424763518256
+patient028,ES,voxel,EDT boundary sum,17,19.897662492445956
+patient030,ED,model,Laplace field,1,9.516544117647058
+patient030,ED,model,Laplace field,2,9.882917964693666
+patient030,ED,model,Laplace field,3,9.903775079197466
+patient030,ED,model,Laplace field,4,10.068266171792153
+patient030,ED,model,Laplace field,5,9.946764091858038
+patient030,ED,model,Laplace field,6,9.189598168870804
+patient030,ED,model,Laplace field,7,9.291779279279279
+patient030,ED,model,Laplace field,8,9.83473963355834
+patient030,ED,model,Laplace field,9,10.227669404517453
+patient030,ED,model,Laplace field,10,9.777492291880781
+patient030,ED,model,Laplace field,11,9.410236625514404
+patient030,ED,model,Laplace field,12,9.039654356060606
+patient030,ED,model,Laplace field,13,8.79574074074074
+patient030,ED,model,Laplace field,14,9.420212765957446
+patient030,ED,model,Laplace field,15,9.111398071625345
+patient030,ED,model,Laplace field,16,8.2375533428165
+patient030,ED,model,Laplace field,17,7.467251856853477
+patient030,ED,model,Yezzi-Prince,1,10.01147594121324
+patient030,ED,model,Yezzi-Prince,2,10.331191073820722
+patient030,ED,model,Yezzi-Prince,3,10.47467359695918
+patient030,ED,model,Yezzi-Prince,4,10.547865442860545
+patient030,ED,model,Yezzi-Prince,5,10.386562621668137
+patient030,ED,model,Yezzi-Prince,6,9.736428884135622
+patient030,ED,model,Yezzi-Prince,7,9.788457905709206
+patient030,ED,model,Yezzi-Prince,8,10.317505533922834
+patient030,ED,model,Yezzi-Prince,9,10.814334180076019
+patient030,ED,model,Yezzi-Prince,10,10.286765986576844
+patient030,ED,model,Yezzi-Prince,11,9.882346046314318
+patient030,ED,model,Yezzi-Prince,12,9.598706657236272
+patient030,ED,model,Yezzi-Prince,13,9.228401206687645
+patient030,ED,model,Yezzi-Prince,14,9.844182408348342
+patient030,ED,model,Yezzi-Prince,15,9.537946624860947
+patient030,ED,model,Yezzi-Prince,16,8.689742698099671
+patient030,ED,model,Yezzi-Prince,17,7.915411788494824
+patient030,ED,model,SDF cone rays,1,10.508736710087591
+patient030,ED,model,SDF cone rays,2,10.868283575321408
+patient030,ED,model,SDF cone rays,3,10.801806025419467
+patient030,ED,model,SDF cone rays,4,11.047754941032142
+patient030,ED,model,SDF cone rays,5,10.945084839623755
+patient030,ED,model,SDF cone rays,6,10.092364965110926
+patient030,ED,model,SDF cone rays,7,10.139818092724225
+patient030,ED,model,SDF cone rays,8,10.785987635127833
+patient030,ED,model,SDF cone rays,9,11.215060778467073
+patient030,ED,model,SDF cone rays,10,10.714026143347494
+patient030,ED,model,SDF cone rays,11,10.3547984994488
+patient030,ED,model,SDF cone rays,12,9.8339637427619
+patient030,ED,model,SDF cone rays,13,9.552296508506492
+patient030,ED,model,SDF cone rays,14,10.216210768727098
+patient030,ED,model,SDF cone rays,15,9.915993214967166
+patient030,ED,model,SDF cone rays,16,8.967714671220413
+patient030,ED,model,SDF cone rays,17,8.654786362670547
+patient030,ED,model,EDT boundary sum,1,9.691976102460332
+patient030,ED,model,EDT boundary sum,2,10.065377078942669
+patient030,ED,model,EDT boundary sum,3,10.199678095744051
+patient030,ED,model,EDT boundary sum,4,10.299187487787306
+patient030,ED,model,EDT boundary sum,5,10.148579533264384
+patient030,ED,model,EDT boundary sum,6,9.423165147205093
+patient030,ED,model,EDT boundary sum,7,9.703359899434957
+patient030,ED,model,EDT boundary sum,8,10.24155041061004
+patient030,ED,model,EDT boundary sum,9,10.594333364733435
+patient030,ED,model,EDT boundary sum,10,10.167892408027923
+patient030,ED,model,EDT boundary sum,11,9.813298620804838
+patient030,ED,model,EDT boundary sum,12,9.435963855548339
+patient030,ED,model,EDT boundary sum,13,9.20482197938142
+patient030,ED,model,EDT boundary sum,14,9.812307249171862
+patient030,ED,model,EDT boundary sum,15,9.465320831487986
+patient030,ED,model,EDT boundary sum,16,8.664287598339966
+patient030,ED,model,EDT boundary sum,17,7.766481902774808
+patient030,ED,voxel,Laplace field,1,14.058016877637131
+patient030,ED,voxel,Laplace field,2,11.660330261136712
+patient030,ED,voxel,Laplace field,3,11.618439716312057
+patient030,ED,voxel,Laplace field,4,10.764855072463767
+patient030,ED,voxel,Laplace field,5,12.001134644478064
+patient030,ED,voxel,Laplace field,6,15.855407523510971
+patient030,ED,voxel,Laplace field,7,11.557065217391305
+patient030,ED,voxel,Laplace field,8,13.205202312138729
+patient030,ED,voxel,Laplace field,9,10.63238188976378
+patient030,ED,voxel,Laplace field,10,10.133982947624848
+patient030,ED,voxel,Laplace field,11,12.045731707317072
+patient030,ED,voxel,Laplace field,12,12.469833333333334
+patient030,ED,voxel,Laplace field,13,10.727087114337568
+patient030,ED,voxel,Laplace field,14,9.970548561151078
+patient030,ED,voxel,Laplace field,15,10.56686626746507
+patient030,ED,voxel,Laplace field,16,11.548720472440944
+patient030,ED,voxel,Laplace field,17,9.386278973509933
+patient030,ED,voxel,Yezzi-Prince,1,14.512844279513246
+patient030,ED,voxel,Yezzi-Prince,2,12.143566565213298
+patient030,ED,voxel,Yezzi-Prince,3,12.17131133113347
+patient030,ED,voxel,Yezzi-Prince,4,11.281429281096528
+patient030,ED,voxel,Yezzi-Prince,5,12.476075080086712
+patient030,ED,voxel,Yezzi-Prince,6,16.331357658469937
+patient030,ED,voxel,Yezzi-Prince,7,12.10733958741893
+patient030,ED,voxel,Yezzi-Prince,8,13.623845030117586
+patient030,ED,voxel,Yezzi-Prince,9,11.245259585343009
+patient030,ED,voxel,Yezzi-Prince,10,10.65477622353929
+patient030,ED,voxel,Yezzi-Prince,11,12.540245281410462
+patient030,ED,voxel,Yezzi-Prince,12,13.124171543121339
+patient030,ED,voxel,Yezzi-Prince,13,11.169632901297291
+patient030,ED,voxel,Yezzi-Prince,14,10.424316257023984
+patient030,ED,voxel,Yezzi-Prince,15,11.01346037059487
+patient030,ED,voxel,Yezzi-Prince,16,12.002190612432525
+patient030,ED,voxel,Yezzi-Prince,17,9.835952664842669
+patient030,ED,voxel,SDF cone rays,1,15.532954835690527
+patient030,ED,voxel,SDF cone rays,2,12.956583477201915
+patient030,ED,voxel,SDF cone rays,3,12.684236330343477
+patient030,ED,voxel,SDF cone rays,4,11.889778535262398
+patient030,ED,voxel,SDF cone rays,5,13.263405169373021
+patient030,ED,voxel,SDF cone rays,6,17.483396267068798
+patient030,ED,voxel,SDF cone rays,7,12.879766095202902
+patient030,ED,voxel,SDF cone rays,8,14.361382538183577
+patient030,ED,voxel,SDF cone rays,9,11.904153405837812
+patient030,ED,voxel,SDF cone rays,10,11.218396136879775
+patient030,ED,voxel,SDF cone rays,11,13.144874337701957
+patient030,ED,voxel,SDF cone rays,12,14.100556975046795
+patient030,ED,voxel,SDF cone rays,13,11.899298221359668
+patient030,ED,voxel,SDF cone rays,14,10.844095408487663
+patient030,ED,voxel,SDF cone rays,15,11.587199726980366
+patient030,ED,voxel,SDF cone rays,16,12.528272514268169
+patient030,ED,voxel,SDF cone rays,17,10.510653708944258
+patient030,ED,voxel,EDT boundary sum,1,13.484154797136867
+patient030,ED,voxel,EDT boundary sum,2,11.881732979494672
+patient030,ED,voxel,EDT boundary sum,3,11.761240257100855
+patient030,ED,voxel,EDT boundary sum,4,11.06679463179215
+patient030,ED,voxel,EDT boundary sum,5,12.075750902092222
+patient030,ED,voxel,EDT boundary sum,6,14.846098952158865
+patient030,ED,voxel,EDT boundary sum,7,11.793594946031986
+patient030,ED,voxel,EDT boundary sum,8,13.363423992443636
+patient030,ED,voxel,EDT boundary sum,9,10.91032800023637
+patient030,ED,voxel,EDT boundary sum,10,10.413813737365128
+patient030,ED,voxel,EDT boundary sum,11,12.329135030469784
+patient030,ED,voxel,EDT boundary sum,12,12.74032119878133
+patient030,ED,voxel,EDT boundary sum,13,10.785966006034949
+patient030,ED,voxel,EDT boundary sum,14,10.23127250019595
+patient030,ED,voxel,EDT boundary sum,15,10.65228683030058
+patient030,ED,voxel,EDT boundary sum,16,11.632293224334717
+patient030,ED,voxel,EDT boundary sum,17,9.230908959117157
+patient030,ES,model,Laplace field,1,13.922619047619047
+patient030,ES,model,Laplace field,2,15.295131291028447
+patient030,ES,model,Laplace field,3,15.054913294797688
+patient030,ES,model,Laplace field,4,13.98157894736842
+patient030,ES,model,Laplace field,5,14.815899581589958
+patient030,ES,model,Laplace field,6,14.196713147410359
+patient030,ES,model,Laplace field,7,14.998940677966102
+patient030,ES,model,Laplace field,8,15.330376940133037
+patient030,ES,model,Laplace field,9,14.770348837209303
+patient030,ES,model,Laplace field,10,13.968555093555093
+patient030,ES,model,Laplace field,11,14.526373626373626
+patient030,ES,model,Laplace field,12,15.319101123595505
+patient030,ES,model,Laplace field,13,17.295058139534884
+patient030,ES,model,Laplace field,14,18.203525641025642
+patient030,ES,model,Laplace field,15,17.804597701149426
+patient030,ES,model,Laplace field,16,17.8659793814433
+patient030,ES,model,Laplace field,17,
+patient030,ES,model,Yezzi-Prince,1,14.358527570530988
+patient030,ES,model,Yezzi-Prince,2,15.621912757990398
+patient030,ES,model,Yezzi-Prince,3,15.423134770696564
+patient030,ES,model,Yezzi-Prince,4,14.367391596342388
+patient030,ES,model,Yezzi-Prince,5,15.18801156646537
+patient030,ES,model,Yezzi-Prince,6,14.67068572253345
+patient030,ES,model,Yezzi-Prince,7,15.424191577959869
+patient030,ES,model,Yezzi-Prince,8,15.739204474404751
+patient030,ES,model,Yezzi-Prince,9,15.244784105151703
+patient030,ES,model,Yezzi-Prince,10,14.462143572848948
+patient030,ES,model,Yezzi-Prince,11,14.968371190081585
+patient030,ES,model,Yezzi-Prince,12,15.843508364645283
+patient030,ES,model,Yezzi-Prince,13,17.6834253488585
+patient030,ES,model,Yezzi-Prince,14,18.561120620140663
+patient030,ES,model,Yezzi-Prince,15,18.342874801021882
+patient030,ES,model,Yezzi-Prince,16,18.212941140243686
+patient030,ES,model,Yezzi-Prince,17,
+patient030,ES,model,SDF cone rays,1,15.357853844052268
+patient030,ES,model,SDF cone rays,2,16.562292042655027
+patient030,ES,model,SDF cone rays,3,16.25248278910025
+patient030,ES,model,SDF cone rays,4,15.239741026225843
+patient030,ES,model,SDF cone rays,5,16.028170509817212
+patient030,ES,model,SDF cone rays,6,15.523632957640872
+patient030,ES,model,SDF cone rays,7,16.10543412273213
+patient030,ES,model,SDF cone rays,8,16.42446127593385
+patient030,ES,model,SDF cone rays,9,15.769718345577571
+patient030,ES,model,SDF cone rays,10,15.161662107693678
+patient030,ES,model,SDF cone rays,11,15.66175670833378
+patient030,ES,model,SDF cone rays,12,16.319005291113694
+patient030,ES,model,SDF cone rays,13,17.591169545816822
+patient030,ES,model,SDF cone rays,14,17.814583668342003
+patient030,ES,model,SDF cone rays,15,17.658885594072014
+patient030,ES,model,SDF cone rays,16,17.85668718200369
+patient030,ES,model,SDF cone rays,17,
+patient030,ES,model,EDT boundary sum,1,12.907642241096891
+patient030,ES,model,EDT boundary sum,2,13.90791775413363
+patient030,ES,model,EDT boundary sum,3,13.684292593902706
+patient030,ES,model,EDT boundary sum,4,13.27170893618935
+patient030,ES,model,EDT boundary sum,5,13.624766715899671
+patient030,ES,model,EDT boundary sum,6,12.875836421768978
+patient030,ES,model,EDT boundary sum,7,15.215000013173636
+patient030,ES,model,EDT boundary sum,8,15.635846013240434
+patient030,ES,model,EDT boundary sum,9,14.953014710488834
+patient030,ES,model,EDT boundary sum,10,14.177497986696366
+patient030,ES,model,EDT boundary sum,11,14.725985321631798
+patient030,ES,model,EDT boundary sum,12,15.231105238668034
+patient030,ES,model,EDT boundary sum,13,16.091257294943166
+patient030,ES,model,EDT boundary sum,14,16.409488861377422
+patient030,ES,model,EDT boundary sum,15,15.918000528182107
+patient030,ES,model,EDT boundary sum,16,16.203004571580394
+patient030,ES,model,EDT boundary sum,17,
+patient030,ES,voxel,Laplace field,1,17.597323600973237
+patient030,ES,voxel,Laplace field,2,15.467302452316076
+patient030,ES,voxel,Laplace field,3,17.128318584070797
+patient030,ES,voxel,Laplace field,4,17.73481912144703
+patient030,ES,voxel,Laplace field,5,17.35889355742297
+patient030,ES,voxel,Laplace field,6,18.751126126126128
+patient030,ES,voxel,Laplace field,7,21.708333333333332
+patient030,ES,voxel,Laplace field,8,20.344682835820894
+patient030,ES,voxel,Laplace field,9,20.845175438596492
+patient030,ES,voxel,Laplace field,10,21.04901960784314
+patient030,ES,voxel,Laplace field,11,24.317708333333332
+patient030,ES,voxel,Laplace field,12,24.49372759856631
+patient030,ES,voxel,Laplace field,13,19.748106060606062
+patient030,ES,voxel,Laplace field,14,18.16920731707317
+patient030,ES,voxel,Laplace field,15,19.028459821428573
+patient030,ES,voxel,Laplace field,16,21.297093023255815
+patient030,ES,voxel,Laplace field,17,16.784044715447155
+patient030,ES,voxel,Yezzi-Prince,1,17.999353260309448
+patient030,ES,voxel,Yezzi-Prince,2,15.938572184591267
+patient030,ES,voxel,Yezzi-Prince,3,17.63324124552859
+patient030,ES,voxel,Yezzi-Prince,4,18.134376111880755
+patient030,ES,voxel,Yezzi-Prince,5,17.76641502433798
+patient030,ES,voxel,Yezzi-Prince,6,19.157653705493825
+patient030,ES,voxel,Yezzi-Prince,7,21.965366970143915
+patient030,ES,voxel,Yezzi-Prince,8,20.72318410873413
+patient030,ES,voxel,Yezzi-Prince,9,21.343205796626577
+patient030,ES,voxel,Yezzi-Prince,10,21.426865041645524
+patient030,ES,voxel,Yezzi-Prince,11,24.490997552871704
+patient030,ES,voxel,Yezzi-Prince,12,24.87872548257151
+patient030,ES,voxel,Yezzi-Prince,13,20.25794757014573
+patient030,ES,voxel,Yezzi-Prince,14,18.563205296431132
+patient030,ES,voxel,Yezzi-Prince,15,19.495667500155314
+patient030,ES,voxel,Yezzi-Prince,16,21.726376600043718
+patient030,ES,voxel,Yezzi-Prince,17,17.028556664784748
+patient030,ES,voxel,SDF cone rays,1,20.381448956881705
+patient030,ES,voxel,SDF cone rays,2,18.294024672755103
+patient030,ES,voxel,SDF cone rays,3,20.60571141088255
+patient030,ES,voxel,SDF cone rays,4,20.902892770693285
+patient030,ES,voxel,SDF cone rays,5,19.219806078101406
+patient030,ES,voxel,SDF cone rays,6,20.11624927348919
+patient030,ES,voxel,SDF cone rays,7,24.37243721171621
+patient030,ES,voxel,SDF cone rays,8,22.2258381558888
+patient030,ES,voxel,SDF cone rays,9,22.939156180933903
+patient030,ES,voxel,SDF cone rays,10,23.944660604389664
+patient030,ES,voxel,SDF cone rays,11,26.647006346119774
+patient030,ES,voxel,SDF cone rays,12,28.210880361577516
+patient030,ES,voxel,SDF cone rays,13,22.508017438830752
+patient030,ES,voxel,SDF cone rays,14,19.645075666226024
+patient030,ES,voxel,SDF cone rays,15,20.444910185677664
+patient030,ES,voxel,SDF cone rays,16,24.51348892921625
+patient030,ES,voxel,SDF cone rays,17,18.04085738872125
+patient030,ES,voxel,EDT boundary sum,1,15.715072423002146
+patient030,ES,voxel,EDT boundary sum,2,14.655883825442446
+patient030,ES,voxel,EDT boundary sum,3,15.377103631123681
+patient030,ES,voxel,EDT boundary sum,4,15.488149756300974
+patient030,ES,voxel,EDT boundary sum,5,15.639649535427575
+patient030,ES,voxel,EDT boundary sum,6,16.896078212841136
+patient030,ES,voxel,EDT boundary sum,7,21.007788398579354
+patient030,ES,voxel,EDT boundary sum,8,20.41766244262012
+patient030,ES,voxel,EDT boundary sum,9,20.820083089460407
+patient030,ES,voxel,EDT boundary sum,10,20.270696384454865
+patient030,ES,voxel,EDT boundary sum,11,22.011921763420105
+patient030,ES,voxel,EDT boundary sum,12,23.584004207323957
+patient030,ES,voxel,EDT boundary sum,13,18.659659193019674
+patient030,ES,voxel,EDT boundary sum,14,17.39865244113333
+patient030,ES,voxel,EDT boundary sum,15,18.941253432205745
+patient030,ES,voxel,EDT boundary sum,16,20.8841786406761
+patient030,ES,voxel,EDT boundary sum,17,15.937445822770034
+patient029,ED,model,Laplace field,1,9.82468220338983
+patient029,ED,model,Laplace field,2,9.071444543828266
+patient029,ED,model,Laplace field,3,8.935283687943262
+patient029,ED,model,Laplace field,4,9.485801486199575
+patient029,ED,model,Laplace field,5,9.804801670146137
+patient029,ED,model,Laplace field,6,9.22844827586207
+patient029,ED,model,Laplace field,7,10.402188940092167
+patient029,ED,model,Laplace field,8,10.502879692832764
+patient029,ED,model,Laplace field,9,10.959258436944937
+patient029,ED,model,Laplace field,10,10.290455911823647
+patient029,ED,model,Laplace field,11,10.169497607655503
+patient029,ED,model,Laplace field,12,9.687105500450857
+patient029,ED,model,Laplace field,13,9.505148005148005
+patient029,ED,model,Laplace field,14,10.111455613577023
+patient029,ED,model,Laplace field,15,8.992804551539491
+patient029,ED,model,Laplace field,16,8.42413697104677
+patient029,ED,model,Laplace field,17,8.273290386521309
+patient029,ED,model,Yezzi-Prince,1,10.349376747163676
+patient029,ED,model,Yezzi-Prince,2,9.55992765716662
+patient029,ED,model,Yezzi-Prince,3,9.487683561676782
+patient029,ED,model,Yezzi-Prince,4,9.992063619275509
+patient029,ED,model,Yezzi-Prince,5,10.273404177394939
+patient029,ED,model,Yezzi-Prince,6,9.8574178052066
+patient029,ED,model,Yezzi-Prince,7,10.968637366228938
+patient029,ED,model,Yezzi-Prince,8,10.973578844461018
+patient029,ED,model,Yezzi-Prince,9,11.512319645280312
+patient029,ED,model,Yezzi-Prince,10,10.859439674025786
+patient029,ED,model,Yezzi-Prince,11,10.667966845389188
+patient029,ED,model,Yezzi-Prince,12,10.331824890872827
+patient029,ED,model,Yezzi-Prince,13,9.995150082513325
+patient029,ED,model,Yezzi-Prince,14,10.589423736143983
+patient029,ED,model,Yezzi-Prince,15,9.533711687468461
+patient029,ED,model,Yezzi-Prince,16,8.933509074765484
+patient029,ED,model,Yezzi-Prince,17,8.675149514724762
+patient029,ED,model,SDF cone rays,1,11.05474350020542
+patient029,ED,model,SDF cone rays,2,10.0039022154373
+patient029,ED,model,SDF cone rays,3,9.78464510297099
+patient029,ED,model,SDF cone rays,4,10.489701590973354
+patient029,ED,model,SDF cone rays,5,10.978402894822441
+patient029,ED,model,SDF cone rays,6,10.376161309181176
+patient029,ED,model,SDF cone rays,7,11.413037514576715
+patient029,ED,model,SDF cone rays,8,11.618253911314564
+patient029,ED,model,SDF cone rays,9,12.046977772382395
+patient029,ED,model,SDF cone rays,10,11.34958276767769
+patient029,ED,model,SDF cone rays,11,11.262812469336405
+patient029,ED,model,SDF cone rays,12,10.776305478150185
+patient029,ED,model,SDF cone rays,13,10.391246890162563
+patient029,ED,model,SDF cone rays,14,11.038416843812708
+patient029,ED,model,SDF cone rays,15,9.909002204496698
+patient029,ED,model,SDF cone rays,16,9.215956960860764
+patient029,ED,model,SDF cone rays,17,8.964311440234377
+patient029,ED,model,EDT boundary sum,1,10.007385778225075
+patient029,ED,model,EDT boundary sum,2,9.390686889880458
+patient029,ED,model,EDT boundary sum,3,9.301744664391727
+patient029,ED,model,EDT boundary sum,4,9.733752956815586
+patient029,ED,model,EDT boundary sum,5,9.978806188559483
+patient029,ED,model,EDT boundary sum,6,9.446245620285936
+patient029,ED,model,EDT boundary sum,7,10.823750604023033
+patient029,ED,model,EDT boundary sum,8,10.900141882815053
+patient029,ED,model,EDT boundary sum,9,11.336574358796142
+patient029,ED,model,EDT boundary sum,10,10.708620299796065
+patient029,ED,model,EDT boundary sum,11,10.602633924347362
+patient029,ED,model,EDT boundary sum,12,10.150291443731035
+patient029,ED,model,EDT boundary sum,13,9.885353857946212
+patient029,ED,model,EDT boundary sum,14,10.50588001345841
+patient029,ED,model,EDT boundary sum,15,9.431031223920135
+patient029,ED,model,EDT boundary sum,16,8.859074580377353
+patient029,ED,model,EDT boundary sum,17,8.669395399755246
+patient029,ED,voxel,Laplace field,1,12.933603238866397
+patient029,ED,voxel,Laplace field,2,10.251063829787235
+patient029,ED,voxel,Laplace field,3,11.495114942528735
+patient029,ED,voxel,Laplace field,4,10.002405949256342
+patient029,ED,voxel,Laplace field,5,8.415409899458623
+patient029,ED,voxel,Laplace field,6,13.312722024866785
+patient029,ED,voxel,Laplace field,7,10.997927180966114
+patient029,ED,voxel,Laplace field,8,17.432256711409394
+patient029,ED,voxel,Laplace field,9,17.161776859504133
+patient029,ED,voxel,Laplace field,10,12.060473815461346
+patient029,ED,voxel,Laplace field,11,9.206303418803419
+patient029,ED,voxel,Laplace field,12,9.296688034188033
+patient029,ED,voxel,Laplace field,13,7.99941037735849
+patient029,ED,voxel,Laplace field,14,9.019286403085825
+patient029,ED,voxel,Laplace field,15,6.939458370635631
+patient029,ED,voxel,Laplace field,16,8.955415754923413
+patient029,ED,voxel,Laplace field,17,7.303748451053284
+patient029,ED,voxel,Yezzi-Prince,1,14.377999251868598
+patient029,ED,voxel,Yezzi-Prince,2,10.779219956779805
+patient029,ED,voxel,Yezzi-Prince,3,12.058434593083758
+patient029,ED,voxel,Yezzi-Prince,4,10.599039149513812
+patient029,ED,voxel,Yezzi-Prince,5,8.934205473990563
+patient029,ED,voxel,Yezzi-Prince,6,13.900309969646257
+patient029,ED,voxel,Yezzi-Prince,7,11.600247090552124
+patient029,ED,voxel,Yezzi-Prince,8,17.835483142993596
+patient029,ED,voxel,Yezzi-Prince,9,17.655065043898652
+patient029,ED,voxel,Yezzi-Prince,10,12.624096303608452
+patient029,ED,voxel,Yezzi-Prince,11,9.698388851198375
+patient029,ED,voxel,Yezzi-Prince,12,9.92036507842887
+patient029,ED,voxel,Yezzi-Prince,13,8.579174090331456
+patient029,ED,voxel,Yezzi-Prince,14,9.607437261620046
+patient029,ED,voxel,Yezzi-Prince,15,7.516246744854278
+patient029,ED,voxel,Yezzi-Prince,16,9.532495528394335
+patient029,ED,voxel,Yezzi-Prince,17,7.809755841152375
+patient029,ED,voxel,SDF cone rays,1,16.19594370679063
+patient029,ED,voxel,SDF cone rays,2,11.923889271629617
+patient029,ED,voxel,SDF cone rays,3,14.214280510496819
+patient029,ED,voxel,SDF cone rays,4,11.444603961909538
+patient029,ED,voxel,SDF cone rays,5,9.530823110519965
+patient029,ED,voxel,SDF cone rays,6,17.00278598758298
+patient029,ED,voxel,SDF cone rays,7,12.892221675644526
+patient029,ED,voxel,SDF cone rays,8,20.150507738126205
+patient029,ED,voxel,SDF cone rays,9,18.898795151513472
+patient029,ED,voxel,SDF cone rays,10,13.407667822770446
+patient029,ED,voxel,SDF cone rays,11,10.202189624003875
+patient029,ED,voxel,SDF cone rays,12,10.39089632197323
+patient029,ED,voxel,SDF cone rays,13,9.000307765546834
+patient029,ED,voxel,SDF cone rays,14,10.458498227791708
+patient029,ED,voxel,SDF cone rays,15,8.121934592777208
+patient029,ED,voxel,SDF cone rays,16,10.035567983756701
+patient029,ED,voxel,SDF cone rays,17,8.355043155996329
+patient029,ED,voxel,EDT boundary sum,1,11.88546294341597
+patient029,ED,voxel,EDT boundary sum,2,9.932904969691418
+patient029,ED,voxel,EDT boundary sum,3,10.614614970656648
+patient029,ED,voxel,EDT boundary sum,4,10.009379812425829
+patient029,ED,voxel,EDT boundary sum,5,8.605470316592612
+patient029,ED,voxel,EDT boundary sum,6,11.231678120831614
+patient029,ED,voxel,EDT boundary sum,7,11.027604688907065
+patient029,ED,voxel,EDT boundary sum,8,17.256561447309966
+patient029,ED,voxel,EDT boundary sum,9,16.84227438682367
+patient029,ED,voxel,EDT boundary sum,10,12.16592127069868
+patient029,ED,voxel,EDT boundary sum,11,9.539229843759129
+patient029,ED,voxel,EDT boundary sum,12,9.684730982984233
+patient029,ED,voxel,EDT boundary sum,13,8.334917453549943
+patient029,ED,voxel,EDT boundary sum,14,9.07301105620661
+patient029,ED,voxel,EDT boundary sum,15,7.131213719223692
+patient029,ED,voxel,EDT boundary sum,16,9.290061701309238
+patient029,ED,voxel,EDT boundary sum,17,7.405293448313067
+patient029,ES,model,Laplace field,1,15.189132462686567
+patient029,ES,model,Laplace field,2,15.607698961937716
+patient029,ES,model,Laplace field,3,14.741353383458646
+patient029,ES,model,Laplace field,4,13.835051546391753
+patient029,ES,model,Laplace field,5,14.389748549323018
+patient029,ES,model,Laplace field,6,14.445805647840531
+patient029,ES,model,Laplace field,7,14.797069271758437
+patient029,ES,model,Laplace field,8,14.089130434782609
+patient029,ES,model,Laplace field,9,14.652037617554859
+patient029,ES,model,Laplace field,10,14.024150268336316
+patient029,ES,model,Laplace field,11,13.237882653061224
+patient029,ES,model,Laplace field,12,15.136923688394276
+patient029,ES,model,Laplace field,13,13.875498007968128
+patient029,ES,model,Laplace field,14,14.184027777777779
+patient029,ES,model,Laplace field,15,14.478562005277045
+patient029,ES,model,Laplace field,16,14.575440528634362
+patient029,ES,model,Laplace field,17,16.059593023255815
+patient029,ES,model,Yezzi-Prince,1,15.681955088430376
+patient029,ES,model,Yezzi-Prince,2,15.958090785465439
+patient029,ES,model,Yezzi-Prince,3,15.132545908590904
+patient029,ES,model,Yezzi-Prince,4,14.452523846970392
+patient029,ES,model,Yezzi-Prince,5,14.754039963624464
+patient029,ES,model,Yezzi-Prince,6,14.8730286189488
+patient029,ES,model,Yezzi-Prince,7,15.31118028921937
+patient029,ES,model,Yezzi-Prince,8,14.4835347366333
+patient029,ES,model,Yezzi-Prince,9,15.098103893961653
+patient029,ES,model,Yezzi-Prince,10,14.620042724131684
+patient029,ES,model,Yezzi-Prince,11,13.709639182707079
+patient029,ES,model,Yezzi-Prince,12,15.613332947032061
+patient029,ES,model,Yezzi-Prince,13,14.310208225630195
+patient029,ES,model,Yezzi-Prince,14,14.537341674168905
+patient029,ES,model,Yezzi-Prince,15,14.811923633464723
+patient029,ES,model,Yezzi-Prince,16,14.910163736553445
+patient029,ES,model,Yezzi-Prince,17,16.088208963704663
+patient029,ES,model,SDF cone rays,1,16.614226140193086
+patient029,ES,model,SDF cone rays,2,17.022389276629912
+patient029,ES,model,SDF cone rays,3,16.049438962721286
+patient029,ES,model,SDF cone rays,4,15.416621192460207
+patient029,ES,model,SDF cone rays,5,15.894969609996567
+patient029,ES,model,SDF cone rays,6,15.919519202653753
+patient029,ES,model,SDF cone rays,7,15.911768195048953
+patient029,ES,model,SDF cone rays,8,15.337952157725459
+patient029,ES,model,SDF cone rays,9,15.668501492204337
+patient029,ES,model,SDF cone rays,10,15.165252885153127
+patient029,ES,model,SDF cone rays,11,14.554092347216445
+patient029,ES,model,SDF cone rays,12,16.266628210798544
+patient029,ES,model,SDF cone rays,13,14.896430680476337
+patient029,ES,model,SDF cone rays,14,15.10796023298193
+patient029,ES,model,SDF cone rays,15,15.208904714257233
+patient029,ES,model,SDF cone rays,16,15.41491892264278
+patient029,ES,model,SDF cone rays,17,15.99925045634425
+patient029,ES,model,EDT boundary sum,1,14.139182961698788
+patient029,ES,model,EDT boundary sum,2,14.541555075496952
+patient029,ES,model,EDT boundary sum,3,13.903240534416716
+patient029,ES,model,EDT boundary sum,4,13.201852634272624
+patient029,ES,model,EDT boundary sum,5,13.423043173563089
+patient029,ES,model,EDT boundary sum,6,13.173405349452631
+patient029,ES,model,EDT boundary sum,7,15.105470105132243
+patient029,ES,model,EDT boundary sum,8,14.427999279188073
+patient029,ES,model,EDT boundary sum,9,14.904861944969918
+patient029,ES,model,EDT boundary sum,10,14.354091502686092
+patient029,ES,model,EDT boundary sum,11,13.534486159175431
+patient029,ES,model,EDT boundary sum,12,15.388144599235304
+patient029,ES,model,EDT boundary sum,13,14.178282388178001
+patient029,ES,model,EDT boundary sum,14,14.42520953696451
+patient029,ES,model,EDT boundary sum,15,14.528902094093665
+patient029,ES,model,EDT boundary sum,16,14.627567257650098
+patient029,ES,model,EDT boundary sum,17,15.586904791898506
+patient029,ES,voxel,Laplace field,1,21.476545253863133
+patient029,ES,voxel,Laplace field,2,18.022265625
+patient029,ES,voxel,Laplace field,3,20.695889894419306
+patient029,ES,voxel,Laplace field,4,17.626551418439718
+patient029,ES,voxel,Laplace field,5,18.65252590673575
+patient029,ES,voxel,Laplace field,6,22.5
+patient029,ES,voxel,Laplace field,7,19.470817120622566
+patient029,ES,voxel,Laplace field,8,21.789444444444445
+patient029,ES,voxel,Laplace field,9,26.16820987654321
+patient029,ES,voxel,Laplace field,10,27.35802872062663
+patient029,ES,voxel,Laplace field,11,22.99455275229358
+patient029,ES,voxel,Laplace field,12,19.037801484230055
+patient029,ES,voxel,Laplace field,13,18.594322344322343
+patient029,ES,voxel,Laplace field,14,18.68548387096774
+patient029,ES,voxel,Laplace field,15,18.495896464646464
+patient029,ES,voxel,Laplace field,16,18.095526315789474
+patient029,ES,voxel,Laplace field,17,15.535467791411042
+patient029,ES,voxel,Yezzi-Prince,1,21.74913258794654
+patient029,ES,voxel,Yezzi-Prince,2,18.468252685666084
+patient029,ES,voxel,Yezzi-Prince,3,21.031359092861997
+patient029,ES,voxel,Yezzi-Prince,4,18.078978834422767
+patient029,ES,voxel,Yezzi-Prince,5,18.98104821338555
+patient029,ES,voxel,Yezzi-Prince,6,23.115181558160668
+patient029,ES,voxel,Yezzi-Prince,7,19.971543978160458
+patient029,ES,voxel,Yezzi-Prince,8,22.342214084201387
+patient029,ES,voxel,Yezzi-Prince,9,26.411895021980193
+patient029,ES,voxel,Yezzi-Prince,10,27.681013201920234
+patient029,ES,voxel,Yezzi-Prince,11,23.39242187552496
+patient029,ES,voxel,Yezzi-Prince,12,19.545475133496
+patient029,ES,voxel,Yezzi-Prince,13,19.02678013895894
+patient029,ES,voxel,Yezzi-Prince,14,19.25180358271445
+patient029,ES,voxel,Yezzi-Prince,15,19.217615416555695
+patient029,ES,voxel,Yezzi-Prince,16,18.498593410692717
+patient029,ES,voxel,Yezzi-Prince,17,15.873357417393315
+patient029,ES,voxel,SDF cone rays,1,25.12222562667813
+patient029,ES,voxel,SDF cone rays,2,21.39827681183815
+patient029,ES,voxel,SDF cone rays,3,23.310763908547333
+patient029,ES,voxel,SDF cone rays,4,20.603576433574055
+patient029,ES,voxel,SDF cone rays,5,21.97091009209193
+patient029,ES,voxel,SDF cone rays,6,25.197290640903184
+patient029,ES,voxel,SDF cone rays,7,22.518523388799526
+patient029,ES,voxel,SDF cone rays,8,26.962522837320964
+patient029,ES,voxel,SDF cone rays,9,29.867785347832573
+patient029,ES,voxel,SDF cone rays,10,29.836636894365515
+patient029,ES,voxel,SDF cone rays,11,24.577777180102988
+patient029,ES,voxel,SDF cone rays,12,21.802033507536425
+patient029,ES,voxel,SDF cone rays,13,21.15559673309326
+patient029,ES,voxel,SDF cone rays,14,22.189559998050814
+patient029,ES,voxel,SDF cone rays,15,24.911644598450323
+patient029,ES,voxel,SDF cone rays,16,20.239874442251104
+patient029,ES,voxel,SDF cone rays,17,17.10038976435281
+patient029,ES,voxel,EDT boundary sum,1,16.64596718668148
+patient029,ES,voxel,EDT boundary sum,2,15.823506958782673
+patient029,ES,voxel,EDT boundary sum,3,17.559511243667718
+patient029,ES,voxel,EDT boundary sum,4,16.223280747731526
+patient029,ES,voxel,EDT boundary sum,5,16.742064374716172
+patient029,ES,voxel,EDT boundary sum,6,18.421435568912095
+patient029,ES,voxel,EDT boundary sum,7,19.12607014875004
+patient029,ES,voxel,EDT boundary sum,8,20.929243375990126
+patient029,ES,voxel,EDT boundary sum,9,24.11742891696255
+patient029,ES,voxel,EDT boundary sum,10,24.402046895836413
+patient029,ES,voxel,EDT boundary sum,11,21.92889606843301
+patient029,ES,voxel,EDT boundary sum,12,18.78737298190483
+patient029,ES,voxel,EDT boundary sum,13,17.8178747512482
+patient029,ES,voxel,EDT boundary sum,14,17.250813176555017
+patient029,ES,voxel,EDT boundary sum,15,15.949007099325007
+patient029,ES,voxel,EDT boundary sum,16,17.786068773771586
+patient029,ES,voxel,EDT boundary sum,17,15.1113413243206

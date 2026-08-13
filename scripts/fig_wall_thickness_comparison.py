@@ -2,14 +2,20 @@
 Generate the wall-thickness method-comparison figure for the results chapter:
   images/wall_thickness_methods_comparison.pdf
 
-Values are taken directly from the 10-method wall-thickness notebook
-(lv_wall_thickness_10_methods), restricted to the four methods retained in the
-methodology: the Laplace field, Yezzi--Prince, SDF cone-ray, and EDT baseline
-estimators, all evaluated on the CardioSDF-generated LV geometry. The dashed
-line marks the input-segmentation reference mean. No values are invented.
+Values are read from the NOR cohort tables written by
+``scripts/eval_demo/run_cohort.py`` (end-diastole, CardioSDF model geometry),
+restricted to the four methods retained in the methodology: the Laplace field,
+Yezzi--Prince, SDF cone-ray, and EDT baseline estimators. The dashed line marks
+the input-segmentation reference mean. No values are invented.
 """
+from pathlib import Path
+
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
+
+THESIS = Path(__file__).resolve().parents[1]
+COHORT = THESIS / "scripts" / "cohort_nor"
 
 plt.rcParams.update({
     "font.family": "serif",
@@ -24,22 +30,32 @@ plt.rcParams.update({
     "savefig.pad_inches": 0.08,
 })
 
-# Method, mean, p5, p95 (mm) — from the notebook summary table.
-METHODS = [
-    ("Laplace field\n(state of the art)", 5.076, 2.916, 8.623, "#1d3557"),
-    ("Yezzi--Prince\n(recent)",           4.303, 0.964, 5.804, "#2a6f97"),
-    ("SDF cone rays\n(promising)",        5.469, 3.245, 7.156, "#457b9d"),
-    ("EDT boundary sum\n(baseline)",      3.584, 1.490, 4.807, "#c9a0a0"),
-]
-REFERENCE_MEAN = 3.61  # input-segmentation KD reference (mm)
+LABELS = {
+    "Laplace field": "Laplace field\n(state of the art)",
+    "Yezzi-Prince": "Yezzi--Prince\n(recent)",
+    "SDF cone rays": "SDF cone rays\n(promising)",
+    "EDT boundary sum": "EDT boundary sum\n(baseline)",
+}
+colors = ["#1d3557", "#2a6f97", "#457b9d", "#c9a0a0"]
 
-names = [m[0] for m in METHODS]
-means = np.array([m[1] for m in METHODS])
-p5 = np.array([m[2] for m in METHODS])
-p95 = np.array([m[3] for m in METHODS])
-colors = [m[4] for m in METHODS]
+wall = pd.read_csv(COHORT / "wall_methods.csv")
+wall = wall[(wall["phase"] == "ED") & (wall["geometry"] == "model")]
+reference = pd.read_csv(COHORT / "reference_thickness.csv")
+REFERENCE_MEAN = float(reference[reference["phase"] == "ED"]["ref_mm"].mean())
+N_PATIENTS = int(wall["patient"].nunique())
 
-x = np.arange(len(METHODS))
+names, means, p5, p95 = [], [], [], []
+for method, label in LABELS.items():
+    sub = wall[wall["method"] == method]
+    names.append(label)
+    means.append(sub["mean_mm"].mean())
+    p5.append(sub["p5_mm"].mean())
+    p95.append(sub["p95_mm"].mean())
+means = np.array(means)
+p5 = np.array(p5)
+p95 = np.array(p95)
+
+x = np.arange(len(names))
 # Asymmetric whiskers from p5 to p95 around the mean.
 lower = means - p5
 upper = p95 - means
@@ -59,12 +75,13 @@ ax.axhline(REFERENCE_MEAN, color="#e63946", ls="--", lw=1.2, zorder=2,
 ax.set_xticks(x)
 ax.set_xticklabels(names, fontsize=8)
 ax.set_ylabel("Wall thickness (mm)")
-ax.set_ylim(0, 10)
+ax.set_ylim(0, max(p95.max(), REFERENCE_MEAN) * 1.25)
 ax.set_title("Wall-thickness estimates on the reconstructed LV geometry")
 ax.legend(loc="upper right", frameon=False, fontsize=8)
-ax.text(0.0, -0.34, "Bars show the mean; whiskers span the 5th--95th percentile.",
+ax.text(0.0, -0.34, "Bars show the mean; whiskers span the 5th--95th percentile "
+        f"(n = {N_PATIENTS} NOR patients).",
         transform=ax.transAxes, fontsize=7.5, color="#555555")
 fig.tight_layout()
-fig.savefig("images/wall_thickness_methods_comparison.pdf")
+fig.savefig(THESIS / "images" / "wall_thickness_methods_comparison.pdf")
 plt.close(fig)
 print("Wrote images/wall_thickness_methods_comparison.pdf")

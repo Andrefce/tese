@@ -618,60 +618,46 @@ Not every real patient produces a usable mesh. A segmentation may be a
 long-axis view, cover too few slices, or fail an anatomical plausibility check,
 such as an endocardium that is not fully enclosed by the epicardium. After
 these quality gates, 444 of the 460 patients yield a valid ED mesh and 423
-yield a valid ES mesh. \Cref{fig:dataset-pipeline} summarises this attrition
-for the three streams.
-
-\begin{figure}[!htbp]
-	\centering
-	\includegraphics[width=0.9\linewidth]{dataset_pipeline}
-	\vspace{2mm}
-	\caption{Number of candidate samples and how many survive the quality gates
-	for each data stream. The real streams start from the 460 indexed patients;
-	the synthetic stream starts from the 2048 sampled shape vectors.}
-	\label{fig:dataset-pipeline}
-\end{figure}
-
-To prevent information from leaking between training and evaluation, the real
-streams are split by patient: all meshes from a given patient stay within a
-single split. \Cref{fig:dataset-splits} shows the resulting composition. The
-ED stream is divided into 310 training, 67 validation, and 67 test patients,
-and the ES stream into 338 training, 66 validation, and 19 test patients. The
-synthetic ED meshes are used only to enrich the pre-training stage and are
-never placed in the validation or test sets.
-
-\begin{figure}[!htbp]
-	\centering
-	\includegraphics[width=0.9\linewidth]{dataset_splits}
-	\vspace{2mm}
-	\caption{Patient-level train, validation, and test split for the two real
-	streams. Splitting by patient guarantees that no patient appears in more
-	than one partition.}
-	\label{fig:dataset-splits}
-\end{figure}
-
-\Cref{tab:dataset-summary} collects the final sample counts. In total, the
-model is trained and evaluated on 867 real LV meshes, supported by up to 1300
-synthetic ED meshes during pre-training.
+yield a valid ES mesh. The surviving meshes are then divided for training and
+evaluation. To prevent information from leaking between the partitions, the
+real streams are split by patient rather than by mesh, so that all meshes from
+a given patient stay within a single partition. Both streams use the same
+70\,\%/15\,\%/15\,\% allocation for training, validation, and test, rounded to
+whole patients, and the synthetic ED meshes are used only to enrich the
+pre-training stage and are never placed in the validation or test sets.
 
 \begin{table}[H]
 	\centering
-	\caption{Final sample counts for the three data streams. Real streams report
-	patients that pass the quality gates; the synthetic stream reports accepted
-	meshes.}
+	\caption{Final sample counts and patient-level partitioning of the three data
+	streams. Real streams report patients that pass the quality gates; the
+	synthetic stream reports meshes accepted out of the 2048 sampled shape
+	vectors. Percentages in parentheses are the nominal allocation, rounded to
+	whole patients.}
 	\label{tab:dataset-summary}
 	\small
 	\begin{tabular}{l l c c c c c}
 		\toprule
 		Stream & Source & Phase & Valid & \multicolumn{3}{c}{Split} \\
 		\cmidrule(lr){5-7}
-		       &        &       & meshes & Train & Val. & Test \\
+		       &        &       & meshes & Train (70\%) & Val. (15\%) & Test (15\%) \\
 		\midrule
 		Real ED      & ACDC + M\&Ms-2 & ED & 444  & 310 & 67 & 67 \\
-		Real ES      & ACDC + M\&Ms-2 & ES & 423  & 338 & 66 & 19 \\
+		Real ES      & ACDC + M\&Ms-2 & ES & 423  & 296 & 63 & 64 \\
 		Synthetic ED & UK Biobank SSM & ED & 1300 & \multicolumn{3}{c}{pre-training only} \\
 		\bottomrule
 	\end{tabular}
 \end{table}
+
+\Cref{tab:dataset-summary} collects the resulting composition of the three
+streams. Its first two rows show that the real ED and ES streams contribute 444
+and 423 meshes respectively, for a total of 867 real LV meshes drawn from the
+same 460 patients, so that a patient assigned to the test partition is absent
+from training in both phases. Its last row records the 1300 accepted synthetic
+ED meshes, listed without a split because they only support the pre-training
+stage; the reported evaluation therefore rests exclusively on the 67 real ED
+and the 64 real ES test patients. The same composition is shown graphically in
+\cref{fig:dataset-selection-splits} of
+\cref{app:supplementary-methods}.
 
 \section{Model Architecture}
 \label{sec:architecture}
@@ -695,6 +681,39 @@ into a mesh only when needed. The key addition in this work is that the
 epicardium is not predicted on its own. Instead, it is defined as an outward
 offset from the endocardium, which forces the wall to have a positive thickness
 everywhere.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{fig_model_architecture}
+	\vspace{2mm}
+	\caption{High-level view of the proposed model. (a)~Sparse endocardial and
+	epicardial SAX contours, together with a tissue and a cardiac-phase label,
+	form the observation. (b)~A shared per-point network followed by
+	tissue-specific max-pooling produces a single latent code $z$.
+	(c)~A Fourier-encoded query point and the latent code are decoded by an
+	eight-layer implicit network with a middle skip connection. (d)~The decoder
+	emits the endocardial signed-distance field and a bounded positive offset
+	$\delta$, from which the epicardial field is obtained, guaranteeing a
+	positive wall thickness everywhere. (e)~Marching cubes on a $96^{3}$ grid
+	yields the two watertight endocardial and epicardial surfaces.}
+	\label{fig:model-architecture}
+\end{figure}
+
+\Cref{fig:model-architecture} summarises the resulting model as five stages. The
+sparse SAX contour observation of panel~(a) is reduced by the contour encoder of
+panel~(b) to a single 256-dimensional latent code, using separate endocardial and
+epicardial max-pooling so that the descriptor is invariant to the order in which
+contour points are listed. That code conditions the implicit decoder of
+panel~(c), which is queried at arbitrary three-dimensional points and therefore
+represents the geometry continuously rather than on a fixed mesh. Panel~(d) shows
+the central design choice of this work: the decoder does not predict the two
+surfaces independently, but predicts the endocardial field together with a
+strictly positive bounded offset, so that the epicardium is always separated from
+the endocardium and the myocardial wall cannot collapse. Panel~(e) shows the
+resulting output, namely the pair of watertight endocardial and epicardial
+surfaces extracted by marching cubes. The encoder is formalised in
+\cref{subsec:contour-encoder} and the decoder in
+\cref{subsec:monotone-epi-decoder}.
 
 \subsection{Contour encoder}
 \label{subsec:contour-encoder}

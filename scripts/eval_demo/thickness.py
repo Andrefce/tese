@@ -298,6 +298,65 @@ def method_laplace_gradient(ctx: VolumeContext, verts: np.ndarray,
                            values.astype(np.float32), time.perf_counter() - t0, {})
 
 
+def _shift(arr: np.ndarray, step: int, axis: int) -> np.ndarray:
+    """``_shift(a, +1, k)[i] == a[i-1]`` along ``axis``; out-of-range reads as 0."""
+    out = np.zeros_like(arr)
+    dst, src = [slice(None)] * 3, [slice(None)] * 3
+    if step > 0:
+        dst[axis], src[axis] = slice(step, None), slice(None, -step)
+    else:
+        dst[axis], src[axis] = slice(None, step), slice(-step, None)
+    out[tuple(dst)] = arr[tuple(src)]
+    return out
+
+
+def method_yezzi_prince(ctx: VolumeContext, verts: np.ndarray, normals: np.ndarray,
+                        phi: np.ndarray, max_iter: int = 400,
+                        tol: float = 1e-4) -> ThicknessResult:
+    """Yezzi-Prince correspondence thickness W = L0 + L1.
+
+    The two linear transport equations ``T . grad L0 = 1`` (L0 = 0 on the
+    endocardium) and ``-T . grad L1 = 1`` (L1 = 0 on the epicardium) are solved
+    on the tangent field ``T = grad(phi)/||grad(phi)||`` with the first-order
+    upwind fixed-point scheme of the original paper. Solving it here rather than
+    through ``pyezzi`` avoids that package's native crash on anisotropic stacks.
+    """
+    t0 = time.perf_counter()
+    direction = _laplace_direction_field(phi, ctx)
+    myo = ctx.myo_mask
+    weight = np.abs(direction.astype(np.float64))
+    denom = weight.sum(axis=-1)
+    ok = myo & (denom > 1e-9)
+    forward = direction >= 0.0
+
+    l0 = np.zeros(myo.shape)
+    l1 = np.zeros(myo.shape)
+    residual, iterations = np.inf, 0
+    for iterations in range(1, max_iter + 1):
+        acc0 = np.full(myo.shape, ctx.pitch)
+        acc1 = np.full(myo.shape, ctx.pitch)
+        for axis in range(3):
+            prev0, next0 = _shift(l0, +1, axis), _shift(l0, -1, axis)
+            prev1, next1 = _shift(l1, +1, axis), _shift(l1, -1, axis)
+            acc0 += weight[..., axis] * np.where(forward[..., axis], prev0, next0)
+            acc1 += weight[..., axis] * np.where(forward[..., axis], next1, prev1)
+        new0, new1 = np.zeros_like(l0), np.zeros_like(l1)
+        new0[ok] = acc0[ok] / denom[ok]
+        new1[ok] = acc1[ok] / denom[ok]
+        residual = float(max(np.abs(new0 - l0).max(), np.abs(new1 - l1).max()))
+        l0, l1 = new0, new1
+        if residual < tol:
+            break
+
+    field = np.full(myo.shape, np.nan)
+    field[ok] = l0[ok] + l1[ok]
+    values = _sample_at_vertices(field, ctx, verts, normals * (0.75 * ctx.pitch))
+    return ThicknessResult("Yezzi-Prince", "PDE / correspondence",
+                           values.astype(np.float32), time.perf_counter() - t0,
+                           {"yezzi_iterations": int(iterations),
+                            "yezzi_residual_mm": round(residual, 6)})
+
+
 # ──────────────────────────────────────────────────────────────────────────
 # Volumetric baselines
 # ──────────────────────────────────────────────────────────────────────────

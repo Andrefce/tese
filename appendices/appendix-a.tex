@@ -33,3 +33,20 @@ procedure.
 		\bottomrule
 	\end{tabular}
 \end{table}
+
+\noindent
+\Cref{fig:dataset-selection-splits} presents the same composition graphically,
+complementing the counts reported in \cref{tab:dataset-summary}.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.85\linewidth]{dataset_selection_and_splits}
+	\vspace{2mm}
+	\caption{Composition of the three data streams. Each bar shows how the valid
+	samples of one stream are distributed over the 70\,\%/15\,\%/15\,\%
+	train/validation/test partitions, with the number of patients annotated inside
+	each segment. The synthetic stream, of which 1300 meshes were accepted out of
+	2048 sampled shape vectors, is reserved entirely for pre-training and is
+	therefore not partitioned.}
+	\label{fig:dataset-selection-splits}
+\end{figure}
