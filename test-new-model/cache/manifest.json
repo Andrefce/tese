@@ -1,0 +1,15 @@
+{
+  "n_samples": 200,
+  "strata": {
+    "DCM/ED": 20,
+    "DCM/ES": 20,
+    "HCM/ED": 20,
+    "HCM/ES": 20,
+    "MINF/ED": 20,
+    "MINF/ES": 20,
+    "NOR/ED": 20,
+    "NOR/ES": 20,
+    "RV/ED": 20,
+    "RV/ES": 20
+  }
+}
