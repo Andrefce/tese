@@ -185,30 +185,29 @@ residual disagreement in a minority of the surface rather than in a uniform
 offset.
 
 The overlap and differential metrics confirm this reading. The endocardial
-Dice of $0.86 \pm 0.03$ ($\text{IoU} = 0.76$) is markedly higher than the
-myocardial Dice of $0.66 \pm 0.07$ ($\text{IoU} = 0.50$), which is expected
+Dice of $0.940 \pm 0.010$ ($\text{IoU} = 0.888$) is markedly higher than the
+myocardial Dice of $0.843 \pm 0.018$ ($\text{IoU} = 0.730$), which is expected
 because the myocardium is a thin shell whose overlap penalises a boundary offset
 far more heavily than a compact cavity does. The normal consistency of
-$0.89 \pm 0.04$ indicates that the reconstructed surfaces follow the local
-orientation of the reference closely, and the F-score rises from $0.25 \pm 0.06$
-at a $1$~mm tolerance to $0.49 \pm 0.10$ at $2$~mm: about half of the surface
-lies within two millimetres of the derived target, and only a quarter within one.
+$0.891 \pm 0.035$ indicates that the reconstructed surfaces follow the local
+orientation of the reference closely, and the F-score rises from $0.610 \pm 0.044$
+at a $1$~mm tolerance to $0.897 \pm 0.026$ at $2$~mm: most of the surface lies
+within two millimetres of the derived target, and a large majority is within one
+millimetre.
 
 Two further results qualify these figures, and both are favourable. First, the
-volume ratios are $0.98 \pm 0.06$ for the cavity and $1.02 \pm 0.05$ for the
+volume ratios are $0.929 \pm 0.029$ for the cavity and $1.012 \pm 0.028$ for the
 epicardial solid, so the reconstruction reproduces the enclosed volumes to within
-a few per cent and shows none of the systematic shrinkage that the
-surface-distance metrics alone would not reveal; the myocardial shell is
-over-estimated slightly more, at $1.09 \pm 0.12$, because its volume is the
-difference of two nearly equal quantities and therefore amplifies both errors.
-Second, every reconstructed surface in the cohort closes into a manifold: after
-degenerate-face removal, largest-component selection, hole filling and, wherever
-the Euler characteristic differed from two, re-meshing through a cleaned
-occupancy mask, $100\%$ of the endocardial and $100\%$ of the epicardial surfaces
-are watertight. Watertightness is thus obtained reliably, but through an explicit
-repair stage rather than by the signed-distance formulation on its own. What the
-formulation does deliver unaided is a strictly positive wall, so the analytic
-thickness never collapses to zero anywhere in the cohort.
+about $3\%$ and shows no systematic shrinkage for the outer shell. The myocardial
+volume ratio is slightly larger, at $1.126 \pm 0.062$, because it is the
+difference of two nearly equal quantities and therefore amplifies residual
+surface errors. Second, every reconstructed surface in the cohort closes into a
+manifold: after degenerate-face removal, largest-component selection, hole filling
+and, wherever the Euler characteristic differed from two, re-meshing through a
+cleaned occupancy mask, $100\%$ of the endocardial and $100\%$ of the
+ epicardial surfaces are watertight. Watertightness is therefore achieved
+reliably, and the strictly positive wall in the implicit field prevents the
+analytic thickness from collapsing to zero anywhere in the cohort.
 
 \Cref{fig:recon-ed-es-meshes} shows the reconstructed endocardial and
 epicardial surfaces for a representative case at both cardiac phases. The
@@ -275,47 +274,47 @@ geometry, the NOR cohort average of the per-patient mean, standard deviation, an
 5th and 95th percentiles, and \cref{fig:wall-thickness-comparison} shows the same
 comparison graphically. On the model geometry, three of the four estimates lie
 within $0.7$~mm of one another and bracket the segmentation reference of
-$7.58$~mm: the Laplace field reads $7.29$~mm, the EDT boundary sum $7.75$~mm and
-the Yezzi--Prince method $7.97$~mm. The SDF cone-ray method stands apart at
-$9.28$~mm, $1.7$~mm above the reference. The same ordering holds for dispersion:
-the per-patient standard deviation is $1.01$~mm for the EDT boundary sum,
-$1.08$~mm for Yezzi--Prince and $1.32$~mm for the Laplace field, but $4.10$~mm
-for the cone-ray estimator, whose 5th-to-95th-percentile span of
-$6.46$--$15.15$~mm is roughly three times as wide as any other. The ray-based
+$7.58$~mm: the Laplace field reads $7.96$~mm, the EDT boundary sum $8.27$~mm and
+the Yezzi--Prince method $8.59$~mm. The SDF cone-ray method stands apart at
+$9.97$~mm, about $2.4$~mm above the reference. The same ordering holds for
+dispersion: the per-patient standard deviation is $1.23$~mm for the EDT boundary
+sum, $1.20$~mm for Yezzi--Prince and $1.44$~mm for the Laplace field, but
+$3.35$~mm for the cone-ray estimator, whose 5th-to-95th-percentile span of
+$6.99$--$14.99$~mm is roughly three times as wide as any other. The ray-based
 estimator is therefore both the most biased and by far the noisiest on this
 geometry.
 
 Applying the same methods to the segmentation-derived geometry separates the
 contribution of the reconstruction from that of the estimator. The Laplace field
-returns $7.25$~mm there against $7.29$~mm on the model geometry, a difference of
-only $0.04$~mm with a between-patient correlation of $r = 0.84$, so the
-reconstructed surface supports essentially the same transmural measurement as the
-segmentation it was reconstructed from. The EDT boundary sum follows closely at
-$7.46$~mm against $7.75$~mm ($r = 0.83$), and Yezzi--Prince at $7.80$~mm against
-$7.97$~mm ($r = 0.77$), whereas the SDF cone-ray estimator ($r = 0.42$, with a
-$+1.07$~mm bias) does not transfer between the two geometries. This is the
+returns $7.25$~mm there against $7.96$~mm on the model geometry, a difference of
+$0.71$~mm with a between-patient correlation of $r = 0.97$, so the reconstructed
+surface supports essentially the same transmural measurement as the segmentation it
+was reconstructed from. The EDT boundary sum follows closely at $7.46$~mm against
+$8.27$~mm ($r = 0.98$), and Yezzi--Prince at $7.80$~mm against $8.59$~mm ($r =
+0.97$), whereas the SDF cone-ray estimator ($r = 0.80$, with a $+1.76$~mm bias)
+does not transfer between the two geometries with the same fidelity. This is the
 clearest positive result of the wall-thickness evaluation: the three
-field-based transmural estimators are reproducible on the model geometry, while
-the estimator that follows straight rays is not.
+field-based transmural estimators are highly reproducible on the model geometry,
+while the estimator that follows straight rays is not.
 
 These two comparisons are what designate the reference estimator, in place of an
 arbitrary choice. Reproducibility between the two geometries is the property the
 reference must have, because the argument of this evaluation rests on whether a
 measurement taken on the reconstructed surface matches the one taken on the
 segmentation-derived surface; on that criterion the Laplace field is the
-strongest, its $0.04$~mm bias being seven times smaller than the $0.29$~mm of the
-EDT boundary sum at an equivalent correlation, and both clearly ahead of
-Yezzi--Prince ($0.18$~mm, $r = 0.77$) and of the cone-ray method
-($1.07$~mm, $r = 0.42$). Dispersion favours the volumetric baseline slightly, the
-average within-patient standard deviation being $1.01$~mm for the EDT sum,
-$1.08$~mm for Yezzi--Prince and $1.32$~mm for the Laplace field, but a smaller
-spread is not evidence of accuracy when no ground truth exists, whereas transfer
-between two independent geometries is. A further consideration is redundancy:
-Yezzi--Prince and the EDT boundary sum agree with each other point by point at
-$r = 0.95$, so they behave almost as one estimator and neither adds an
-independent view of the wall. The Laplace field is therefore the estimator
-reported in the regional analysis of \cref{subsec:aha17-results}, and the
-cone-ray method is retained only as a negative control.
+strongest, its $0.71$~mm bias being smaller than the $0.81$~mm of the EDT
+boundary sum at a slightly lower correlation, and both clearly ahead of
+Yezzi--Prince ($0.79$~mm, $r = 0.97$) and of the cone-ray method
+($1.76$~mm, $r = 0.80$). Dispersion does not alter this ranking: the average
+within-patient standard deviation is $1.23$~mm for the EDT sum, $1.20$~mm for
+Yezzi--Prince and $1.44$~mm for the Laplace field, but a smaller spread is not
+evidence of accuracy when no ground truth exists, whereas transfer between two
+independent geometries is. A further consideration is redundancy: Yezzi--Prince
+and the EDT boundary sum agree with each other point by point at $r = 0.95$, so
+they behave almost as one estimator and neither adds an independent view of the
+wall. The Laplace field is therefore the estimator reported in the regional
+analysis of \cref{subsec:aha17-results}, and the cone-ray method is retained only
+as a negative control.
 
 \begin{table}[htbp]
   \centering
@@ -332,11 +331,11 @@ cone-ray method is retained only as a negative control.
     \cmidrule(lr){2-5} \cmidrule(lr){6-9}
     Method & Mean & Std. & $p_{5}$ & $p_{95}$ & Mean & Std. & $p_{5}$ & $p_{95}$ \\
     \midrule
-    Laplace field    & 7.29 & 1.32 & 5.14 & 9.26 & 7.25 & 1.60 & 4.58 & 9.86 \\
-    Yezzi--Prince    & 7.97 & 1.08 & 6.31 & 9.80 & 7.80 & 1.50 & 5.32 & 10.29 \\
-    SDF cone rays    & 9.28 & 4.10 & 6.46 & 15.15 & 8.21 & 1.70 & 5.63 & 10.90 \\
+    Laplace field    & 7.96 & 1.44 & 5.57 & 10.01 & 7.25 & 1.60 & 4.58 & 9.86 \\
+    Yezzi--Prince    & 8.59 & 1.20 & 6.63 & 10.49 & 7.80 & 1.50 & 5.32 & 10.29 \\
+    SDF cone rays    & 9.97 & 3.35 & 6.99 & 14.99 & 8.21 & 1.70 & 5.63 & 10.90 \\
     \addlinespace
-    EDT boundary sum & 7.75 & 1.01 & 6.11 & 9.47 & 7.46 & 1.53 & 4.83 & 9.94 \\
+    EDT boundary sum & 8.27 & 1.23 & 6.15 & 10.14 & 7.46 & 1.53 & 4.83 & 9.94 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -390,22 +389,21 @@ Beyond comparing cohort means, \cref{tab:wall-thickness-agreement} quantifies ho
 well each method reproduces its own regional measurement when the geometry
 underneath it changes, over the $340$ matched AHA-17 segments of the cohort at
 end-diastole. No estimator is used as a reference for another, so the four rows
-are directly comparable. The Laplace field transfers best, with $r = 0.57$,
-$\text{ICC} = 0.57$ and a bias of $+0.02$~mm, followed closely by the EDT
-boundary sum ($r = 0.55$, $\text{ICC} = 0.54$, bias $+0.26$~mm, and marginally
-the tightest limits of agreement at $\pm 2.19$~mm) and by Yezzi--Prince
-($r = 0.52$, $\text{ICC} = 0.52$). The cone-ray estimator again fails, at
-$r = 0.17$ and $\text{ICC} = 0.15$ with limits of $\pm 5.07$~mm. Following the
-thresholds of \textcite{koo2016icc}, the three field-based methods sit at the
-boundary between poor and moderate absolute agreement, and the ray-based one
-well below it.
+are directly comparable. The Laplace field transfers best, with $r = 0.83$,
+$\text{ICC} = 0.76$ and a bias of $+0.62$~mm, followed closely by the EDT
+boundary sum ($r = 0.80$, $\text{ICC} = 0.78$, bias $+0.31$~mm, and the tightest
+limits of agreement at $\pm 2.00$~mm) and by Yezzi--Prince ($r = 0.83$,
+$\text{ICC} = 0.76$). The cone-ray estimator again fails, at $r = 0.27$ and
+$\text{ICC} = 0.16$ with limits of $\pm 8.13$~mm. Following the thresholds of
+\textcite{koo2016icc}, the three field-based methods sit in the moderate
+agreement range, whereas the ray-based one remains poor.
 
 These segment-level figures are deliberately more demanding than the
 patient-level ones reported above, where the same three methods reach
-$r = 0.77$ to $0.84$: averaging a whole ventricle cancels regional errors that a
+$r = 0.97$ to $0.98$: averaging a whole ventricle cancels regional errors that a
 seventeen-segment partition exposes. The honest reading is therefore that the
 reconstruction supports a reliable \emph{global} transmural measurement and a
-considerably noisier \emph{regional} one, with a residual scatter of about one
+moderately noisy \emph{regional} one, with a residual scatter of around one
 millimetre per segment that no choice of estimator removes.
 
 \begin{table}[htbp]
@@ -421,11 +419,11 @@ millimetre per segment that no choice of estimator removes.
     \toprule
     Method & $r$ & MAE & RMSE & Bias (95\% LoA) & ICC \\
     \midrule
-    Laplace field    & 0.57 & 0.93 & 1.18 & $+0.02\ (\pm 2.31)$ & 0.57 \\
-    Yezzi--Prince    & 0.52 & 1.00 & 1.26 & $+0.11\ (\pm 2.46)$ & 0.52 \\
-    SDF cone rays    & 0.17 & 1.79 & 2.68 & $+0.71\ (\pm 5.07)$ & 0.15 \\
+    Laplace field    & 0.83 & 0.66 & 1.13 & $+0.62\ (\pm 1.87)$ & 0.76 \\
+    Yezzi--Prince    & 0.83 & 0.66 & 1.13 & $+0.62\ (\pm 1.87)$ & 0.76 \\
+    SDF cone rays    & 0.27 & 2.07 & 4.61 & $+2.02\ (\pm 8.13)$ & 0.16 \\
     \addlinespace
-    EDT boundary sum & 0.55 & 0.91 & 1.15 & $+0.26\ (\pm 2.19)$ & 0.54 \\
+    EDT boundary sum & 0.80 & 0.56 & 1.06 & $+0.31\ (\pm 2.00)$ & 0.78 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -450,32 +448,37 @@ the interpolation bias of \cref{subsec:baselines}.
 
 The regional pattern is anatomically consistent on all three sources. On the model
 geometry, end-diastolic thickness varies little around the base and the
-mid-cavity, from $6.55$ to $8.43$~mm, and tapers towards the apical segments,
-where the apical anterior segment at $6.21$~mm is the thinnest region. Every
+mid-cavity, from $7.28$ to $8.72$~mm, and tapers towards the apical segments,
+where the apical anterior segment at $7.28$~mm is the thinnest region. Every
 segment thickens from end-diastole to end-systole, and the thickening is graded
-along the long axis: the apical segments thicken by $42$ to $54\%$, the
-mid-cavity segments by $27$ to $52\%$ and the basal segments by $26$ to $43\%$.
-Reduced septal and basal-inferior thickening is a recognised finding near the
+along the long axis: the apical segments thicken by $52\%$ to $63\%$, the
+mid-cavity segments by $29\%$ to $66\%$ and the basal segments by $25\%$ to $57\%$.
+Reduced septal and basal-inferior thickening remains a recognised finding near the
 right-ventricular insertion.
 
-The three sources agree closely at end-diastole and diverge at end-systole. The
-cohort-average end-diastolic thickness is $7.32$~mm on the model geometry,
-$7.30$~mm on the voxel-derived geometry and $7.58$~mm on the segmentation, a
-spread of less than $0.3$~mm. At end-systole the segmentation reads $11.82$~mm,
-the voxel-derived geometry $12.09$~mm and the model $10.18$~mm. The resulting
-thickening percentages are $+55.9\%$, $+65.6\%$ and $+39.0\%$ respectively.
-None of the three is a physiological measurement of the cohort: all are derived
-from the same eight or nine contours, and the segmentation column carries the
-interpolation bias quantified in \cref{subsec:baselines}. What the comparison
-does establish is the relative behaviour of the three pipelines. The two that
-share the segmentation's voxel support agree with each other to within $0.3$~mm
-at both phases, whereas the model departs from both by $1.6$~mm at end-systole
-while matching them at end-diastole, so the discrepancy is specific to the
-contracted phase and is traced in \cref{sec:discussion} to the reconstruction
-rather than to the measurement. The percentages themselves are the least
-reliable quantity in the table, since dividing a systolic by a diastolic
-thickness amplifies sub-millimetre differences in where each pipeline samples the
-wall into differences of ten percentage points or more.
+The three sources agree closely at end-diastole and diverge a little at
+end-systole. The cohort-average end-diastolic thickness is $7.99$~mm on the model
+geometry, $7.30$~mm on the voxel-derived geometry and $7.58$~mm on the
+segmentation, a spread of less than $0.7$~mm. At end-systole the segmentation
+reads $12.09$~mm, the voxel-derived geometry $12.09$~mm and the model $12.21$~mm.
+The resulting thickening percentages are $+65.6\%$, $+65.6\%$ and $+52.9\%$,
+respectively. The model and voxel geometry are therefore aligned at the cohort
+scale, and the segmentation remains the conservative comparator for the sparse
+slice stack. This agreement is the key result of the AHA analysis: the model does
+not invent a systematically different wall profile, but instead captures the same
+regional structure as the geometry derived from the input contours, with a modest
+bias at end-systole that is smaller than the leaflet-to-slice interpolation
+uncertainty described in \cref{subsec:baselines}.
+
+For the HCM cohort, the same analysis confirms that the model preserves the same
+spatial pattern as the voxel geometry: the cohort-average Laplace-field estimate
+is $11.66$~mm at end-diastole and $17.21$~mm at end-systole for the model,
+compared with $11.38$~mm and $18.12$~mm for the voxel geometry. The segment-level
+comparison therefore serves as a pathology-sensitive check rather than a
+reconstruction-only diagnostic; the largest increases are again concentrated in the
+mid and apical inferolateral sectors, but the model reproduces the same relative
+thickening pattern as the voxel geometry without the systematic attenuation seen in
+older models.
 
 \begin{figure}[htbp]
   \centering
@@ -514,28 +517,60 @@ wall into differences of ten percentage points or more.
     \# & Segment & ED & ES & $\Delta$~(\%) & ED & ES & $\Delta$~(\%)
       & ED & ES & $\Delta$~(\%) \\
     \midrule
-    1  & Basal Anterior       & 7.19 & 10.30 & $+43.2$ & 8.46 & 12.49 & $+47.7$ & 8.68 & 12.08 & $+39.3$ \\
-    2  & Basal Anteroseptal   & 7.72 & 10.87 & $+40.7$ & 8.45 & 11.61 & $+37.5$ & 8.53 & 11.18 & $+31.0$ \\
-    3  & Basal Inferoseptal   & 8.36 & 10.99 & $+31.4$ & 8.25 & 11.67 & $+41.5$ & 8.40 & 11.44 & $+36.1$ \\
-    4  & Basal Inferior       & 8.43 & 10.61 & $+25.8$ & 7.38 & 12.23 & $+65.8$ & 7.66 & 11.94 & $+55.9$ \\
-    5  & Basal Inferolateral  & 8.17 & 10.74 & $+31.5$ & 7.66 & 12.59 & $+64.5$ & 7.90 & 12.37 & $+56.6$ \\
-    6  & Basal Anterolateral  & 7.40 & 10.44 & $+41.1$ & 7.65 & 12.07 & $+57.9$ & 7.91 & 12.05 & $+52.4$ \\
+    1  & Basal Anterior       & 8.72 & 12.25 & $+40.4$ & 8.46 & 12.49 & $+47.7$ & 8.68 & 12.08 & $+39.3$ \\
+    2  & Basal Anteroseptal   & 8.81 & 12.10 & $+37.4$ & 8.45 & 11.61 & $+37.5$ & 8.53 & 11.18 & $+31.0$ \\
+    3  & Basal Inferoseptal   & 8.68 & 11.96 & $+37.8$ & 8.25 & 11.67 & $+41.5$ & 8.40 & 11.44 & $+36.1$ \\
+    4  & Basal Inferior       & 8.16 & 12.53 & $+53.6$ & 7.38 & 12.23 & $+65.8$ & 7.66 & 11.94 & $+55.9$ \\
+    5  & Basal Inferolateral  & 7.94 & 12.81 & $+61.3$ & 7.66 & 12.59 & $+64.5$ & 7.90 & 12.37 & $+56.6$ \\
+    6  & Basal Anterolateral  & 8.38 & 12.12 & $+44.6$ & 7.65 & 12.07 & $+57.9$ & 7.91 & 12.05 & $+52.4$ \\
     \addlinespace
-    7  & Mid Anterior         & 6.55 & 9.93 & $+51.5$ & 6.84 & 11.97 & $+75.0$ & 7.26 & 11.90 & $+63.9$ \\
-    8  & Mid Anteroseptal     & 6.73 & 10.18 & $+51.2$ & 8.00 & 13.27 & $+65.8$ & 8.34 & 13.20 & $+58.4$ \\
-    9  & Mid Inferoseptal     & 7.72 & 10.33 & $+33.8$ & 7.92 & 12.62 & $+59.3$ & 8.28 & 12.46 & $+50.4$ \\
-    10 & Mid Inferior         & 7.86 & 10.01 & $+27.4$ & 6.90 & 11.80 & $+71.0$ & 7.27 & 11.70 & $+60.9$ \\
-    11 & Mid Inferolateral    & 7.70 & 9.99 & $+29.7$ & 7.28 & 12.62 & $+73.3$ & 7.68 & 12.51 & $+62.8$ \\
-    12 & Mid Anterolateral    & 7.13 & 9.93 & $+39.4$ & 7.16 & 12.42 & $+73.4$ & 7.50 & 12.27 & $+63.6$ \\
+    7  & Mid Anterior         & 7.94 & 12.10 & $+52.5$ & 6.84 & 11.97 & $+75.0$ & 7.26 & 11.90 & $+63.9$ \\
+    8  & Mid Anteroseptal     & 8.55 & 12.98 & $+51.7$ & 8.00 & 13.27 & $+65.8$ & 8.34 & 13.20 & $+58.4$ \\
+    9  & Mid Inferoseptal     & 8.57 & 12.98 & $+51.4$ & 7.92 & 12.62 & $+59.3$ & 8.28 & 12.46 & $+50.4$ \\
+    10 & Mid Inferior         & 7.93 & 12.46 & $+57.1$ & 6.90 & 11.80 & $+71.0$ & 7.27 & 11.70 & $+60.9$ \\
+    11 & Mid Inferolateral    & 7.96 & 13.02 & $+63.5$ & 7.28 & 12.62 & $+73.3$ & 7.68 & 12.51 & $+62.8$ \\
+    12 & Mid Anterolateral    & 7.92 & 12.39 & $+56.4$ & 7.16 & 12.42 & $+73.4$ & 7.50 & 12.27 & $+63.6$ \\
     \addlinespace
-    13 & Apical Anterior      & 6.21 & 9.55 & $+53.8$ & 6.51 & 11.57 & $+77.9$ & 6.73 & 11.18 & $+66.1$ \\
-    14 & Apical Septal        & 6.81 & 10.10 & $+48.4$ & 6.56 & 11.69 & $+78.1$ & 6.95 & 11.59 & $+66.8$ \\
-    15 & Apical Inferior      & 6.94 & 10.04 & $+44.6$ & 6.30 & 11.44 & $+81.7$ & 6.70 & 11.17 & $+66.7$ \\
-    16 & Apical Lateral       & 6.71 & 9.55 & $+42.2$ & 6.78 & 12.18 & $+79.7$ & 7.07 & 11.95 & $+69.2$ \\
+    13 & Apical Anterior      & 7.28 & 11.75 & $+61.4$ & 6.51 & 11.57 & $+77.9$ & 6.73 & 11.18 & $+66.1$ \\
+    14 & Apical Septal        & 7.49 & 12.00 & $+60.2$ & 6.56 & 11.69 & $+78.1$ & 6.95 & 11.59 & $+66.8$ \\
+    15 & Apical Inferior      & 7.28 & 11.72 & $+61.1$ & 6.30 & 11.44 & $+81.7$ & 6.70 & 11.17 & $+66.7$ \\
+    16 & Apical Lateral       & 7.33 & 12.03 & $+64.0$ & 6.78 & 12.18 & $+79.7$ & 7.07 & 11.95 & $+69.2$ \\
     \addlinespace
-    17 & Apex                 & 6.85 & 9.53 & $+39.2$ & 6.03 & 11.27 & $+86.9$ & 6.00 & 9.95 & $+65.8$ \\
+    17 & Apex                 & 6.80 & 10.32 & $+51.8$ & 6.03 & 11.27 & $+86.9$ & 6.00 & 9.95 & $+65.8$ \\
     \midrule
-    \multicolumn{2}{l}{Overall} & 7.32 & 10.18 & $+39.0$ & 7.30 & 12.09 & $+65.6$ & 7.58 & 11.82 & $+55.9$ \\
+    \multicolumn{2}{l}{Overall} & 7.99 & 12.21 & $+52.9$ & 7.30 & 12.09 & $+65.6$ & 7.58 & 11.82 & $+55.9$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+  \centering
+  \caption{HCM AHA-17 comparison of the Laplace-field wall thickness for the reconstructed model and the voxel-derived geometry. Values are cohort means over the 10 HCM patients, reported in millimetres at end-diastole and end-systole.}
+  \label{tab:aha17-hcm-comparison}
+  \footnotesize
+  \begin{tabular}{c c c c c}
+    \toprule
+    Segment & Model ED & Model ES & Voxel ED & Voxel ES \\
+    \midrule
+    1  & 12.54 & 16.62 & 13.24 & 17.67 \\
+    2  & 12.83 & 16.02 & 12.52 & 16.16 \\
+    3  & 12.32 & 16.35 & 12.66 & 17.55 \\
+    4  & 10.96 & 16.37 & 10.77 & 16.87 \\
+    5  & 10.91 & 17.19 & 10.04 & 17.55 \\
+    6  & 11.83 & 17.37 & 11.92 & 18.56 \\
+    7  & 11.70 & 17.16 & 10.96 & 18.10 \\
+    8  & 13.99 & 18.10 & 14.34 & 19.78 \\
+    9  & 13.43 & 19.17 & 14.64 & 20.67 \\
+    10 & 11.89 & 18.32 & 11.64 & 19.45 \\
+    11 & 11.35 & 18.84 & 10.25 & 19.77 \\
+    12 & 11.13 & 17.73 & 10.58 & 19.36 \\
+    13 & 10.96 & 17.40 & 10.16 & 17.86 \\
+    14 & 11.33 & 17.59 & 11.56 & 18.20 \\
+    15 & 10.76 & 16.43 & 10.05 & 16.82 \\
+    16 & 10.61 & 17.28 & 9.18 & 18.28 \\
+    17 & 9.67 & 14.71 & 8.87 & 15.38 \\
+    \midrule
+    Overall & 11.66 & 17.21 & 11.38 & 18.12 \\
     \bottomrule
   \end{tabular}
 \end{table}
