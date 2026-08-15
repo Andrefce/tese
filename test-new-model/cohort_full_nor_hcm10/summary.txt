@@ -1,0 +1,84 @@
+patients: 30
+
+== reconstruction quality (ED, mean +/- sd across patients) ==
+  endo_chamfer_mm        1.224 +/- 0.207
+  epi_chamfer_mm         1.052 +/- 0.179
+  endo_assd_mm           1.208 +/- 0.225
+  epi_assd_mm            1.088 +/- 0.202
+  endo_hd95_mm           3.299 +/- 0.911
+  epi_hd95_mm            3.472 +/- 1.406
+  endo_dice              0.932 +/- 0.016
+  myo_dice               0.852 +/- 0.023
+  endo_iou               0.873 +/- 0.029
+  myo_iou                0.743 +/- 0.035
+  normal_consistency     0.869 +/- 0.048
+  fscore_1mm             0.573 +/- 0.077
+  fscore_2mm             0.866 +/- 0.060
+  vol_ratio_endo         0.923 +/- 0.030
+  vol_ratio_epi          1.003 +/- 0.030
+  vol_ratio_myo          1.097 +/- 0.069
+  endo_watertight        100%
+  epi_watertight         100%
+
+== wall thickness (ED, cohort mean of per-patient statistics) ==
+  segmentation reference: 8.96 mm
+  method                geometry   mean   std    p5     p95
+  Laplace field         model      9.18   2.14   4.75  12.20
+  Laplace field         voxel      8.60   2.18   5.22  12.42
+  Yezzi-Prince          model     10.01   1.64   7.41  12.74
+  Yezzi-Prince          voxel      9.14   2.07   5.98  12.82
+  SDF cone rays         model     12.47   4.87   8.01  20.68
+  SDF cone rays         voxel      9.83   2.43   6.44  13.92
+  EDT boundary sum      model      9.55   1.66   6.62  12.17
+  EDT boundary sum      voxel      8.63   2.01   5.33  12.08
+
+== model vs voxel, per-patient means (ED) ==
+  Laplace field        model  9.18  voxel  8.60  bias +0.58  r 0.99
+  Yezzi-Prince         model 10.01  voxel  9.14  bias +0.87  r 0.99
+  SDF cone rays        model 12.47  voxel  9.83  bias +2.65  r 0.95
+  EDT boundary sum     model  9.55  voxel  8.63  bias +0.91  r 0.99
+
+== agreement with the Laplace field reference (pooled points) ==
+  Yezzi-Prince         r 0.80  MAE 0.89  RMSE 2.14  bias +0.83 (+/-3.86)  ICC 0.77  n=16800
+  SDF cone rays        r 0.44  MAE 3.38  RMSE 7.29  bias +3.31 (+/-12.74)  ICC 0.28  n=16800
+  EDT boundary sum     r 0.78  MAE 0.81  RMSE 2.07  bias +0.37 (+/-3.99)  ICC 0.77  n=16800
+
+== AHA-17 (Laplace field) ==
+  -- model --
+    1 Basal Anterior          9.99  13.71   +37.1%
+    2 Basal Anteroseptal     10.15  13.40   +32.1%
+    3 Basal Inferoseptal      9.89  13.43   +35.7%
+    4 Basal Inferior          9.09  13.81   +51.9%
+    5 Basal Inferolateral     8.93  14.27   +59.8%
+    6 Basal Anterolateral     9.53  13.87   +45.5%
+    7 Mid Anterior            9.19  13.79   +50.0%
+    8 Mid Anteroseptal       10.37  14.68   +41.6%
+    9 Mid Inferoseptal       10.19  15.05   +47.6%
+   10 Mid Inferior            9.25  14.41   +55.8%
+   11 Mid Inferolateral       9.09  14.96   +64.6%
+   12 Mid Anterolateral       8.99  14.17   +57.6%
+   13 Apical Anterior         8.50  13.63   +60.3%
+   14 Apical Septal           8.77  13.86   +58.1%
+   15 Apical Inferior         8.44  13.29   +57.5%
+   16 Apical Lateral          8.43  13.78   +63.6%
+   17 Apex                    7.76  11.69   +50.7%
+   overall  9.21  13.87   +50.6%
+  -- voxel --
+    1 Basal Anterior         10.05  14.22   +41.4%
+    2 Basal Anteroseptal      9.81  13.13   +33.9%
+    3 Basal Inferoseptal      9.72  13.63   +40.2%
+    4 Basal Inferior          8.51  13.77   +61.9%
+    5 Basal Inferolateral     8.45  14.25   +68.6%
+    6 Basal Anterolateral     9.07  14.23   +56.9%
+    7 Mid Anterior            8.21  14.01   +70.6%
+    8 Mid Anteroseptal       10.11  15.44   +52.7%
+    9 Mid Inferoseptal       10.16  15.30   +50.6%
+   10 Mid Inferior            8.48  14.35   +69.3%
+   11 Mid Inferolateral       8.27  15.00   +81.3%
+   12 Mid Anterolateral       8.30  14.73   +77.5%
+   13 Apical Anterior         7.72  13.67   +77.0%
+   14 Apical Septal           8.23  13.86   +68.4%
+   15 Apical Inferior         7.55  13.24   +75.3%
+   16 Apical Lateral          7.58  14.21   +87.5%
+   17 Apex                    6.98  12.64   +81.1%
+   overall  8.66  14.10   +62.8%

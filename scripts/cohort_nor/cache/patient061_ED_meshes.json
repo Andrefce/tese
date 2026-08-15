@@ -1,0 +1,66 @@
+{
+  "reports": [
+    {
+      "surface": "model-endo",
+      "faces_in": 88402,
+      "watertight_in": true,
+      "components_in": 13,
+      "euler_number_in": -6,
+      "genus_repair": true,
+      "repaired_with": "pymeshfix",
+      "faces_out": 250204,
+      "vertices_out": 125104,
+      "watertight_out": true,
+      "winding_consistent": true,
+      "euler_number": 2,
+      "volume_ml": 130.43764481094496,
+      "area_cm2": 177.10237063443728
+    },
+    {
+      "surface": "model-epi",
+      "faces_in": 90496,
+      "watertight_in": true,
+      "components_in": 1,
+      "euler_number_in": 2,
+      "repaired_with": "pymeshfix",
+      "faces_out": 90496,
+      "vertices_out": 45250,
+      "watertight_out": true,
+      "winding_consistent": true,
+      "euler_number": 2,
+      "volume_ml": 246.81673649675912,
+      "area_cm2": 217.21044900438613
+    },
+    {
+      "surface": "voxel-endo",
+      "faces_in": 40684,
+      "watertight_in": true,
+      "components_in": 1,
+      "euler_number_in": 2,
+      "repaired_with": "pymeshfix",
+      "faces_out": 40684,
+      "vertices_out": 20344,
+      "watertight_out": true,
+      "winding_consistent": true,
+      "euler_number": 2,
+      "volume_ml": 141.19760982856405,
+      "area_cm2": 148.98105600349024
+    },
+    {
+      "surface": "voxel-epi",
+      "faces_in": 58036,
+      "watertight_in": true,
+      "components_in": 1,
+      "euler_number_in": 2,
+      "repaired_with": "pymeshfix",
+      "faces_out": 58036,
+      "vertices_out": 29020,
+      "watertight_out": true,
+      "winding_consistent": true,
+      "euler_number": 2,
+      "volume_ml": 252.10443332259763,
+      "area_cm2": 215.3777022485282
+    }
+  ],
+  "n_contour_slices": 8
+}

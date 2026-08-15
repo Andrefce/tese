@@ -618,83 +618,102 @@ Not every real patient produces a usable mesh. A segmentation may be a
 long-axis view, cover too few slices, or fail an anatomical plausibility check,
 such as an endocardium that is not fully enclosed by the epicardium. After
 these quality gates, 444 of the 460 patients yield a valid ED mesh and 423
-yield a valid ES mesh. \Cref{fig:dataset-pipeline} summarises this attrition
-for the three streams.
-
-\begin{figure}[!htbp]
-	\centering
-	\includegraphics[width=0.9\linewidth]{dataset_pipeline}
-	\vspace{2mm}
-	\caption{Number of candidate samples and how many survive the quality gates
-	for each data stream. The real streams start from the 460 indexed patients;
-	the synthetic stream starts from the 2048 sampled shape vectors.}
-	\label{fig:dataset-pipeline}
-\end{figure}
-
-To prevent information from leaking between training and evaluation, the real
-streams are split by patient: all meshes from a given patient stay within a
-single split. \Cref{fig:dataset-splits} shows the resulting composition. The
-ED stream is divided into 310 training, 67 validation, and 67 test patients,
-and the ES stream into 338 training, 66 validation, and 19 test patients. The
-synthetic ED meshes are used only to enrich the pre-training stage and are
-never placed in the validation or test sets.
-
-\begin{figure}[!htbp]
-	\centering
-	\includegraphics[width=0.9\linewidth]{dataset_splits}
-	\vspace{2mm}
-	\caption{Patient-level train, validation, and test split for the two real
-	streams. Splitting by patient guarantees that no patient appears in more
-	than one partition.}
-	\label{fig:dataset-splits}
-\end{figure}
-
-\Cref{tab:dataset-summary} collects the final sample counts. In total, the
-model is trained and evaluated on 867 real LV meshes, supported by up to 1300
-synthetic ED meshes during pre-training.
+yield a valid ES mesh. The surviving meshes are then divided for training and
+evaluation. To prevent information from leaking between the partitions, the
+real streams are split by patient rather than by mesh, so that all meshes from
+a given patient stay within a single partition. Both streams use the same
+70\,\%/15\,\%/15\,\% allocation for training, validation, and test, rounded to
+whole patients, and the synthetic ED meshes are used only to enrich the
+pre-training stage and are never placed in the validation or test sets.
 
 \begin{table}[H]
 	\centering
-	\caption{Final sample counts for the three data streams. Real streams report
-	patients that pass the quality gates; the synthetic stream reports accepted
-	meshes.}
+	\caption{Final sample counts and patient-level partitioning of the three data
+	streams. Real streams report patients that pass the quality gates; the
+	synthetic stream reports meshes accepted out of the 2048 sampled shape
+	vectors. Percentages in parentheses are the nominal allocation, rounded to
+	whole patients.}
 	\label{tab:dataset-summary}
 	\small
 	\begin{tabular}{l l c c c c c}
 		\toprule
 		Stream & Source & Phase & Valid & \multicolumn{3}{c}{Split} \\
 		\cmidrule(lr){5-7}
-		       &        &       & meshes & Train & Val. & Test \\
+		       &        &       & meshes & Train (70\%) & Val. (15\%) & Test (15\%) \\
 		\midrule
 		Real ED      & ACDC + M\&Ms-2 & ED & 444  & 310 & 67 & 67 \\
-		Real ES      & ACDC + M\&Ms-2 & ES & 423  & 338 & 66 & 19 \\
+		Real ES      & ACDC + M\&Ms-2 & ES & 423  & 296 & 63 & 64 \\
 		Synthetic ED & UK Biobank SSM & ED & 1300 & \multicolumn{3}{c}{pre-training only} \\
 		\bottomrule
 	\end{tabular}
 \end{table}
 
+\Cref{tab:dataset-summary} collects the resulting composition of the three
+streams. Its first two rows show that the real ED and ES streams contribute 444
+and 423 meshes respectively, for a total of 867 real LV meshes drawn from the
+same 460 patients, so that a patient assigned to the test partition is absent
+from training in both phases. Its last row records the 1300 accepted synthetic
+ED meshes, listed without a split because they only support the pre-training
+stage; the reported evaluation therefore rests exclusively on the 67 real ED
+and the 64 real ES test patients. The same composition is shown graphically in
+\cref{fig:dataset-selection-splits} of
+\cref{app:supplementary-methods}.
+
 \section{Model Architecture}
 \label{sec:architecture}
 \noindent
-The model has two parts: an encoder and a decoder. The encoder reads the sparse
-contour points and summarises them into a single latent vector that describes the
-LV geometry of one case. The decoder takes that vector together with a 3D query
-point and returns how far the point is from the endocardial surface. Because the
-decoder can be evaluated at any point in space, the reconstructed surface is not
-tied to a fixed grid or a fixed number of vertices, and a mesh is produced only
-at the end by sampling the decoder densely. The encoder follows the point-cloud
-principle of \textcite{qi2017pointnet} and the implicit decoder follows the
-signed-distance idea of \textcite{deepsdf2019}.
+The model is built from two complementary parts. The encoder reads the sparse
+contour points and summarises the case into a compact latent representation, while
+a local contour-volume branch keeps the surrounding spatial structure in a coarse
+3D feature field. The decoder then combines the global latent code, the local
+feature at each query point, and the point coordinates to predict the LV
+endocardial signed-distance field. Because the decoder can be evaluated anywhere
+in space, the reconstructed surface is not tied to a fixed grid or a fixed number
+of vertices, and a mesh is only generated once the field has been sampled densely.
+The output is then a continuous signed-distance representation of the chamber and
+its surrounding wall.
 
-This split is a natural fit for the problem, because the input and the output
-have very different structure. The input is a small, unordered set of slice
-points, so a point-cloud encoder is appropriate: it does not require the points to
-be ordered or arranged on a grid. The output is a smooth, continuous surface, so
-an implicit decoder is appropriate: it can be sampled at any resolution and turned
-into a mesh only when needed. The key addition in this work is that the
-epicardium is not predicted on its own. Instead, it is defined as an outward
-offset from the endocardium, which forces the wall to have a positive thickness
-everywhere.
+This design matches the structure of the problem. The contour input is a small,
+unordered set of points, so the encoder uses a point-cloud formulation that is
+invariant to the order of the points. The output is a smooth, continuous surface,
+so the decoder is an implicit function that can be evaluated at any resolution.
+The epicardium is defined as an outward offset from the endocardium, so the wall
+remains positive everywhere and the model learns a valid myocardial thickness
+field instead of two independent surfaces.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{fig_model_architecture}
+	\vspace{2mm}
+	\caption{High-level view of the model. (a)~Sparse endocardial and epicardial SAX
+	contours, together with a tissue and a cardiac-phase label, form the
+	observation. (b)~A shared per-point network and tissue-specific max-pooling
+	produce a global latent code $z$, while a parallel local contour-volume branch
+	builds a 3D feature field. (c)~A Fourier-encoded query point, the global code,
+	and the interpolated local features are passed to an eight-layer implicit
+	network with a middle skip connection. (d)~The decoder emits the endocardial
+	signed-distance field and a bounded positive offset $\delta$, from which the
+	epicardial field is obtained and the myocardial wall is constrained to remain
+	positive. (e)~Marching cubes on a $96^{3}$ grid yields the two watertight
+	endocardial and epicardial surfaces.}
+	\label{fig:model-architecture}
+\end{figure}
+
+\Cref{fig:model-architecture} summarises the model as five stages. The sparse SAX
+contour observation of panel~(a) is reduced by the encoder of panel~(b) to a
+single 256-dimensional latent code using separate endocardial and epicardial
+max-pooling, while the same point features are also scattered into a local 3D
+feature volume. The global code captures the overall LV shape, and the local
+volume keeps the spatial context that is useful for estimating wall thickness.
+Both are passed to the implicit decoder of panel~(c), which is evaluated at
+arbitrary three-dimensional points and therefore represents the geometry
+continuously rather than on a fixed mesh. Panel~(d) shows the key geometric
+constraint: the model predicts the endocardial field together with a strictly
+positive bounded offset, so the epicardium is always separated from the
+endocardium by a valid wall thickness. Panel~(e) shows the final output: the two
+watertight endocardial and epicardial surfaces extracted by marching cubes. The
+encoder is formalised in \cref{subsec:contour-encoder} and the decoder in
+\cref{subsec:monotone-epi-decoder}.
 
 \subsection{Contour encoder}
 \label{subsec:contour-encoder}
@@ -704,11 +723,12 @@ label indicating whether the point is endocardial or epicardial and a label
 indicating the cardiac phase. A small shared network processes every point
 independently and turns it into a feature vector. The features of the endocardial
 points and the features of the epicardial points are then combined separately by
-taking, for each feature, its maximum over the points. This max operation is what
-makes the encoder independent of the order in which the points are listed, which
-is important because contour points have no natural ordering across patients or
-slices. The two resulting descriptors are joined and projected into a single
-256-dimensional latent vector $z$.
+taking, for each feature, its maximum over the points. This makes the latent code
+invariant to the order of the contour points, which is important because contour
+points have no natural ordering across patients or slices. The two resulting
+descriptors are joined and projected to a single 256-dimensional latent vector
+$z$. At the same time, the same point features are scattered into a local 3D
+feature volume that keeps spatial neighbourhood information around the LV wall.
 
 More formally, let $P = \{p_i\}_{i=1}^{N}$ be the contour points of one case,
 where each $p_i$ carries coordinates, a tissue label, and a phase label. The
@@ -726,18 +746,27 @@ descriptors are then obtained by max-pooling within each tissue,
 	\label{eq:tissue-pooling}
 \end{equation}
 where $\mathcal{E}$ and $\mathcal{P}$ are the endocardial and epicardial point
-sets, and the final latent code is
+sets. The global latent code is then
 \begin{equation}
-	z = W_z [z_{\mathrm{endo}}, z_{\mathrm{epi}}] + b_z.
+	z = W_z [z_{\mathrm{endo}}, z_{\mathrm{epi}}] + b_z,
 	\label{eq:latent-projection}
 \end{equation}
+while the same scattered features are aggregated into a local 3D volume $V$ and
+sampled at each query point by trilinear interpolation,
+\begin{equation}
+	v(x) = \mathrm{Interp}(V, x).
+	\label{eq:local-volume-interp}
+\end{equation}
+This local field adds spatial detail to the decoder while the global latent vector
+keeps the overall chamber shape compact and stable.
 
 Pooling the two tissues separately keeps their information distinct. The
-endocardial points describe the shape of the cavity, while the epicardial points
-describe the outer boundary of the wall. If all points were pooled together,
-these two roles would be mixed and the decoder would have a harder time telling
-the cavity apart from the wall. Keeping them separate gives the latent code
-explicit access to both surfaces before they are combined.
+endocardial points describe the cavity, while the epicardial points describe the
+outer boundary of the wall. If all points were pooled together, these roles would
+be mixed and the network would have a harder time separating the cavity from the
+wall. Keeping them separate gives the latent code clear access to both surfaces,
+while the local volume gives the decoder additional context at the myocardial
+boundary.
 
 \subsection{Implicit decoder and positive-wall coupling}
 \label{subsec:monotone-epi-decoder}
@@ -760,26 +789,28 @@ creases that a ReLU activation would introduce.
 
 The decoder produces two outputs. The first is the signed distance to the
 endocardium, $f_{\mathrm{endo}}$. The second is a positive offset $\delta$, which
-represents the local wall thickness, that is, how far the epicardium lies outside
-the endocardium at that point. The offset is squeezed into a fixed positive range
-by a sigmoid,
+represents the local wall thickness: how far the epicardium lies outside the
+endocardium at each query point. The decoder also receives the local contour
+feature $v(x)$ from the spatial volume, which is injected into the model so that
+it can use local wall context when predicting thickness. The offset is squeezed
+into a fixed positive range by a sigmoid,
 \begin{equation}
-	\delta(x,z) = \tau_{\min} + (\delta_{\mathrm{cap}} - \tau_{\min})
-	\sigma\left(g_{\delta}(x,z)\right),
+	\delta(x,z,v) = \tau_{\min} + (\delta_{\mathrm{cap}} - \tau_{\min})
+	\sigma\left(g_{\delta}(x,z,v)\right),
 	\label{eq:bounded-delta}
 \end{equation}
 where $g_{\delta}$ is the raw decoder output, $\sigma$ is the sigmoid, and
 $\tau_{\min}$ and $\delta_{\mathrm{cap}}$ are the smallest and largest allowed
 wall thickness. The epicardial field is then
 \begin{equation}
-	f_{\mathrm{epi}}(x,z) = f_{\mathrm{endo}}(x,z) - \delta(x,z).
+	f_{\mathrm{epi}}(x,z,v) = f_{\mathrm{endo}}(x,z,v) - \delta(x,z,v).
 	\label{eq:monotone-epi}
 \end{equation}
 Because \cref{eq:bounded-delta} always keeps $\delta \geq \tau_{\min} > 0$, the
 epicardial surface can never touch or cross the endocardial surface: the two are
-always separated by at least $\tau_{\min}$. This is the mechanism that guarantees
-a positive wall thickness everywhere, rather than hoping the network learns it
-from data. In the final configuration $\tau_{\min}=0.05$ and
+always separated by at least $\tau_{\min}$. This guarantees a positive wall
+thickness everywhere and gives the model a valid myocardial shell instead of
+allowing the wall to collapse. In the final configuration $\tau_{\min}=0.05$ and
 $\delta_{\mathrm{cap}}=0.45$ in normalised units, which corresponds to roughly
 1.25--11.25~mm once mapped back to millimetres.
 
@@ -793,11 +824,14 @@ $\delta_{\mathrm{cap}}=0.45$ in normalised units, which corresponds to roughly
 		Component & Configuration \\
 		\midrule
 		Input features & 3D coordinates, tissue label, and cardiac phase \\
-		Encoder type & Shared network with endocardial and epicardial max-pooling \\
+		Global encoder type & Shared network with endocardial and epicardial max-pooling \\
+		Local conditioning & Coarse 3D contour feature volume with trilinear interpolation \\
 		Latent dimension & 256 \\
+		Local volume size & $16^3$ with 32 channels \\
 		Positional encoding & Fourier features with $L=3$ frequency bands \\
 		Decoder & 8-layer network, width 512, skip connection at layer 4 \\
 		Activation & Softplus (smooth) \\
+		Local injections & Local feature paths into the decoder trunk and wall head \\
 		Output heads & Endocardial signed distance and positive wall-thickness offset \\
 		Thickness range & $\tau_{\min}=0.05$, $\delta_{\mathrm{cap}}=0.45$ in normalised units \\
 		Inference grid & $96^3$ query grid for marching cubes \\
