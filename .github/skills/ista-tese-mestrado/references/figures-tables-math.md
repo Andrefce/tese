@@ -10,7 +10,7 @@ Hard rules and copy-paste templates.
 - Refer with `\cref{fig:...}`, never `Figure~\ref{...}`.
 
 ```latex
-\begin{figure}[htbp]
+\begin{figure}[H]
   \centering
   \includegraphics[width=0.8\textwidth]{lv-pipeline}
   \caption{Overview of the LV reconstruction pipeline: SAX slices are
@@ -34,7 +34,7 @@ it).
 - Bold the best value per metric.
 
 ```latex
-\begin{table}[htbp]
+\begin{table}[H]
   \centering
   \caption{Wall-thickness mean absolute error (mm) on the test split.}
   \label{tab:thickness-mae}

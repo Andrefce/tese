@@ -15,7 +15,8 @@ import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
-DATA = ROOT / "scripts" / "webapp" / "notebooks" / "outputs" / "cohort_full"
+PRIMARY_DATA = ROOT / "scripts" / "webapp" / "notebooks" / "outputs" / "cohort_full"
+DATA = PRIMARY_DATA if PRIMARY_DATA.exists() else ROOT / "scripts" / "cohort_full"
 
 METHODS = ["Laplace field", "Yezzi-Prince", "SDF cone rays", "EDT boundary sum"]
 

@@ -200,28 +200,30 @@ base delineation accounting for the majority of inter-observer variability.
 
 The American Heart Association (AHA) 17-segment model, introduced by
 \textcite{cerqueira2002segmentation}, standardised the partition of the
-myocardium into basal, mid-cavity, and apical regions. This model is universally
-adopted for reporting wall motion, perfusion, and thickness, and serves as the
-reference frame for all regional analysis discussed in subsequent sections.
+myocardium into basal, mid-cavity, and apical regions. It is widely used for
+reporting regional wall motion, perfusion, and thickness because it provides a
+common anatomical frame for comparison across studies.
 
 Segmentation of endocardial and epicardial contours is a prerequisite for any
 downstream 3D analysis. \textcite{ronneberger2015unet} proposed U-Net, an
 encoder--decoder architecture with skip connections that was originally designed
-for neuronal structure segmentation but rapidly became the de facto backbone for
-cardiac MRI analysis. The architecture trains effectively from small annotated
-datasets and produces pixel-level predictions that, when applied to SAX slices,
-yield endocardial and epicardial contours with sub-pixel accuracy.
+for neuronal structure segmentation and was later widely used for cardiac MRI
+analysis. Its encoder--decoder design combines image context with fine spatial
+detail, which is useful when extracting endocardial and epicardial contours from
+SAX slices.
 
 The Automated Cardiac Diagnosis Challenge (ACDC), organised by
-\textcite{bernard2018acdc}, provided the first standardised cardiac
-segmentation benchmark. The dataset comprises 100 patients distributed across
+\textcite{bernard2018acdc}, provided a standardised benchmark for cardiac
+segmentation and diagnosis. The dataset comprises 100 patients distributed across
 five clinical groups: normal, dilated cardiomyopathy (DCM), hypertrophic
-cardiomyopathy (HCM), abnormal right ventricle, and previous myocardial
-infarction. Each case includes expert delineations at end-diastole (ED) and
+cardiomyopathy (HCM), abnormal right ventricle, and myocardial infarction with
+altered LV ejection fraction. Each case includes expert delineations at end-diastole (ED) and
 end-systole (ES). The challenge reported that top-performing deep learning
 methods achieved mean Dice scores exceeding 0.93 for the LV cavity and 0.89
 for the myocardium, demonstrating that automated segmentation had reached
-expert-level performance for standard acquisitions.
+expert-level performance for standard acquisitions. The images and their expert
+labels remain openly available for research at no cost, after a free
+registration and on the condition that the challenge paper is cited.
 
 \textcite{isensee2021nnunet} introduced nnU-Net, a self-configuring framework
 that automatically adapts network topology, patch size, preprocessing, and
@@ -232,21 +234,25 @@ cardiac segmentation methods are evaluated.
 
 The Multi-Centre, Multi-Vendor and Multi-Disease (M\&Ms) challenge, described
 by \textcite{campello2021mnms}, extended evaluation to the clinically critical
-question of domain generalisation. The dataset includes 345 subjects acquired on
+question of domain generalisation. The dataset includes 375 CMR studies acquired on
 scanners from four different vendors (Siemens, General Electric, Philips, and
 Canon) across six clinical centres. The challenge demonstrated that while
 methods trained on a single vendor achieved high accuracy on that vendor,
 performance dropped significantly when tested on unseen vendors --- with Dice
 reductions of 5--15 percentage points in some cases. This finding motivated the
 development of domain-adaptation techniques and highlighted the importance of
-multi-source training data.
+multi-source training data. As with ACDC, the data are distributed free of
+charge through the challenge website after registration.
 
 For population-level analysis, the UK Biobank \parencite{sudlow2015ukbiobank}
 provides the largest available resource, with cardiac MRI acquired for over
 40\,000 participants using a standardised 1.5T protocol. \textcite{bai2018automated}
 developed a fully convolutional pipeline to segment this cohort at scale,
 producing automated delineations that, after quality control, serve as the
-foundation for large-scale shape modelling and epidemiological studies.
+foundation for large-scale shape modelling and epidemiological studies. Unlike
+the challenge datasets described above, the UK Biobank is not openly
+downloadable. Access is granted through an approved application and is subject
+to a tiered access fee, with imaging data placed in the highest tier.
 
 \subsection{Statistical shape models}
 \label{subsec:ssm-review}
@@ -286,9 +292,14 @@ Heart Project. Their biventricular model captures both end-diastolic shape and
 wall motion through the cardiac cycle. The authors reported that the first 50
 PCA modes explain approximately 90\% of shape variance, and demonstrated that
 the atlas enables automatic segmentation of new subjects by fitting the model to
-image evidence with mean surface-to-surface errors below 1.5~mm.
+image evidence with mean surface-to-surface errors below 1.5~mm. An important
+practical point is that the derived shape model is released openly and free of
+charge, while the underlying patient images are not: only the mean shape, the
+principal components, and the corresponding variances are distributed. A shape
+model of this kind can therefore be reused without the access restrictions that
+apply to the imaging cohort it was built from.
 
-\textcite{demarvao2014atlas} applied the same UK Biobank-derived SSM to study
+\textcite{demarvao2014atlas} applied the same UK Digital Heart Project atlas to study
 myocardial hypertrophy and showed that atlas-based shape analysis detects subtle
 remodelling patterns that volumetric indices alone (such as LV mass) miss. Their
 study demonstrated substantially improved statistical power for detecting
@@ -347,8 +358,8 @@ recovers full 3D human body meshes from sparse 2D pose keypoints. Their
 cascaded coarse-to-fine architecture first predicts a coarse mesh from joint
 positions and then refines vertex locations with finer graph convolutions,
 achieving state-of-the-art results on the Human3.6M benchmark. The
-architectural principle --- recovering dense 3D geometry from sparse 2D
-observations --- is directly analogous to the cardiac problem of inferring a
+architectural principle, recovering dense 3D geometry from sparse 2D
+observations, is directly analogous to the cardiac problem of inferring a
 full LV mesh from a handful of 2D SAX contours.
 
 In the cardiac domain, template deformation preserves the topological
@@ -453,22 +464,13 @@ approximately 5--10\% for the curvatures typical of the LV mid-wall. The method
 is computationally efficient ($O(V)$ via the Saito--Toriwaki algorithm) but
 limited by voxel resolution.
 
-PDE-based methods represent the gold standard for transmural thickness.
-\textcite{jones2000laplace} introduced the Laplacian approach --- originally for
-cortical thickness in brain imaging --- which solves $\nabla^2\psi = 0$ with
-Dirichlet conditions ($\psi{=}0$ at the endocardium, $\psi{=}1$ at the
-epicardium). The uniqueness of the harmonic solution guarantees that the
-resulting streamlines never cross, producing a globally consistent transmural
-direction field. The local thickness is $t = 1/|\nabla\psi|$. While
-conceptually elegant, this formulation amplifies numerical errors where the
-gradient magnitude is small (thin walls, apex). \textcite{yezzi2003thickness}
-proposed an improvement: instead of dividing by $|\nabla\psi|$, they solve two
-advection equations ($\nabla\psi \cdot \nabla u = -1$ from the endocardium and
-$\nabla\psi \cdot \nabla v = -1$ from the epicardium), with the total thickness
-given directly as $t = u + v$. This Eulerian PDE formulation avoids the
-numerical instability of gradient division and produces identical results to the
-Laplacian method in smooth regions while being significantly more stable near
-the apex and in walls thinner than 4~mm.
+PDE-based methods are widely used for transmural thickness estimation.
+\textcite{jones2000laplace} solved Laplace's equation between the two tissue
+boundaries and used the resulting non-intersecting field lines to establish
+corresponding paths. Thickness is obtained from the path length between the
+boundaries along these streamlines. \textcite{yezzi2003thickness} formulated an
+Eulerian PDE method that computes distances propagated from both boundaries
+along the Laplacian field. Their sum gives the local tissue thickness.
 
 Finally, mesh-based regularised correspondence methods combine an initial
 geometric estimate (normal projection or nearest neighbour) with iterative
@@ -483,13 +485,16 @@ thickness variation if the smoothing parameter is set too aggressively.
 
 \noindent
 The reviewed literature shows that each component of the LV analysis pipeline is
-well-studied in isolation: segmentation is effectively solved by deep learning,
+well-studied in isolation: deep learning gives accurate slice-wise segmentation,
 SSMs encode population-level shape priors, implicit representations provide
 continuous surface modelling, and multiple wall-thickness algorithms exist.
-However, few studies integrate these components into a single pipeline for the
-specific setting addressed in this thesis. The missing combination is a method
+To the best of our knowledge, however, limited work integrates these components
+into a single pipeline for the specific setting addressed in this thesis. The
+combination that appears to be missing is a method
 that encodes sparse SAX contour points, decodes paired endocardial and
 epicardial surfaces as implicit signed distance fields, conditions the
-reconstruction on cardiac phase, guarantees positive wall thickness by
-construction, and trains jointly on real clinical data and SSM-derived synthetic
-samples. This gap motivates the approach described in the remaining chapters.
+reconstruction on cardiac phase, constrains the wall offset to stay positive,
+and trains jointly on real clinical data and SSM-derived synthetic
+samples. This is useful because the wall can then be measured everywhere on a
+continuous surface instead of only on the acquired slices. This gap motivates
+the approach described in the remaining chapters.

@@ -3,7 +3,7 @@
 ## Figures
 
 ```latex
-\begin{figure}[htbp]
+\begin{figure}[H]
   \centering
   \includegraphics[width=0.8\textwidth]{my-figure}
   \caption{A clear, descriptive caption that explains the figure.}
@@ -22,14 +22,14 @@
 | `!` | override LaTeX's internal float rules |
 | `H` | exactly here (requires `\usepackage{float}`) |
 
-Use `[htbp]` as default. Reserve `[H]` for figures that MUST sit where placed.
+Use `[H]` as default. Reserve `[H]` for figures that MUST sit where placed.
 
 ### Side-by-side figures
 
 ```latex
 \usepackage{subcaption}
 
-\begin{figure}[htbp]
+\begin{figure}[H]
   \centering
   \begin{subfigure}[b]{0.45\textwidth}
     \centering
@@ -66,7 +66,7 @@ Use `booktabs` for professional tables — never use `\hline`/vertical rules.
 ```latex
 \usepackage{booktabs}
 
-\begin{table}[htbp]
+\begin{table}[H]
   \centering
   \caption{Comparison of methods on the benchmark.}
   \label{tab:comparison}
@@ -180,7 +180,7 @@ Compile with: `pdflatex -shell-escape main.tex`.
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 
-\begin{algorithm}[htbp]
+\begin{algorithm}[H]
   \caption{Binary search.}
   \label{alg:binsearch}
   \begin{algorithmic}[1]
@@ -213,7 +213,7 @@ For architecture / flow diagrams, prefer **TikZ** for native LaTeX rendering:
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric, arrows.meta, positioning}
 
-\begin{figure}[htbp]
+\begin{figure}[H]
   \centering
   \begin{tikzpicture}[node distance=2cm, every node/.style={align=center}]
     \node[draw, rectangle] (a) {Input};

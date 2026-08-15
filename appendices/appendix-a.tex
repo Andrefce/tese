@@ -13,9 +13,10 @@ repeat information established in the main text.
 \label{sec:appendix-training-streams}
 \noindent
 All three training streams use the shared cache representation described in
-\cref{subsec:training-cache-representation}. The table below provides a compact
-reference for their source, cardiac phase, and role in the two-stage training
-procedure.
+\cref{subsec:training-cache-representation}. \Cref{tab:method-datasets} provides
+a compact reference for their source, cardiac phase, and role in the two-stage
+training procedure, complementing the source datasets listed in
+\cref{tab:dataset-summary}.
 
 \begin{table}[H]
 	\centering
@@ -28,25 +29,40 @@ procedure.
 		Stream & Phase & Source & Training role \\
 		\midrule
 		Synthetic SSM & ED & UK Digital Heart Project LV SSM & Pre-training to establish a geometric shape prior \\
-		Real MRI & ED & ACDC, M\&Ms, and M\&Ms-2 & Fine-tuning on patient-specific diastolic anatomy \\
-		Real MRI & ES & ACDC, M\&Ms, and M\&Ms-2 & Fine-tuning on systolic anatomy with phase conditioning \\
+		Real MRI & ED & ACDC and original M\&Ms & Fine-tuning on patient-specific diastolic anatomy \\
+		Real MRI & ES & ACDC and original M\&Ms & Fine-tuning on systolic anatomy with phase conditioning \\
 		\bottomrule
 	\end{tabular}
 \end{table}
 
+\section{Real ED and ES mesh-preparation pipeline}
+\label{sec:appendix-real-pipeline}
 \noindent
-\Cref{fig:dataset-selection-splits} presents the same composition graphically,
-complementing the counts reported in \cref{tab:dataset-summary}.
+\Cref{tab:real-pipeline} lists, in order, the operations that convert a clinical
+segmentation stack into the watertight mesh used as derived supervision. The
+four stages of this conversion are described in
+\cref{subsec:real-ed-es-datasets}.
 
-\begin{figure}[H]
+\begin{table}[H]
 	\centering
-	\includegraphics[width=0.85\linewidth]{dataset_selection_and_splits}
-	\vspace{2mm}
-	\caption{Composition of the three data streams. Each bar shows how the valid
-	samples of one stream are distributed over the 70\,\%/15\,\%/15\,\%
-	train/validation/test partitions, with the number of patients annotated inside
-	each segment. The synthetic stream, of which 1300 meshes were accepted out of
-	2048 sampled shape vectors, is reserved entirely for pre-training and is
-	therefore not partitioned.}
-	\label{fig:dataset-selection-splits}
-\end{figure}
+	\caption{Main operations in the real ED/ES mesh-preparation pipeline.}
+	\label{tab:real-pipeline}
+	\small
+	\renewcommand{\arraystretch}{1.12}
+	\begin{tabular}{p{0.34\textwidth} p{0.55\textwidth}}
+		\toprule
+		Operation & Purpose \\
+		\midrule
+		RAS+ canonicalisation & Standardises patient-coordinate orientation while preserving physical spacing \\
+		Label harmonisation & Converts ACDC and original M\&Ms to a common LV/myocardium mask \\
+		Isotropic resampling at 1.5~mm & Reduces anisotropy before 3D surface extraction \\
+		Per-slice cleaning & Removes small 2D fragments and fills holes \\
+		3D largest-component filtering & Keeps the main anatomical LV region \\
+		Gaussian mask smoothing and marching cubes & Suppresses staircase artefacts and extracts the surface \\
+		Taubin smoothing and Laplacian fairing & Reduces residual artefacts while preserving global shape \\
+		Basal cap perpendicular to the apex--base axis & Replaces the non-anatomical basal dome at the valve-plane boundary \\
+		Quadric decimation to 4000 vertices & Produces a consistently sized mesh for all cases \\
+		Plausibility checks (7 criteria) & Rejects geometrically implausible or corrupted cases \\
+		\bottomrule
+	\end{tabular}
+\end{table}

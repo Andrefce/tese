@@ -15,7 +15,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 THESIS = Path(__file__).resolve().parents[1]
-COHORT = THESIS / "scripts" / "cohort_nor"
+COHORT = THESIS / "test-new-model" / "cohort_full_nor_hcm10"
 
 plt.rcParams.update({
     "font.family": "serif",
@@ -31,10 +31,10 @@ plt.rcParams.update({
 })
 
 LABELS = {
-    "Laplace field": "Laplace field\n(state of the art)",
-    "Yezzi-Prince": "Yezzi--Prince\n(recent)",
-    "SDF cone rays": "SDF cone rays\n(promising)",
-    "EDT boundary sum": "EDT boundary sum\n(baseline)",
+    "Laplace field": "Laplace field",
+    "Yezzi-Prince": "Yezzi--Prince",
+    "SDF cone rays": "SDF cone rays",
+    "EDT boundary sum": "EDT boundary sum",
 }
 colors = ["#1d3557", "#2a6f97", "#457b9d", "#c9a0a0"]
 
@@ -76,10 +76,9 @@ ax.set_xticks(x)
 ax.set_xticklabels(names, fontsize=8)
 ax.set_ylabel("Wall thickness (mm)")
 ax.set_ylim(0, max(p95.max(), REFERENCE_MEAN) * 1.25)
-ax.set_title("Wall-thickness estimates on the reconstructed LV geometry")
 ax.legend(loc="upper right", frameon=False, fontsize=8)
-ax.text(0.0, -0.34, "Bars show the mean; whiskers span the 5th--95th percentile "
-        f"(n = {N_PATIENTS} NOR patients).",
+ax.text(0.0, -0.28, "Bars show the mean; whiskers span the 5th--95th percentile "
+        f"(n = {N_PATIENTS} patients).",
         transform=ax.transAxes, fontsize=7.5, color="#555555")
 fig.tight_layout()
 fig.savefig(THESIS / "images" / "wall_thickness_methods_comparison.pdf")
