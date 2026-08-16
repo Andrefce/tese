@@ -238,6 +238,16 @@ surfaces and in the surrounding volume, and signed-distance targets or
 inside/outside labels were computed. These query points form the dense
 volumetric supervision used by the SDF loss terms during training.
 
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\linewidth]{fig_ssm_sampling_pipeline}
+	\vspace{2mm}
+	\caption{Synthetic ED dataset generation from SSM sampling to geometric
+	supervision. Top row: statistical constraints; bottom row: geometric
+	construction and supervision targets.}
+	\label{fig:ssm-sampling-pipeline}
+\end{figure}
+
 \Cref{fig:ssm-sampling-pipeline} summarises this process in two rows. The top
 row provides the statistical view of sampling: panel~(a) shows the
 Mahalanobis-statistic density and the $\chi^2_{0.99,32}$ acceptance threshold,
@@ -249,16 +259,6 @@ panel~(e) shows mesh synthesis via \cref{eq:ssm-generation}, panel~(f)
 contrasts an accepted shape with a rejected outlier, panel~(g) shows the 10
 SAX contour levels, and panel~(h) shows the 2048 near-surface and volumetric
 query points used for decoder supervision.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.9\linewidth]{fig_ssm_sampling_pipeline}
-	\vspace{2mm}
-	\caption{Synthetic ED dataset generation from SSM sampling to geometric
-	supervision. Top row: statistical constraints; bottom row: geometric
-	construction and supervision targets.}
-	\label{fig:ssm-sampling-pipeline}
-\end{figure}
 
 These fixed SSM-sampling and supervision settings were kept constant across all
 synthetic ED cases to ensure reproducible pre-training before fine-tuning on
@@ -459,12 +459,6 @@ identity, and cardiac phase, whereas the decoder is supervised by surface and
 volumetric samples derived from the corresponding mesh. Thus, at inference time,
 the same model can reconstruct geometry from sparse contour observations alone.
 
-\Cref{tab:cache-schema} makes this separation explicit. The first three fields
-describe the clinical-style observation supplied to the encoder; the remaining
-fields are available only during training, evaluation, or visualisation. Keeping
-these roles distinct prevents mesh-derived information from leaking into the
-encoder input while allowing dense supervision of the implicit field.
-
 \begin{table}[H]
 	\centering
 	\caption{Fields of one shared cache item and their role in training.}
@@ -484,6 +478,12 @@ encoder input while allowing dense supervision of the implicit field.
 		\bottomrule
 	\end{tabular}
 \end{table}
+
+\Cref{tab:cache-schema} makes this separation explicit. The first three fields
+describe the clinical-style observation supplied to the encoder; the remaining
+fields are available only during training, evaluation, or visualisation. Keeping
+these roles distinct prevents mesh-derived information from leaking into the
+encoder input while allowing dense supervision of the implicit field.
 
 This common contract enables two-stage optimisation without dataset-specific
 changes to the architecture or loss. The model is first trained on synthetic ED

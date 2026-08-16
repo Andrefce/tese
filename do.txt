@@ -1,0 +1,15 @@
+what needs changing:
+figure 4.2 - use the watertight version and also add the "segmentation true mesh" to the figure.
+
+table 4.1 - choose the 3 best values metrics and keep only these top 3
+
+figure 4.3 - take out the title of the image and update the values with the new data on the new architecture.
+
+table 4.3 -  maybe had the laplace too???
+
+figure 4.5 - don the (a) make it the mesh with colour map but of the actual difference of thickness and separate each of the 17 segments with a black line then pass it to the (b) aha-17 with the new values.
+
+USE THE NEW MODEL FOR THIS
+
+
+E FALTA A PARTE DE REPETIÇÃO SOBRE A DATA NA METODOLOGIA.
