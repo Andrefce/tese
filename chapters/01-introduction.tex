@@ -5,50 +5,87 @@
 \chapter{Introduction}
 \label{ch:introduction}
 
-\noindent This chapter introduces the addressed problem,
-motivates the work, states the research questions, summarises the
-contributions, and outlines the remainder of the document.
+\noindent This chapter explains why the problem matters, describes the
+problem being addressed, states the research questions and objectives.
 
 \section{Motivation}
 \label{sec:motivation}
 \noindent
-% TODO: describe the broader context and why the problem matters.
+The heart keeps blood moving through the body. The left ventricle (LV) has a
+central role because it pumps oxygen-rich blood into the aorta and from there
+to the rest of the body. Its size, shape, motion, and wall thickness can
+therefore provide important information about cardiac function. Changes in LV
+shape and wall thickness can also be associated with disease
+\parencite{grossman1974wallthickness,demarvao2014atlas}.
+
+Cardiac magnetic resonance imaging (MRI) allows the LV to be observed without
+an invasive procedure. Short-axis (SAX) images show the heart as a stack of
+slices from the base to the apex. These images make it possible to identify the
+inner and outer boundaries of the myocardium, which is the muscular wall of the
+heart. However, the slices alone do not provide a complete three-dimensional
+view. A 3D model can describe the full LV shape and support measurements in the
+regions between slices. Consistent descriptions of LV anatomy are useful in
+large imaging studies and automated analysis
+\parencite{bai2015biventricularatlas,bai2018automated}.
+
+Myocardial wall thickness is one such measurement. A wall that is unusually
+thick, thin, or uneven can contain useful information about the state of the
+heart. In clinical images, wall thickness is often measured only on the
+acquired slices. A smooth 3D representation could provide a more complete and
+more easily visualised measurement across the LV. This thesis studies how sparse
+SAX observations can be used to reconstruct the LV in three dimensions and to
+measure myocardial wall thickness.
 
 \section{Problem Statement}
 \label{sec:problem}
 \noindent
-% TODO: state the specific problem and the gap in current solutions.
+SAX cardiac MRI is useful, but it is not a detailed 3D scan of the heart. The
+slices are separated along the long axis of the LV, leaving part of the shape
+unobserved between them. This makes 3D reconstruction difficult. Simply
+connecting the slices can create rough surfaces, gaps, or a myocardial wall
+that does not represent the anatomy well.
+
+Two related surfaces must be reconstructed. The endocardium is the inner
+boundary of the LV cavity, and the epicardium is the outer boundary of the
+myocardium. The space between them must remain a valid wall everywhere. Public
+cardiac MRI datasets usually provide images and segmentation masks for each
+slice, rather than complete 3D LV meshes. Such meshes are needed to train and
+evaluate a surface-reconstruction model directly.
+
+This work addresses the problem with a phase-conditioned implicit model trained
+using both synthetic LV shapes and meshes derived from real cardiac MRI
+segmentations. The model receives sparse contours as input and predicts
+continuous 3D LV surfaces. The outer surface is constrained to remain outside
+the inner surface, producing a myocardial wall with positive thickness. The
+reconstructed geometry is then used to study wall-thickness measurements and
+compare them with measurements from segmentation-derived geometry.
 
 \section{Research Questions}
 \label{sec:research-questions}
-\noindent This work addresses the following research questions:
-\begin{enumerate}[label=\textbf{RQ\arabic*.}, leftmargin=*]
-  \item % TODO: research question 1
-  \item % TODO: research question 2
-  \item % TODO: research question 3
-\end{enumerate}
+\noindent This work addresses three research questions. \textbf{RQ1} asks
+whether a model can reconstruct smooth, closed 3D LV surfaces from sparse SAX
+contours. \textbf{RQ2} asks whether the model can represent the endocardium and
+epicardium while maintaining a valid myocardial wall at both end-diastole and
+end-systole. \textbf{RQ3} asks how closely wall-thickness measurements from the
+reconstructed LV agree with measurements from segmentation-derived geometry.
 
 \section{Objectives}
 \label{sec:objectives}
-\noindent The main objectives are:
-\begin{itemize}
-  \item % TODO: objective 1
-  \item % TODO: objective 2
-\end{itemize}
+\noindent The first objective is to prepare synthetic and real cardiac MRI
+data in a shared contour-based format. The second objective is to develop a
+phase-conditioned signed-distance model that reconstructs the inner and outer
+LV surfaces from sparse SAX contours. A further objective is to ensure that the
+reconstructed surfaces are smooth and closed, with a myocardial wall of positive
+thickness. Finally, the reconstructed surfaces are evaluated against
+segmentation-derived meshes, and several methods for measuring local and
+regional wall thickness are compared.
 
 \section{Contributions}
 \label{sec:contributions}
-\noindent The main contributions are:
-\begin{itemize}
-  \item % TODO: contribution 1
-  \item % TODO: contribution 2
-\end{itemize}
-
-\section{Document Structure}
-\label{sec:document-structure}
-\noindent The remainder of this document is organised as follows.
-\Cref{ch:literature-review} reviews the relevant literature and prior work.
-\Cref{ch:methodology} describes the proposed approach.
-\Cref{ch:results} presents and discusses the experimental results.
-\Cref{ch:conclusions} summarises the work and outlines directions for
-future work.
+\noindent This thesis provides a data pipeline that converts synthetic LV
+shapes and real cardiac MRI segmentations into a shared representation of sparse
+SAX contours and 3D meshes. It also presents a phase-conditioned signed-distance
+model that predicts the endocardial and epicardial LV surfaces while preserving
+a positive wall between them. Finally, it evaluates the reconstructed geometry
+on data not used for training and compares local and regional wall-thickness
+methods on reconstructed and segmentation-derived LV geometry.
