@@ -833,42 +833,31 @@ three-dimensional geometry.
 \subsection{Loss function}
 \label{subsec:training-loss}
 \noindent
-The training loss is a weighted sum of several terms, each responsible for one
-aspect of a good reconstruction. Some terms pull the predicted surfaces onto the
-target meshes, some keep the distance field well-behaved, some keep the surface
-faithful to the observed slices, and some prevent the wall from collapsing.
-The full objective is
+The training objective contains five complementary terms. Surface and dense SDF
+supervision fit the geometry, Eikonal regularisation preserves a valid distance
+field, off-surface repulsion suppresses spurious zero crossings, and direct
+wall-thickness supervision constrains the myocardial wall. The full objective is
 \begin{align}
 	\mathcal{L}_{\mathrm{total}} ={}&
 	\lambda_{\mathrm{surf}}\mathcal{L}_{\mathrm{surf}} +
+	\lambda_{\mathrm{SDF}}\mathcal{L}_{\mathrm{SDF}} +
 	\lambda_{\mathrm{eik}}\mathcal{L}_{\mathrm{eik}} +
 	\lambda_{\mathrm{off}}\mathcal{L}_{\mathrm{off}} +
-	\lambda_{\mathrm{normal}}\mathcal{L}_{\mathrm{normal}}
-	\notag \\
-	&+ \lambda_{\mathrm{WT}}\mathcal{L}_{\mathrm{WT}} +
-	\lambda_{\mathrm{L1}}\mathcal{L}_{\mathrm{L1}} +
-	\lambda_{\mathrm{anchor}}\mathcal{L}_{\mathrm{anchor}} +
-	\lambda_{\mathrm{sign}}\mathcal{L}_{\mathrm{sign}}
-	\notag \\
-	&+ \lambda_{\mathrm{extsign}}\mathcal{L}_{\mathrm{extsign}} +
-	\lambda_{\mathrm{bbox}}\mathcal{L}_{\mathrm{bbox}} +
-	\lambda_z \lVert z \rVert_2^2 .
+	\lambda_{\mathrm{WT}}\mathcal{L}_{\mathrm{WT}} .
 	\label{eq:training-objective}
 \end{align}
-The most important terms are the surface term, which places the two surfaces on
-their target meshes, and the eikonal term, which keeps the output a proper signed
-distance field by encouraging its gradient to have unit length
-\parencite{gropp2020igr}. The wall-thickness term reinforces the built-in lower
-bound on $\delta$ by discouraging the wall from ever thinning toward its minimum.
-The remaining terms handle finer effects such as surface orientation, agreement
-with the input contours, and the suppression of spurious surfaces outside the
-heart; their individual roles are listed in \cref{tab:loss-terms}. The eikonal
-term is computed in full precision to keep its gradient calculation numerically
-stable.
+The surface term places the two zero-level sets on their target meshes. The SDF
+term provides dense volumetric supervision at cached query points. The Eikonal
+term encourages the field gradient to have unit magnitude
+\parencite{gropp2020igr}, while off-surface repulsion keeps free-space samples
+away from either zero-level set. Finally, the wall-thickness term directly
+supervises the predicted offset $\delta$ at endocardial surface points. The
+Eikonal term is computed in full precision to keep its gradient calculation
+numerically stable.
 
 \begin{table}[H]
 	\centering
-	\caption{Purpose of the main training-loss terms.}
+	\caption{Purpose of the five training-loss terms.}
 	\label{tab:loss-terms}
 	\small
 	\begin{tabular}{p{0.19\textwidth} p{0.34\textwidth} p{0.35\textwidth}}
@@ -876,14 +865,10 @@ stable.
 		Term & Purpose & Effect on reconstruction \\
 		\midrule
 		$\mathcal{L}_{\mathrm{surf}}$ & Fits zero-level sets to surface samples & Places endocardial and epicardial surfaces on the target meshes \\
+		$\mathcal{L}_{\mathrm{SDF}}$ & Fits cached query-point distances & Provides dense volumetric supervision \\
 		$\mathcal{L}_{\mathrm{eik}}$ & Encourages $\lVert \nabla f \rVert = 1$ & Regularises the decoder as a signed-distance field \\
 		$\mathcal{L}_{\mathrm{off}}$ & Repels off-surface points from zero & Reduces spurious zero crossings away from the myocardium \\
-		$\mathcal{L}_{\mathrm{normal}}$ & Aligns predicted and target normals & Improves local surface orientation \\
-		$\mathcal{L}_{\mathrm{WT}}$ & Enforces the wall-thickness floor & Discourages collapse toward an unrealistically thin wall \\
-		$\mathcal{L}_{\mathrm{L1}}$ & Supervises cached query-point distances & Provides dense volumetric SDF information \\
-		$\mathcal{L}_{\mathrm{anchor}}$ & Anchors input contour points to the surface & Preserves agreement with observed SAX contours \\
-		Sign terms & Enforce inside/outside consistency & Stabilise the relative position of endocardium and epicardium \\
-		Bbox term & Pushes points outside the contour box outward & Suppresses exterior false surfaces \\
+		$\mathcal{L}_{\mathrm{WT}}$ & Fits the predicted wall offset to wall targets & Constrains myocardial wall thickness \\
 		\bottomrule
 	\end{tabular}
 \end{table}
@@ -919,7 +904,6 @@ points per step and GPU memory is the main constraint.
 		Optimiser & AdamW \\
 		Learning rate & $2\times10^{-5}$ \\
 		Weight decay & $5\times10^{-4}$ \\
-		Maximum epochs & 400 per stage \\
 		Batch size & 8, with gradient accumulation \\
 		Gradient clipping & 1.0 \\
 		Precision & Automatic mixed precision \\
