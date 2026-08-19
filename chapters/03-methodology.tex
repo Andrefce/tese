@@ -399,14 +399,22 @@ stay within plausible limits, which removes cases where labels have merged or
 leaked into neighbouring tissue.
 
 \paragraph{Contour and query-point extraction.}
-Accepted meshes are centred and normalised together, then cut by 10 equally
-spaced axial planes after a 5\% margin at the apex and at the base. The largest
-intersection loop at each plane is resampled to 60 points for each available
-tissue. These are the contour points observed by the encoder. Separately, 2048
-near-surface and volumetric query points are sampled and labelled by mesh
-occupancy for decoder supervision. The contour input and the volumetric target
-are therefore two representations of the same derived mesh, rather than
-independent annotations.
+The encoder receives contours extracted directly from the acquired clinical
+slices, not contours re-sliced from the derived mesh. For each available SAX
+slice, the largest endocardial and epicardial label contours are retained and
+resampled to 60 evenly spaced points. Their physical slice positions are kept,
+so the encoder receives the original sparse observation in its measured
+through-plane arrangement. This preserves the acquisition geometry and prevents
+the derived mesh from leaking into the encoder input.
+
+The derived endocardial and epicardial meshes are centred and normalised with the
+same translation and scale before they are used as three-dimensional supervision.
+For each mesh pair, 2048 query points are drawn near the two surfaces and across
+a padded bounding box. Near-surface points teach the decoder where the surfaces
+lie; the volume points teach whether a location is inside or outside each
+surface. Every query point receives occupancy labels for both surfaces. The
+contours are therefore the sparse input from the clinical slices, whereas the
+query points and mesh samples are training-only targets derived from the mesh.
 
 \Cref{fig:real-mesh-steps} provides a visual summary of the conversion from
 clinical labels to mesh-ready supervision. 
@@ -427,11 +435,11 @@ corresponding binary endocardial and epicardial masks after label
 harmonisation. The pipeline then branches into separate endocardial and
 epicardial paths: panels~(c)--(e) and panels~(c$'$)--(e$'$), respectively. 
 
-In both branches, contours are placed in physical three-dimensional positions, a
-voxel surface view makes discretisation artefacts explicit, and Taubin
-smoothing illustrates their reduction before later post-processing. The figure
-is intentionally a process overview; the full sequence also includes basal
-capping, cap fairing, decimation, the plausibility checks, and re-slicing.
+In both branches, the voxel surface view makes discretisation artefacts explicit,
+and Taubin smoothing illustrates their reduction before later post-processing.
+The figure is intentionally a process overview; the full sequence also includes
+basal capping, cap fairing, decimation, and the plausibility checks. Contours for
+the encoder remain those extracted from the original clinical slices.
 
 \subsection{Shared cache representation and contour augmentation}
 \label{subsec:training-cache-representation}
@@ -460,7 +468,7 @@ the same model can reconstruct geometry from sparse contour observations alone.
 		\toprule
 		Field & Origin & Role \\
 		\midrule
-		Contour points & Synthetic mesh slicing or clinical mask re-slicing & Sparse SAX observation for the encoder and contour-anchor loss \\
+		Contour points & Synthetic mesh slicing or clinical slice labels & Sparse SAX observation for the encoder and contour-anchor loss \\
 		Tissue label & Contour extraction & Distinguishes endocardial from epicardial points during tissue-specific pooling \\
 		Phase label & Dataset metadata & Conditions the encoder on ED or ES geometry \\
 		Surface samples & Prepared endocardial and epicardial meshes & Surface-fitting and normal-alignment supervision \\
@@ -872,9 +880,8 @@ schedule and early stopping ending each stage once the validation loss stops
 improving. Fine-tuning simply resumes from the pre-trained weights rather than
 starting from scratch. To fit the model in the available GPU memory, training
 uses mixed precision, gradient clipping at 1.0 for stability, and gradient
-accumulation to reach a larger effective batch size. Each stage runs for at most
-400 epochs, though early stopping usually ends it sooner. Training was carried
-out on two GPUs in parallel. A light weight-clipping strategy was used instead of
+accumulation to reach a larger effective batch size. Training was carried out on
+two GPUs in parallel. A light weight-clipping strategy was used instead of
 the more expensive spectral normalisation, since the decoder is evaluated at many
 points per step and GPU memory is the main constraint.
 
