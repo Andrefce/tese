@@ -548,9 +548,10 @@ observations.
 \noindent
 The evaluation supports one central design choice of the model and qualifies
 another. The coupled endocardium--epicardium parameterisation does what it was
-introduced to do at the level of the field: the predicted wall offset is
-positive everywhere, so a thickness value exists at every myocardial point and
-never collapses to zero. On that geometry the three field-based estimators
+introduced to do at the level of the field: the predicted field offset is
+positive at every evaluated point, preventing the two implicit fields from
+collapsing onto one another. Geometric wall thickness is subsequently estimated
+between the extracted surfaces. On that geometry the three field-based estimators
 return wall thicknesses within about one millimetre of each other, between
 $9.18$ and $10.01$~mm. A continuous field defined over the whole ventricle
 therefore yields a usable, locally resolved measurement surface from ten sparse

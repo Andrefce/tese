@@ -610,9 +610,9 @@ This design matches the structure of the problem. The contour input is a small,
 unordered set of points, so the encoder uses a point-cloud formulation that is
 invariant to the order of the points. The output is a smooth, continuous surface,
 so the decoder is an implicit function that can be evaluated at any resolution.
-The epicardium is defined as an outward offset from the endocardium, so the wall
-remains positive everywhere and the model learns a valid myocardial thickness
-field instead of two independent surfaces.
+The epicardial field is defined through a positive offset from the endocardial
+field, preventing collapse of the two predicted fields. Anatomical wall thickness
+is subsequently measured between the extracted surfaces.
 
 \begin{figure}[H]
 	\centering
