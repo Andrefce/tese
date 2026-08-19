@@ -16,11 +16,12 @@ All three training streams use the shared cache representation described in
 \cref{subsec:training-cache-representation}. \Cref{tab:method-datasets} provides
 a compact reference for their source, cardiac phase, and role in the two-stage
 training procedure, complementing the source datasets listed in
-\cref{tab:dataset-summary}.
+\cref{tab:dataset-summary}. \Cref{fig:dataset-selection-splits} presents the
+same composition graphically.
 
 \begin{table}[H]
 	\centering
-	\caption{Data streams sharing the cache schema and their role in training.}
+	\caption[Training data streams and their roles.]{Data streams sharing the cache schema and their role in training.}
 	\label{tab:method-datasets}
 	\small
 	\renewcommand{\arraystretch}{1.12}
@@ -35,6 +36,19 @@ training procedure, complementing the source datasets listed in
 	\end{tabular}
 \end{table}
 
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.85\linewidth]{dataset_selection_and_splits}
+	\vspace{2mm}
+	\caption[Composition and splits of the training data streams.]{Composition of the three data streams. Each bar shows how the valid
+	samples of one stream are distributed over the 70\,\%/15\,\%/15\,\%
+	train/validation/test partitions, with the number of patients annotated inside
+	each segment. The synthetic stream, of which 1300 meshes were accepted out of
+	2048 sampled shape vectors, is reserved entirely for pre-training and is
+	therefore not partitioned.}
+	\label{fig:dataset-selection-splits}
+\end{figure}
+
 \section{Real ED and ES mesh-preparation pipeline}
 \label{sec:appendix-real-pipeline}
 \noindent
@@ -45,7 +59,7 @@ four stages of this conversion are described in
 
 \begin{table}[H]
 	\centering
-	\caption{Main operations in the real ED/ES mesh-preparation pipeline.}
+	\caption[Main operations in the real ED/ES mesh-preparation pipeline.]{Main operations in the real ED/ES mesh-preparation pipeline.}
 	\label{tab:real-pipeline}
 	\small
 	\renewcommand{\arraystretch}{1.12}

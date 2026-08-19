@@ -127,10 +127,11 @@ made about the pre-training loss because its per-epoch log was not retained.
 Fine-tuning runs for $776$ epochs with the AdamW optimiser (learning rate
 $2\times10^{-5}$, weight decay $5\times10^{-4}$) under a cosine-annealing
 schedule with warm restarts, mixed-precision arithmetic, and an effective batch
-size of $16$. The composite objective is the ten-term signed-distance loss of
-\cref{ch:methodology}, combining the on-surface, Eikonal, off-surface, sign, and
-wall-regularisation terms. \Cref{fig:training-curves} plots the total loss and
-its principal components together with two optimisation diagnostics. The total
+size of $16$. The composite objective is the five-term loss of
+\cref{eq:training-objective}, combining surface, dense SDF, Eikonal,
+off-surface, and wall-thickness supervision. \Cref{fig:training-curves} plots
+the total loss and its principal components together with two optimisation
+diagnostics. The total
 training loss decreases from $10.07$ at the first fine-tuning epoch to $0.91$,
 and the validation loss settles at $0.70$, with the best checkpoint selected at
 epoch $695$ before mild over-fitting appears. The surface and Eikonal terms fall

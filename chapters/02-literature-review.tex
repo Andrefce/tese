@@ -6,7 +6,7 @@
 \label{ch:literature-review}
 
 \noindent This chapter presents the review methodology used to identify relevant
-literature and synthesises the related work on three-dimensional left-ventricle
+literature and synthesises the related work on three-dimensional LV
 reconstruction from cardiac MRI and myocardial wall-thickness measurement.
 
 % ============================================================
@@ -51,7 +51,7 @@ function'' OR ``graph neural network'' OR ``implicit representation'') AND
 
 \noindent
 Studies were included if they: (i) addressed three-dimensional reconstruction or
-shape modelling of the left ventricle, (ii) proposed or evaluated methods for
+shape modelling of the LV, (ii) proposed or evaluated methods for
 myocardial wall-thickness measurement, (iii) developed geometric deep learning
 techniques applicable to anatomical meshes, or (iv) introduced benchmark cardiac
 MRI datasets used for LV analysis.
@@ -171,8 +171,8 @@ corpus of 35 publications.
 \end{figure}
 
 The selected studies span five thematic areas: cardiac MRI acquisition and
-segmentation, statistical shape models, implicit neural representations, graph
-neural networks for mesh processing, and wall-thickness measurement. The
+segmentation, SSMs, INRs, GNNs for mesh processing, and wall-thickness
+measurement. The
 following section synthesises the key findings from this corpus.
 
 % ============================================================
@@ -198,11 +198,11 @@ planar observations. \textcite{petitjean2011segmentationreview} reviewed over
 single largest source of error in volumetric cardiac analysis, with apex and
 base delineation accounting for the majority of inter-observer variability.
 
-The American Heart Association (AHA) 17-segment model, introduced by
-\textcite{cerqueira2002segmentation}, standardised the partition of the
+The AHA 17-segment model, introduced by \textcite{cerqueira2002segmentation},
+standardised the partition of the
 myocardium into basal, mid-cavity, and apical regions. It is widely used for
-reporting regional wall motion, perfusion, and thickness because it provides a
-common anatomical frame for comparison across studies.
+reporting wall motion, perfusion, and thickness, and serves as the
+reference frame for all regional analysis discussed in subsequent sections.
 
 Segmentation of endocardial and epicardial contours is a prerequisite for any
 downstream 3D analysis. \textcite{ronneberger2015unet} proposed U-Net, an
@@ -217,8 +217,8 @@ The Automated Cardiac Diagnosis Challenge (ACDC), organised by
 segmentation and diagnosis. The dataset comprises 100 patients distributed across
 five clinical groups: normal, dilated cardiomyopathy (DCM), hypertrophic
 cardiomyopathy (HCM), abnormal right ventricle, and myocardial infarction with
-altered LV ejection fraction. Each case includes expert delineations at end-diastole (ED) and
-end-systole (ES). The challenge reported that top-performing deep learning
+altered LV ejection fraction. Each case includes expert delineations at ED and
+ES. The challenge reported that top-performing deep learning
 methods achieved mean Dice scores exceeding 0.93 for the LV cavity and 0.89
 for the myocardium, demonstrating that automated segmentation had reached
 expert-level performance for standard acquisitions. The images and their expert
