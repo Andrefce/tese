@@ -4,14 +4,15 @@ Mirrors the two SSM-based methodology figures (``fig_lv_wall_thickness_3d`` and
 ``fig_aha17_cut``) but computes everything on the CardioSDF reconstruction of
 ACDC patient002 instead of on the statistical-shape-model mean mesh: the
 endocardial and epicardial surfaces are the zero-level sets of the predicted
-signed-distance field, and the wall thickness is the analytic offset ``delta``
-read directly from the decoder at each endocardial vertex.
+signed-distance field, and the calibrated analytic offset is the decoder field
+``delta`` read directly at each endocardial vertex. It is not a geometric
+wall-thickness measurement.
 
   images/results_recon_thickness_3d.png -- reconstructed endocardium coloured by
-      the analytic wall thickness, ED and ES, two opposing views each.
+      the calibrated analytic offset, ED and ES, two opposing views each.
   images/results_recon_aha17.png        -- the same reconstructed surface cut
       into the AHA-17 segments beside the unrolled bullseye, both coloured by
-      the measured per-segment mean thickness.
+    the mean calibrated analytic offset.
 
 The reconstruction is cached in ``CACHE`` so re-styling the figures does not
 re-run the decoder; pass ``--refresh`` to recompute it.
@@ -376,7 +377,7 @@ def aha_segment_ids(vertices: np.ndarray) -> np.ndarray:
 
 
 def make_thickness_3d(cases, norm) -> Path:
-    """ED and ES reconstructions coloured by the analytic wall thickness."""
+    """ED and ES reconstructions coloured by the calibrated analytic offset."""
     fig = plt.figure(figsize=(6.6, 5.8), facecolor="white")
     for row, (label, case) in enumerate(cases):
         for col, (elev, azim, view) in enumerate(VIEWS):
@@ -393,7 +394,7 @@ def make_thickness_3d(cases, norm) -> Path:
     colorbar_axis = fig.add_axes([0.30, 0.07, 0.40, 0.024])
     mappable = plt.cm.ScalarMappable(norm=norm, cmap=CMAP)
     colorbar = fig.colorbar(mappable, cax=colorbar_axis, orientation="horizontal")
-    colorbar.set_label("Wall thickness (mm)", fontsize=6.6, labelpad=1)
+    colorbar.set_label("Calibrated analytic offset (mm)", fontsize=6.6, labelpad=1)
     colorbar.ax.tick_params(labelsize=5.8, length=2)
 
     output = OUT_DIR / "results_recon_thickness_3d.png"
@@ -448,7 +449,7 @@ def make_aha17(case) -> tuple[Path, dict[int, float]]:
     colorbar_axis = fig.add_axes([0.90, 0.24, 0.022, 0.56])
     mappable = plt.cm.ScalarMappable(norm=norm, cmap=CMAP)
     colorbar = fig.colorbar(mappable, cax=colorbar_axis, orientation="vertical")
-    colorbar.set_label("Mean wall thickness (mm)", fontsize=6.6, labelpad=2)
+    colorbar.set_label("Mean calibrated analytic offset (mm)", fontsize=6.6, labelpad=2)
     colorbar.ax.tick_params(labelsize=5.8, length=2)
 
     output = OUT_DIR / "results_recon_aha17.png"

@@ -30,8 +30,8 @@ same composition graphically.
 		Stream & Phase & Source & Training role \\
 		\midrule
 		Synthetic SSM & ED & UK Digital Heart Project LV SSM & Pre-training to establish a geometric shape prior \\
-		Real MRI & ED & ACDC and original M\&Ms & Fine-tuning on patient-specific diastolic anatomy \\
-		Real MRI & ES & ACDC and original M\&Ms & Fine-tuning on systolic anatomy with phase conditioning \\
+		Real MRI & ED & ACDC and M\&Ms-2 & Fine-tuning on patient-specific diastolic anatomy \\
+		Real MRI & ES & ACDC and M\&Ms-2 & Fine-tuning on systolic anatomy with phase conditioning \\
 		\bottomrule
 	\end{tabular}
 \end{table}
@@ -68,7 +68,7 @@ four stages of this conversion are described in
 		Operation & Purpose \\
 		\midrule
 		RAS+ canonicalisation & Standardises patient-coordinate orientation while preserving physical spacing \\
-		Label harmonisation & Converts ACDC and original M\&Ms to a common LV/myocardium mask \\
+		Label harmonisation & Converts ACDC and M\&Ms-2 to a common LV/myocardium mask \\
 		Isotropic resampling at 1.5~mm & Reduces anisotropy before 3D surface extraction \\
 		Per-slice cleaning & Removes small 2D fragments and fills holes \\
 		3D largest-component filtering & Keeps the main anatomical LV region \\
