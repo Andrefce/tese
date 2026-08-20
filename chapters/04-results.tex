@@ -16,10 +16,10 @@ SSM meshes and then fine-tuning on the real end-diastolic (ED) and end-systolic
 (ES) data, as described in \cref{ch:methodology}. The datasets
 and patient-level splits are reported in \cref{subsec:dataset-composition}. The
 results below are computed on a cohort of $30$ ACDC patients, comprising
-$20$ normal (NOR) and $10$ hypertrophic-cardiomyopathy (HCM) cases: each is reconstructed
+$20$ normal (NOR) and $10$ hypertrophic cardiomyopathy (HCM) cases: each is reconstructed
 at end-diastole for the geometric and wall-thickness comparisons, and at both
 phases for the regional analysis. The HCM group is included so that the model can
-be examined on abnormal as well as on normal left ventricles. Reconstruction
+be examined on abnormal as well as on normal LV geometry. Reconstruction
 accuracy is measured against a segmentation-derived baseline obtained by
 marching-cubes extraction on the input segmentations, which is the only reference
 available for these scans. Wall thickness is then measured on the reconstructed
@@ -57,9 +57,9 @@ in the text as a precondition rather than as a score, because a mesh that is not
 closed has no volume for the DSC and the volume ratio to use.
 
 Several metrics that often appear alongside these are left out. The average
-symmetric surface distance is almost identical to the Chamfer distance here,
-differing by at most $0.04$~mm. The intersection-over-union is a direct
-transformation of the DSC. The 95th-percentile Hausdorff distance and the
+symmetric surface distance (ASSD) is almost identical to the Chamfer distance here,
+differing by at most $0.04$~mm. The intersection over union (IoU) is a direct
+transformation of the DSC. The 95th-percentile Hausdorff distance (HD95) and the
 F-score at a fixed tolerance both restate the surface-distance result, the first
 in the tail of the distribution and the second at a single threshold. The normal
 consistency measures orientation rather than reconstruction accuracy. Reporting
@@ -78,7 +78,7 @@ reconstructed geometry, using the agreement framework of
 \textcite{blandaltman1986} instead of a comparison of mean values. The reported
 quantities are the \emph{Pearson correlation coefficient} $r$, the \emph{mean
 absolute error} (MAE) and \emph{root-mean-square error} (RMSE) in millimetres,
-and the Bland--Altman \emph{bias} with its \emph{95\% limits of agreement}
+and the Bland--Altman \emph{bias} with its \emph{95\% limits of agreement} (LoA)
 (bias~$\pm 1.96\,\sigma$). Absolute consistency is summarised by the two-way
 \emph{intraclass correlation coefficient} (ICC), read against the thresholds of
 \textcite{koo2016icc}. These are reported together because correlation alone does
@@ -387,8 +387,8 @@ visualisation; it does not provide the values used for the AHA-17 analysis.
   \centering
   \caption[Wall-thickness-method agreement with Laplace]{Agreement of each wall-thickness method with the Laplace field, over
     the myocardial surface points of the $30$ patients at end-diastole on the
-    reconstructed geometry. MAE, RMSE, bias and the 95\% limits of agreement
-    (LoA) are in millimetres; the Pearson correlation $r$ and the intraclass
+    reconstructed geometry. MAE, RMSE, bias and the 95\% LoA are in
+    millimetres; the Pearson correlation $r$ and the intraclass
     correlation coefficient (ICC) are dimensionless. The Laplace field is the
     common comparator, not a ground truth.}
   \label{tab:wall-thickness-agreement}

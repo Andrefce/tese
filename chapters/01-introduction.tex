@@ -49,8 +49,8 @@ cardiac MRI datasets usually provide images and segmentation masks for each
 slice, rather than complete 3D LV meshes. Such meshes are needed to train and
 evaluate a surface-reconstruction model directly.
 
-This work addresses the problem with a phase-conditioned implicit model trained
-using both synthetic LV shapes and meshes derived from real cardiac MRI
+This work addresses the problem with a phase-conditioned implicit neural
+representation (INR) model trained using both synthetic LV shapes and meshes derived from real cardiac MRI
 segmentations. The model receives sparse contours as input and predicts
 continuous 3D LV surfaces. The outer surface is constrained to remain outside
 the inner surface, producing a myocardial wall with positive thickness. The
@@ -62,15 +62,15 @@ compare them with measurements from segmentation-derived geometry.
 \noindent This work addresses three research questions. \textbf{RQ1} asks
 whether a model can reconstruct smooth, closed 3D LV surfaces from sparse SAX
 contours. \textbf{RQ2} asks whether the model can represent the endocardium and
-epicardium while maintaining a valid myocardial wall at both end-diastole and
-end-systole. \textbf{RQ3} asks how closely wall-thickness measurements from the
+epicardium while maintaining a valid myocardial wall at end-diastole (ED) and
+end-systole (ES). \textbf{RQ3} asks how closely wall-thickness measurements from the
 reconstructed LV agree with measurements from segmentation-derived geometry.
 
 \section{Objectives}
 \label{sec:objectives}
 \noindent The first objective is to prepare synthetic and real cardiac MRI
 data in a shared contour-based format. The second objective is to develop a
-phase-conditioned signed-distance model that reconstructs the inner and outer
+phase-conditioned signed distance function (SDF) model that reconstructs the inner and outer
 LV surfaces from sparse SAX contours. A further objective is to encourage smooth,
 closed reconstructed surfaces and prevent collapse of the endocardial and
 epicardial implicit fields. Finally, the reconstructed surfaces are evaluated against
@@ -82,7 +82,7 @@ regional wall thickness are compared.
 \noindent This thesis provides a data pipeline that converts synthetic LV
 shapes and real cardiac MRI segmentations into a shared representation of sparse
 SAX contours and 3D meshes. It also presents a phase-conditioned signed-distance
-model that predicts the endocardial and epicardial LV surfaces while preserving
+SDF model that predicts the endocardial and epicardial LV surfaces while preserving
 a positive wall between them. Finally, it evaluates the reconstructed geometry
 on data not used for training and compares local and regional wall-thickness
 methods on reconstructed and segmentation-derived LV geometry.

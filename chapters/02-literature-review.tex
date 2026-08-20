@@ -235,7 +235,7 @@ cardiac segmentation methods are evaluated.
 
 The Multi-Centre, Multi-Vendor and Multi-Disease (M\&Ms) challenge, described
 by \textcite{campello2021mnms}, extended evaluation to the clinically critical
-question of domain generalisation. The dataset includes 375 CMR studies acquired on
+question of domain generalisation. The dataset includes 375 MRI studies acquired on
 scanners from four different vendors (Siemens, General Electric, Philips, and
 Canon) across six clinical centres. The challenge demonstrated that while
 methods trained on a single vendor achieved high accuracy on that vendor,
@@ -500,7 +500,7 @@ regions because the nearest-boundary directions do not necessarily follow a
 common transmural path. The method is computationally efficient ($O(V)$ via the
 Saito--Toriwaki algorithm) but limited by voxel resolution.
 
-PDE-based methods are widely used for transmural thickness estimation.
+Partial differential equation (PDE)-based methods are widely used for transmural thickness estimation.
 \textcite{jones2000laplace} solved Laplace's equation between the two tissue
 boundaries and used the resulting non-intersecting field lines to establish
 corresponding paths. Thickness is obtained from the path length between the
