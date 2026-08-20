@@ -30,22 +30,17 @@ algorithms behave on the surfaces it produces.
 \subsection{Metrics}
 \label{subsec:metrics}
 \noindent
-Reconstruction quality is measured with five quantities, following the metric
+Reconstruction quality is measured with three quantities, following the metric
 taxonomy of \textcite{taha2015metrics} and the conventions used for cardiac
 segmentation~\parencite{bernard2018acdc} and for implicit-surface
 learning~\parencite{occupancynetworks2019}. Each one answers a different
-question: how large the error is at a typical point, how large it is in the worst
-region, how much of the enclosed volume is recovered, whether the reconstruction
-is systematically too big or too small, and whether the surface faces the right
-way.
+question: how large the error is at a typical point, how much of the enclosed
+volume is recovered, and whether the reconstruction is systematically too big or
+too small.
 
 The \emph{Chamfer distance} is the average distance between the two surfaces,
 taken in both directions. It is reported for the endocardium and the epicardium
-in millimetres, and smaller is better. An average hides isolated failures, so the
-\emph{95th-percentile Hausdorff distance} (HD95) is reported next to it. HD95 is
-the value below which $95\%$ of the point-to-surface distances fall, so it
-describes the worst part of the surface without being set by a single outlying
-vertex.
+in millimetres, and smaller is better.
 
 The \emph{Dice similarity coefficient} (DSC) measures the solid rather than the
 surface. After voxelisation it is twice the shared volume divided by the sum of
@@ -54,22 +49,21 @@ myocardium, lies between zero and one, and larger is better. A shape can score
 well on overlap and still be uniformly too small, so the \emph{volume ratio} is
 reported as well. It is the reconstructed volume divided by the reference volume,
 and a value of one means there is no systematic error in size. It is the only one
-of the five metrics that detects such a bias.
+of the three metrics that detects such a bias.
 
-The \emph{normal consistency} is the average absolute cosine similarity between
-the surface normals of corresponding points. It measures orientation rather than
-position, and therefore separates a smooth surface that follows the reference
-from a rough one that keeps crossing it. The \emph{watertight rate} is the
+The \emph{watertight rate} is the
 fraction of reconstructions that close into a surface with no holes. It is stated
 in the text as a precondition rather than as a score, because a mesh that is not
 closed has no volume for the DSC and the volume ratio to use.
 
-Three metrics that often appear alongside these are left out. The average
+Several metrics that often appear alongside these are left out. The average
 symmetric surface distance is almost identical to the Chamfer distance here,
 differing by at most $0.04$~mm. The intersection-over-union is a direct
-transformation of the DSC. The F-score at a fixed tolerance repeats the
-surface-distance result at a single threshold. Reporting them would suggest more
-independent evidence than there is.
+transformation of the DSC. The 95th-percentile Hausdorff distance and the
+F-score at a fixed tolerance both restate the surface-distance result, the first
+in the tail of the distribution and the second at a single threshold. The normal
+consistency measures orientation rather than reconstruction accuracy. Reporting
+them all would suggest more independent evidence than there is.
 
 Wall thickness is summarised by its mean, its standard deviation, and its 5th and
 95th percentiles across the myocardial surface, all in millimetres. The
@@ -164,21 +158,14 @@ the regional analysis over the AHA 17-segment model.
 \noindent
 \Cref{tab:reconstruction-quality} summarises reconstruction accuracy over the
 evaluation cohort. Each case is reconstructed at end-diastole from its SAX
-contours and compared with the reference geometry. The five metrics are read in
-turn, because each one answers a question the others cannot.
+contours and compared with the reference geometry. The three reported metrics
+describe surface error, volumetric overlap, and systematic volume bias.
 
 The Chamfer distance gives the error at a typical point. It is
 $1.22 \pm 0.21$~mm on the endocardium and $1.05 \pm 0.18$~mm on the epicardium,
 so an average point of the reconstructed surface lies about one millimetre from
 the reference. This is finer than the in-plane pixel size of the source images,
 which is between $1.37$ and $1.88$~mm.
-
-The HD95 gives the error in the worst region. It is $3.30 \pm 0.91$~mm on the
-endocardium and $3.47 \pm 1.41$~mm on the epicardium, about three times the
-corresponding mean. The difference between Chamfer distance and HD95 indicates
-that larger errors are concentrated within the upper tail of the
-surface-distance distribution. The larger standard deviation on the epicardium
-shows that this region varies more from patient to patient on the outer surface.
 
 The Dice score gives the share of the enclosed volume that is recovered. It is
 $0.93 \pm 0.02$ for the cavity and $0.85 \pm 0.02$ for the myocardium. The
@@ -194,22 +181,18 @@ consistently about $8\%$ too small. The Chamfer distance cannot show this,
 because it would report the same sub-millimetre error for a uniform inward shift
 as for random noise of the same size.
 
-The normal consistency shows whether the surface faces the right way. It is
-$0.87 \pm 0.05$. A value close to one means the reconstructed normals follow the
-local orientation of the reference, so the small distances above come from a
-smooth surface lying along the reference rather than from a rough one crossing
-it. Every endocardial and epicardial reconstruction in the cohort also closes
-into a manifold, a watertight rate of $100\%$ on both surfaces after the repair
-stage. This is what makes the enclosed volumes well defined, and therefore what
-makes the volume ratios meaningful.
+Every endocardial and epicardial reconstruction in the cohort also closes into a
+manifold, a watertight rate of $100\%$ on both surfaces after the repair stage.
+This makes the enclosed volumes well defined and therefore makes the volume
+ratios meaningful.
 
 Splitting the cohort by group shows that the reconstruction degrades only mildly
 on the abnormal ventricles. The endocardial Chamfer distance is $1.12$~mm on the
-normal cases and $1.43$~mm on the hypertrophic ones, the endocardial HD95 rises
-from $2.89$ to $4.12$~mm, and the endocardial Dice falls from $0.94$ to $0.91$.
+normal cases and $1.43$~mm on the hypertrophic ones, and the endocardial Dice
+falls from $0.94$ to $0.91$.
 The myocardial Dice is slightly higher on the HCM group ($0.87$ against $0.84$),
-because a thicker wall is easier to overlap. The clearest group effect is in the
-normal consistency, which falls from $0.89$ to $0.83$, consistent with the more
+because a thicker wall is easier to overlap. The remaining differences are
+consistent with the more
 irregular wall geometry of the hypertrophic cases.
 
 \Cref{fig:recon-ed-es-meshes} shows the reconstructed endocardial and
@@ -244,26 +227,22 @@ mask.
   \centering
   \caption{Reconstruction quality of the final model over the
     $30$-patient evaluation cohort at end-diastole, reported as mean $\pm$
-    standard deviation across patients. The five metrics cover, in order, the
-    typical surface error, the worst-case surface error, the volumetric overlap,
-    the systematic volume bias and the agreement in local orientation. Distances
-    are in millimetres; the Dice similarity coefficient, the volume ratio and the
-    normal consistency are dimensionless. Every reconstruction in the cohort is
-    watertight on both surfaces.}
+    standard deviation across patients. The three metrics report the typical
+    surface error, volumetric overlap, and systematic volume bias. Distances are
+    in millimetres; the Dice similarity coefficient and the volume ratio are
+    dimensionless. Every reconstruction in the cohort is watertight on both
+    surfaces.}
   \label{tab:reconstruction-quality}
   \begin{tabular}{l c c}
     \toprule
     Metric & Endocardium & Epicardium \\
     \midrule
     Chamfer distance (mm) & $1.22 \pm 0.21$ & $1.05 \pm 0.18$ \\
-    HD95 (mm)             & $3.30 \pm 0.91$ & $3.47 \pm 1.41$ \\
     Volume ratio          & $0.92 \pm 0.03$ & $1.00 \pm 0.03$ \\
     \midrule
                           & Cavity & Myocardium \\
     \cmidrule(lr){2-2} \cmidrule(lr){3-3}
     Dice similarity coefficient & $0.93 \pm 0.02$ & $0.85 \pm 0.02$ \\
-    \midrule
-    Normal consistency    & \multicolumn{2}{c}{$0.87 \pm 0.05$} \\
     \bottomrule
   \end{tabular}
 \end{table}

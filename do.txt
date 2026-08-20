@@ -1,5 +1,5 @@
 what needs changing:
-figure 4.2 - use the watertight version and also add the "segmentation true mesh" to the figure.
+figure 4.2 - use the watertight version and also add the "voxel true mesh" to the figure.
 
 table 4.1 - choose the 3 best values metrics and keep only these top 3
 
@@ -7,9 +7,9 @@ figure 4.3 - take out the title of the image and update the values with the new 
 
 table 4.3 -  maybe had the laplace too???
 
-figure 4.5 - don the (a) make it the mesh with colour map but of the actual difference of thickness and separate each of the 17 segments with a black line then pass it to the (b) aha-17 with the new values.
+figure 4.5 - on the (a), make it so the mesh with colour map has of the actual difference of thickness of the two phases, and separate each of the 17 segments with a black line on the 3d mesh, then pass it to the (b) aha-17 with the new values.
 
 USE THE NEW MODEL FOR THIS
 
 
-E FALTA A PARTE DE REPETIÇÃO SOBRE A DATA NA METODOLOGIA.
+E FALTA A PARTE DE REPETIÇÃO SOBRE os dados NA METODOLOGIA.
