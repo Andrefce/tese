@@ -57,6 +57,12 @@ COL_EPI = "#b8c6d6"
 # grid floor, which leaves a frayed open boundary.
 GRID_RES = 112
 BBOX_PAD = 0.55
+# Voxel pitch of the Laplace solve, matching the cohort pipeline.
+LAPLACE_PITCH_MM = 1.0
+# Completed-cohort meshes, used by --cohort when the patient002 cache is absent.
+COHORT_CACHE = ROOT / "test-new-model" / "cohort_full_nor_hcm10" / "cache"
+COHORT_PATIENT = "patient071"
+DATA_ROOT = ROOT / "notebooks" / "data" / "training"
 
 
 def load_cases(refresh: bool = False) -> tuple[dict, dict]:
@@ -331,7 +337,7 @@ def _shade(vertices: np.ndarray, faces: np.ndarray) -> np.ndarray:
     return 0.50 + 0.50 * np.abs(shading_normals @ light_direction)
 
 
-def _draw_surface(ax, layers, value_norm=None):
+def _draw_surface(ax, layers, value_norm=None, black_faces=None):
     """Draw one or more surfaces as a single depth-sorted collection.
 
     Merging the layers into one ``Poly3DCollection`` is what makes a translucent
@@ -349,6 +355,9 @@ def _draw_surface(ax, layers, value_norm=None):
             rgba = plt.get_cmap(CMAP)(value_norm(colour[faces].mean(axis=1)))
         rgba[:, :3] = np.clip(rgba[:, :3] * (0.68 + 0.32 * light[:, None]), 0.0, 1.0)
         rgba[:, 3] = alpha
+        # Painted into the same collection so the lines depth-sort with the mesh.
+        if black_faces is not None and not isinstance(colour, str):
+            rgba[black_faces] = (0.0, 0.0, 0.0, alpha)
         triangles.append(vertices[faces])
         facecolors.append(rgba)
         drawn.append(vertices)
@@ -403,32 +412,226 @@ def make_thickness_3d(cases, norm) -> Path:
     return output
 
 
-def make_aha17(case) -> tuple[Path, dict[int, float]]:
+def _smooth_over_neighbours(values: np.ndarray, faces: np.ndarray,
+                            iterations: int = 25) -> np.ndarray:
+    """Average each vertex with its mesh neighbours.
+
+    Per-vertex streamline thickness is noisy enough to speckle a continuous
+    colour map. This is applied to the drawn field only; the reported segment
+    statistics stay on the raw values.
+    """
+    edges = np.vstack([faces[:, [0, 1]], faces[:, [1, 2]], faces[:, [2, 0]]])
+    edges = np.vstack([edges, edges[:, ::-1]])
+    degree = np.bincount(edges[:, 0], minlength=len(values)).astype(np.float64)
+    smoothed = np.asarray(values, np.float64).copy()
+    for _ in range(iterations):
+        total = np.bincount(edges[:, 0], weights=smoothed[edges[:, 1]],
+                            minlength=len(smoothed))
+        smoothed = np.where(degree > 0, total / np.maximum(degree, 1.0), smoothed)
+    return smoothed
+
+
+def _boundary_faces(faces: np.ndarray, ids: np.ndarray) -> np.ndarray:
+    """Faces spanning two AHA segments, painted black to separate the regions."""
+    labels = ids[faces]
+    return (labels[:, 0] != labels[:, 1]) | (labels[:, 1] != labels[:, 2])
+
+
+def _laplace_thickness(case) -> np.ndarray:
+    """Per-vertex Laplace-field wall thickness between the two reconstructed surfaces.
+
+    This is the same estimator the cohort pipeline reports, applied here to the
+    endocardial and epicardial surfaces of this case, so the figure shows a
+    measured transmural thickness rather than the decoder's wall offset.
+    """
+    sys.path.insert(0, str(ROOT / "scripts" / "eval_demo"))
+    import trimesh  # noqa: PLC0415
+    import thickness as tk  # noqa: PLC0415
+    from geometry import enforce_nesting, outward_normals  # noqa: PLC0415
+
+    endo = trimesh.Trimesh(np.asarray(case["endo_v"], np.float64),
+                           np.asarray(case["endo_f"], np.int64), process=False)
+    epi = trimesh.Trimesh(np.asarray(case["epi_v"], np.float64),
+                          np.asarray(case["epi_f"], np.int64), process=False)
+    endo, _ = enforce_nesting(endo, epi)
+    vertices = np.asarray(endo.vertices, np.float64)
+    normals = outward_normals(endo, np.asarray(epi.vertices, np.float64))
+    context = tk.build_volume_context(endo, epi, LAPLACE_PITCH_MM)
+    potential, _ = tk.solve_laplace(context)
+    return np.asarray(
+        tk.method_laplace_streamline(context, vertices, normals, potential).values,
+        dtype=np.float64)
+
+
+
+
+def load_cohort_case(patient: str = COHORT_PATIENT, phase: str = "ED") -> dict:
+    """Endo/epi surfaces of one cohort case, read from the cached watertight PLYs."""
+    import trimesh  # noqa: PLC0415
+
+    surfaces = {
+        name: trimesh.load(COHORT_CACHE / f"{patient}_{phase}_model_{name}.ply",
+                           process=False)
+        for name in ("endo", "epi")
+    }
+    return {
+        "endo_v": np.asarray(surfaces["endo"].vertices, np.float64),
+        "endo_f": np.asarray(surfaces["endo"].faces, np.int64),
+        "epi_v": np.asarray(surfaces["epi"].vertices, np.float64),
+        "epi_f": np.asarray(surfaces["epi"].faces, np.int64),
+    }
+
+
+def cohort_frame(case: dict, patient: str = COHORT_PATIENT,
+                 phase: str = "ED") -> tuple[np.ndarray, np.ndarray]:
+    """AHA ids and the valid long-axis band, as ``run_cohort`` computes them.
+
+    Base/apex ordering and the septal reference come from the label mask, and the
+    band drops the basal and apical rims where the cut planes thin the wall, so
+    the segment means reproduce the stored cohort table.
+    """
+    sys.path.insert(0, str(ROOT / "scripts" / "eval_demo"))
+    import trimesh  # noqa: PLC0415
+    from geometry import (  # noqa: PLC0415
+        assign_aha17, load_segmentation, long_axis_frame, read_info_cfg,
+    )
+    from run_cohort import VALID_LONG_AXIS_BAND, find_frame  # noqa: PLC0415
+
+    patient_dir = DATA_ROOT / patient
+    info = read_info_cfg(patient_dir / "Info.cfg")
+    seg = load_segmentation(find_frame(patient_dir, patient, int(info[phase])))
+    endo = trimesh.Trimesh(case["endo_v"], case["endo_f"], process=False)
+    frame = long_axis_frame(endo, seg)
+    vertices = np.asarray(case["endo_v"], np.float64)
+    along = np.clip((vertices[:, 2] - frame["base_z"]) /
+                    (frame["apex_z"] - frame["base_z"]), 0.0, 1.0)
+    band = ((along >= VALID_LONG_AXIS_BAND[0]) & (along <= VALID_LONG_AXIS_BAND[1]))
+    return assign_aha17(vertices, frame), band
+
+
+def _autocrop(image: np.ndarray, pad: int = 8) -> np.ndarray:
+    """Trim the white margin left by the offscreen renderer."""
+    mask = (image[:, :, :3] < 248).any(axis=2)
+    if not mask.any():
+        return image
+    rows, cols = np.where(mask)
+    return image[max(0, rows.min() - pad):rows.max() + pad,
+                 max(0, cols.min() - pad):cols.max() + pad]
+
+
+def _open_basal_cap(surface, flatness: float = 0.80, top_fraction: float = 0.12):
+    """Drop the flat lid the watertight repair leaves at the valve plane."""
+    oriented = surface.compute_normals(cell_normals=True, point_normals=False,
+                                       auto_orient_normals=True)
+    normals = np.asarray(oriented.cell_normals)
+    centres = np.asarray(oriented.cell_centers().points)
+    height = float(np.ptp(np.asarray(surface.points)[:, 2]))
+    ceiling = float(np.asarray(surface.points)[:, 2].max()) - top_fraction * height
+    lid = (np.abs(normals[:, 2]) > flatness) & (centres[:, 2] > ceiling)
+    if not lid.any():
+        return surface
+    return oriented.extract_cells(np.flatnonzero(~lid)).extract_surface()
+
+
+def _render_segmented_surface(vertices: np.ndarray, faces: np.ndarray,
+                              values: np.ndarray, ids: np.ndarray,
+                              norm: colors.Normalize) -> np.ndarray:
+    """Render the segmented surface with VTK.
+
+    Matplotlib's 3D axes have no depth buffer, so the mesh reads flat and the
+    segment boundaries bleed through from the far side. VTK z-buffers both, and
+    ambient occlusion gives the wall its shape.
+    """
+    import pyvista as pv  # noqa: PLC0415
+
+    pv.OFF_SCREEN = True
+    cells = np.hstack([np.full((len(faces), 1), 3, np.int64),
+                       np.asarray(faces, np.int64)]).ravel()
+    surface = pv.PolyData(np.asarray(vertices, np.float32), cells)
+    surface["thickness"] = np.asarray(values, np.float32)
+    surface["segment"] = np.asarray(ids, np.int32)
+    # Volume-preserving smoothing: takes the marching-cubes staircase off both the
+    # surface and the segment boundaries that follow its triangle edges.
+    smoothed = surface.smooth_taubin(n_iter=40, pass_band=0.05,
+                                     normalize_coordinates=True)
+    if smoothed.n_points == surface.n_points:
+        surface = smoothed
+    surface = _open_basal_cap(surface)
+    points = np.asarray(surface.points, np.float32)
+    segment = np.asarray(surface["segment"], np.int64)
+    triangles = surface.faces.reshape(-1, 4)[:, 1:]
+
+    plotter = pv.Plotter(off_screen=True, window_size=(1500, 1600))
+    plotter.set_background("white")
+    plotter.add_mesh(surface, scalars="thickness", cmap=CMAP,
+                     clim=(norm.vmin, norm.vmax), smooth_shading=True,
+                     specular=0.25, specular_power=16, ambient=0.30, diffuse=0.90,
+                     show_scalar_bar=False)
+
+    boundary = {(min(int(a), int(b)), max(int(a), int(b)))
+                for triangle in triangles
+                for a, b in ((triangle[0], triangle[1]), (triangle[1], triangle[2]),
+                             (triangle[2], triangle[0]))
+                if segment[a] != segment[b]}
+    if boundary:
+        edges = np.asarray(sorted(boundary), np.int64)
+        lines = np.hstack([np.full((len(edges), 1), 2, np.int64), edges]).ravel()
+        plotter.add_mesh(pv.PolyData(points, lines=lines),
+                         color="black", line_width=2, render_lines_as_tubes=True)
+
+    plotter.view_vector((1.1, -1.9, 0.55), viewup=(0.0, 0.0, 1.0))
+    plotter.camera.zoom(0.92)
+    for enable in (lambda: plotter.enable_ssao(radius=6.0),
+                   lambda: plotter.enable_anti_aliasing("ssaa")):
+        try:
+            enable()
+        except Exception:                                    # noqa: BLE001
+            pass
+    image = plotter.screenshot(return_img=True)
+    plotter.close()
+    return _autocrop(np.asarray(image))
+
+
+def make_aha17(case, ids: np.ndarray | None = None,
+               band: np.ndarray | None = None) -> tuple[Path, dict[int, float]]:
     """Reconstructed surface cut into AHA-17 segments beside its bullseye."""
-    vertices, faces, thickness = case["endo_v"], case["endo_f"], case["thickness"]
+    vertices, faces = case["endo_v"], case["endo_f"]
+    thickness = _laplace_thickness(case)
+    if band is not None:
+        thickness = np.where(band, thickness, np.nan)
     centred = _centred(vertices)
-    ids = aha_segment_ids(centred)
+    if ids is None:
+        ids = aha_segment_ids(centred)
+    # The cached meshes may hold the apex at either end of z; draw it downwards.
+    if centred[ids == 17, 2].mean() > centred[np.isin(ids, range(1, 7)), 2].mean():
+        centred = centred.copy()
+        centred[:, 2] *= -1.0
+    finite = np.isfinite(thickness)
     segment_values = {
-        sid: float(np.mean(thickness[ids == sid])) if np.any(ids == sid)
-        else float(np.mean(thickness))
+        sid: float(thickness[(ids == sid) & finite].mean())
+        if np.any((ids == sid) & finite) else float(thickness[finite].mean())
         for sid in range(1, 18)
     }
-    per_vertex = np.array([segment_values[int(sid)] for sid in ids], dtype=np.float32)
-    # Own colour range: the segment means span a narrower band than the
-    # per-vertex thickness, so reusing that scale would flatten the regional
-    # contrast the bullseye is meant to show.
-    norm = colors.Normalize(vmin=float(np.floor(min(segment_values.values()) * 2) / 2),
-                            vmax=float(np.ceil(max(segment_values.values()) * 2) / 2))
+    # Panel (a) shows the continuous per-vertex field, so thickness fades across a
+    # border instead of stepping at it; the black lines only delimit the regions.
+    # Rim vertices outside the valid band fall back to their segment mean.
+    fallback = np.array([segment_values[int(sid)] for sid in ids], dtype=np.float32)
+    per_vertex = _smooth_over_neighbours(np.where(finite, thickness, fallback),
+                                         np.asarray(faces, np.int64)).astype(np.float32)
+    # Range from the field itself, clipped to the 5th-95th percentile so a few
+    # extreme vertices do not flatten the gradient everywhere else.
+    norm = colors.Normalize(
+        vmin=float(np.floor(np.percentile(thickness[finite], 5))),
+        vmax=float(np.ceil(np.percentile(thickness[finite], 95))))
 
     fig = plt.figure(figsize=(7.2, 3.9), facecolor="white")
-    ax0 = fig.add_axes([0.00, 0.10, 0.40, 0.86], projection="3d")
-    _draw_surface(ax0, [(centred, faces, per_vertex, 0.98)], value_norm=norm)
-    ax0.view_init(elev=18, azim=-62)
-    ax0.set_box_aspect((1.0, 1.0, 1.0), zoom=1.15)
+    ax0 = fig.add_axes([0.045, 0.20, 0.31, 0.65])
+    ax0.imshow(_render_segmented_surface(centred, faces, per_vertex, ids, norm))
+    ax0.set_axis_off()
 
     ax1 = fig.add_axes([0.44, 0.10, 0.44, 0.86])
     draw_aha17(ax1, segment_values, norm)
-    for x_pos, text in [(0.20, "(a) Reconstructed surface, per-segment mean"),
+    for x_pos, text in [(0.20, "(a) Reconstructed surface, local wall thickness"),
                         (0.66, "(b) Unrolled AHA-17 bullseye")]:
         fig.text(x_pos, 0.955, text, ha="center", va="center", fontsize=8.0,
                  style="italic", color="#333333")
@@ -449,7 +652,7 @@ def make_aha17(case) -> tuple[Path, dict[int, float]]:
     colorbar_axis = fig.add_axes([0.90, 0.24, 0.022, 0.56])
     mappable = plt.cm.ScalarMappable(norm=norm, cmap=CMAP)
     colorbar = fig.colorbar(mappable, cax=colorbar_axis, orientation="vertical")
-    colorbar.set_label("Mean calibrated analytic offset (mm)", fontsize=6.6, labelpad=2)
+    colorbar.set_label("Mean wall thickness, Laplace field (mm)", fontsize=6.6, labelpad=2)
     colorbar.ax.tick_params(labelsize=5.8, length=2)
 
     output = OUT_DIR / "results_recon_aha17.png"
@@ -494,6 +697,14 @@ def make_ed_es_meshes(cases) -> Path:
 
 def main() -> None:
     OUT_DIR.mkdir(exist_ok=True)
+    if "--cohort" in sys.argv[1:]:
+        case = load_cohort_case()
+        ids, band = cohort_frame(case)
+        output, segment_values = make_aha17(case, ids=ids, band=band)
+        for sid in range(1, 18):
+            print(f"  AHA {sid:2d}: {segment_values[sid]:.2f} mm")
+        print("wrote", output.relative_to(ROOT), f"from {COHORT_PATIENT}")
+        return
     ed, es = load_cases(refresh="--refresh" in sys.argv[1:])
     for label, case in (("ED", ed), ("ES", es)):
         thickness = case["thickness"]

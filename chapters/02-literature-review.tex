@@ -25,9 +25,10 @@ results.
 \noindent
 The search was conducted across three major bibliographic databases: Scopus,
 PubMed, and IEEE Xplore, supplemented by Google Scholar for citation chaining.
-The temporal scope covered publications from 2000 to 2026, prioritising work
-from the last decade while retaining foundational methods essential for
-theoretical context.
+The review includes foundational publications from 2000 onwards and selected
+studies available up to 2026. It prioritises work from the last decade while
+retaining methods essential for theoretical context. The review is selective and
+does not claim exhaustive coverage of the literature published through 2026.
 
 Search terms were grouped into four thematic categories and combined using
 Boolean operators. The first category covered anatomy and imaging terms
@@ -166,7 +167,8 @@ corpus of 35 publications.
     at ([xshift=-1.4cm]$(qualify.west)!0.5!(included.west)$)
     {Inclusion};
 \end{tikzpicture}
-\caption{PRISMA flow diagram summarising the literature selection process.}
+\caption[PRISMA literature-selection flow diagram]{PRISMA flow diagram
+summarising the literature selection process.}
 \label{fig:prisma-flow}
 \end{figure}
 
@@ -218,10 +220,9 @@ segmentation and diagnosis. The dataset comprises 100 patients distributed acros
 five clinical groups: normal, dilated cardiomyopathy (DCM), hypertrophic
 cardiomyopathy (HCM), abnormal right ventricle, and myocardial infarction with
 altered LV ejection fraction. Each case includes expert delineations at ED and
-ES. The challenge reported that top-performing deep learning
-methods achieved mean Dice scores exceeding 0.93 for the LV cavity and 0.89
-for the myocardium, demonstrating that automated segmentation had reached
-expert-level performance for standard acquisitions. The images and their expert
+ES. The challenge reported that top-performing deep learning methods achieved
+high overlap with expert segmentations for both the LV cavity and myocardium,
+indicating strong performance on the benchmark data. The images and their expert
 labels remain openly available for research at no cost, after a free
 registration and on the condition that the challenge paper is cited.
 
@@ -267,9 +268,10 @@ aligned via Procrustes analysis, averaged into a mean shape $\bar{x}$, and
 decomposed via PCA into principal modes $\Phi$. A new shape is generated as
 $x = \bar{x} + \Phi\,b$, where $b$ are shape parameters constrained within
 $\pm 3\sigma$ of each eigenvalue to remain anatomically plausible. In their
-experiments on hand and face contours, \textcite{cootes1995asm} showed that the
-first 5--10 modes captured over 95\% of population variance, demonstrating the
-efficiency of the linear representation.
+experiments on hand and face contours, \textcite{cootes1995asm} showed that a
+small number of principal modes can describe substantial population variation.
+The number of modes required depends on the anatomy, the cohort, and the
+correspondence method.
 
 \textcite{heimann2009ssmreview} surveyed over 100 studies applying SSMs to
 medical image segmentation and identified the cardiac domain as particularly
@@ -334,8 +336,8 @@ real subjects.
 
 \noindent
 Classical reconstruction methods interpolate between segmented SAX slices using
-splines or deformable surfaces, but cannot recover geometric detail between
-slices, particularly near the apex and base
+splines or deformable surfaces. Their result depends on the sampled contours and
+the assumptions imposed between slices, particularly near the apex and base
 \parencite{petitjean2011segmentationreview,heimann2009ssmreview}.
 \textcite{petitjean2011segmentationreview} noted that linear interpolation
 between contours produces visible staircase artefacts and fails to reproduce the
@@ -392,6 +394,18 @@ Cubes algorithm \parencite{lorensen1987marchingcubes}, which generates a
 watertight triangulated mesh from the zero-crossing of the implicit field on a
 regular grid.
 
+Recent cardiac work shows why implicit representations are useful when MRI
+slices are far apart. In a SAX scan, the detailed shape of the ventricle is
+observed within each slice, but less information is available between slices.
+\textcite{bras2026anisotropy} addressed this anisotropy problem with a neural
+implicit representation that reconstructs the left and right ventricles,
+including the endocardial and epicardial boundaries of the LV myocardium. The
+study is closely related to the problem considered here because both approaches
+seek a continuous cardiac shape from incomplete three-dimensional observations.
+However, Br{\'a}s et al. use MRI image data as input, whereas this thesis uses
+segmented contour points. This difference matters because contour points retain
+the boundary information while discarding image intensity information.
+
 Two techniques are critical for applying INRs to thin cardiac structures where
 high-frequency geometric detail must be preserved. \textcite{tancik2020fourierfeatures}
 demonstrated that standard MLPs exhibit spectral bias --- they preferentially
@@ -406,6 +420,28 @@ training produces valid distance fields without requiring ground-truth SDF value
 at every point. Their approach enables training from raw point clouds alone,
 which is particularly relevant when dense SDF supervision is expensive to
 compute.
+
+INRs have also been used to reconstruct dynamic cardiac MRI. In cine MRI, the
+heart changes shape during the cardiac cycle and the acquired data can also be
+affected by respiratory motion. A useful reconstruction method must therefore
+represent both space and time. \textcite{kunz2024fourierinr} used a
+Fourier-feature INR as a patient-specific model for free-breathing cine MRI.
+Their approach fits the acquired measurements from one scan, instead of relying
+only on a model trained in advance. \textcite{quillien2025sensorfree} showed
+that cardiac and respiratory motion estimated without external sensors can guide
+INR-based cine reconstruction. This is relevant to clinical imaging because it
+can reduce the reliance on ECG leads and respiratory devices.
+
+Other recent methods recover complete dynamic volumes from two-dimensional
+data. \textcite{wang2025dvrnemf} combined synchronised 2D acquisitions and
+physiological signals to reconstruct temporally consistent 3D cardiac volumes.
+Similarly, \textcite{tian2026mocoinr} combined image reconstruction with an
+explicit model of cardiac motion. These approaches show that continuous and
+phase-aware representations can make incomplete dynamic data more coherent over
+time. Their output, however, is an image sequence or volume rather than a pair
+of explicit endocardial and epicardial surfaces. They also do not focus on
+deriving a myocardial wall-thickness map from the reconstructed anatomy. These
+differences define the more specific contribution of the present work.
 
 For encoding unordered input observations such as SAX contour points, the
 PointNet architecture \parencite{qi2017pointnet} provides a
@@ -440,8 +476,8 @@ five families of measurement methods, each with distinct trade-offs.
 
 The simplest approach uses nearest-neighbour distance: for each endocardial
 vertex, a KD-tree identifies the closest epicardial point, yielding a
-measurement in $O(N \log M)$ time. While computationally trivial (under 1~ms
-for typical cardiac meshes), this method provides only a lower bound on the true
+measurement in $O(N \log M)$ time. Its runtime depends on mesh size and the
+implementation. This method can provide a lower bound on the true
 transmural thickness because it ignores the anatomical direction of measurement
 --- the nearest point may lie tangentially rather than across the wall.
 
@@ -459,10 +495,10 @@ Volumetric methods operate on voxelised representations. The Euclidean Distance
 Transform (EDT) computes, for each myocardial voxel, the distance to the nearest
 boundary, and the sum of the endocardial and epicardial distance fields
 approximates local thickness ($t = D_{\mathrm{endo}} + D_{\mathrm{epi}}$). This
-estimate is exact for planar parallel boundaries and overestimates by
-approximately 5--10\% for the curvatures typical of the LV mid-wall. The method
-is computationally efficient ($O(V)$ via the Saito--Toriwaki algorithm) but
-limited by voxel resolution.
+estimate is exact for planar parallel boundaries but can be biased in curved
+regions because the nearest-boundary directions do not necessarily follow a
+common transmural path. The method is computationally efficient ($O(V)$ via the
+Saito--Toriwaki algorithm) but limited by voxel resolution.
 
 PDE-based methods are widely used for transmural thickness estimation.
 \textcite{jones2000laplace} solved Laplace's equation between the two tissue

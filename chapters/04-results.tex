@@ -137,7 +137,7 @@ by the Eikonal term.
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{training_curves}
-  \caption{Fine-tuning history. Panels (a)--(d) show the total loss
+  \caption[Fine-tuning history]{Fine-tuning history. Panels (a)--(d) show the total loss
     and its surface, Eikonal, and off-surface components for the training and
     validation splits; the dashed vertical line marks the best epoch. Panels
     (e)--(f) show the mean field gradient norm, whose target is one, and the
@@ -195,21 +195,10 @@ because a thicker wall is easier to overlap. The remaining differences are
 consistent with the more
 irregular wall geometry of the hypertrophic cases.
 
-\Cref{fig:recon-ed-es-meshes} shows the reconstructed endocardial and
-epicardial surfaces for one normal case at both cardiac phases, beside the
-geometry derived from the same segmentation. The
-end-systolic cavity is visibly smaller than the end-diastolic one, and the
-surrounding wall correspondingly thicker. This shows that the pipeline
-reconstructs the expected phase-dependent change. Both reconstructed surfaces are zero-level sets of
-the same continuous field rather than stacks of per-slice contours, and the
-comparison with the segmentation-derived surfaces shows that the reconstruction
-recovers the same overall shape while smoothing the voxel staircase of the label
-mask.
-
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{results_recon_ed_es}
-  \caption{Reconstructed and segmentation-derived left-ventricular surfaces at
+  \caption[Reconstructed and segmentation-derived LV surfaces]{Reconstructed and segmentation-derived left-ventricular surfaces at
     both cardiac phases, for one normal case of the evaluation cohort. Panels~(a)
     and~(c) show the reconstruction, panels~(b) and~(d) the geometry derived from
     the same segmentation. The opaque red surface is the endocardium and the
@@ -223,9 +212,20 @@ mask.
   \label{fig:recon-ed-es-meshes}
 \end{figure}
 
+\Cref{fig:recon-ed-es-meshes} shows the reconstructed endocardial and
+epicardial surfaces for one normal case at both cardiac phases, beside the
+geometry derived from the same segmentation. The
+end-systolic cavity is visibly smaller than the end-diastolic one, and the
+surrounding wall correspondingly thicker. This shows that the pipeline
+reconstructs the expected phase-dependent change. Both reconstructed surfaces are zero-level sets of
+the same continuous field rather than stacks of per-slice contours, and the
+comparison with the segmentation-derived surfaces shows that the reconstruction
+recovers the same overall shape while smoothing the voxel staircase of the label
+mask.
+
 \begin{table}[H]
   \centering
-  \caption{Reconstruction quality of the final model over the
+  \caption[Reconstruction quality of the final model]{Reconstruction quality of the final model over the
     $30$-patient evaluation cohort at end-diastole, reported as mean $\pm$
     standard deviation across patients. The three metrics report the typical
     surface error, volumetric overlap, and systematic volume bias. Distances are
@@ -273,7 +273,7 @@ the noisiest of the four.
 
 \begin{table}[H]
   \centering
-  \caption{Wall-thickness statistics at end-diastole over the $30$-patient
+  \caption[End-diastolic wall-thickness statistics]{Wall-thickness statistics at end-diastole over the $30$-patient
       evaluation cohort. Each entry is the cohort average of the corresponding
       per-patient statistic, in millimetres, before any calibration. ``Voxel''
       denotes measurements on geometry derived from the input segmentation; it is
@@ -334,10 +334,13 @@ field sits with the two other field-based methods rather than with the outlier.
 No claim is made that it is closer to true anatomy, because no independent
 measurement of the anatomy exists for these patients.
 
-\begin{figure}[H]
+\Cref{fig:wall-thickness-comparison} summarises the relative magnitude and
+dispersion of the four methods on the reconstructed geometry.
+
+\begin{figure}[!htbp]
   \centering
   \includegraphics[width=0.9\textwidth]{wall_thickness_methods_comparison}
-  \caption{Mean wall thickness of the four selected methods on the reconstructed
+  \caption[Wall-thickness comparison across methods]{Mean wall thickness of the four selected methods on the reconstructed
     LV geometry, with whiskers spanning the 5th to 95th percentile. The dashed
     line marks the anchor value measured directly on the input label mask.}
   \label{fig:wall-thickness-comparison}
@@ -360,7 +363,7 @@ of the input SAX slices, where the field is interpolated between observations.
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{results_recon_thickness_3d}
-  \caption{Calibrated analytic offset map on the reconstructed endocardial
+  \caption[Calibrated decoder offset map]{Calibrated analytic offset map on the reconstructed endocardial
     surface of one representative case from the ACDC cohort, at end-diastole
     (top) and end-systole (bottom), each seen from two opposing viewpoints.
     Every vertex is coloured by the decoder wall offset evaluated at that point,
@@ -382,7 +385,7 @@ visualisation; it does not provide the values used for the AHA-17 analysis.
 
 \begin{table}[H]
   \centering
-  \caption{Agreement of each wall-thickness method with the Laplace field, over
+  \caption[Wall-thickness-method agreement with Laplace]{Agreement of each wall-thickness method with the Laplace field, over
     the myocardial surface points of the $30$ patients at end-diastole on the
     reconstructed geometry. MAE, RMSE, bias and the 95\% limits of agreement
     (LoA) are in millimetres; the Pearson correlation $r$ and the intraclass
@@ -409,76 +412,101 @@ partitioned into the seventeen segments of the American Heart Association (AHA)
 model, assigning each myocardial vertex to a basal, mid-cavity, apical, or
 apical-cap segment from its normalised long-axis height and its circumferential
 angle relative to the right-ventricular insertion.
-\Cref{fig:aha17-bullseye} shows the partition applied to the reconstructed
-geometry of the representative case together with a bullseye of the calibrated
-decoder offset. \Cref{tab:aha17-thickening} instead reports, for every segment,
-the Laplace-derived end-diastolic and end-systolic wall thickness on the reconstructed model,
-separately for the normal and the hypertrophic patients, together with the
-relative wall thickening between the two phases. The values are
-measured with the Laplace field, for the reasons given in
-\cref{subsec:wall-thickness-results}. Splitting the table by group is what makes
-it possible to see whether the model reacts to an abnormal ventricle or simply
-reproduces an average one.
-
-The regional pattern is anatomically consistent in both groups. In the normal
-cases the end-diastolic thickness varies little around the base and the
-mid-cavity, from $7.92$ to $8.81$~mm, and tapers towards the apex, where the
-apical cap at $6.80$~mm is the thinnest region. Every segment thickens from
-end-diastole to end-systole, and the thickening is graded along the long axis:
-the apical segments thicken by $52\%$ to $64\%$, the mid-cavity segments by
-$51\%$ to $64\%$ and the basal segments by $37\%$ to $61\%$. Over the normal
-group the mean thickness rises from $7.99$~mm to $12.21$~mm, a thickening of
-$52.9\%$.
-
-The hypertrophic group is thicker everywhere, which is the effect the comparison
-was designed to expose. Its cohort-average end-diastolic thickness is
-$11.66$~mm against $7.99$~mm in the normal group, a difference of $3.67$~mm, and
-every one of the seventeen segments is thicker than its normal counterpart. The
-difference is largest in the septal and anteroseptal mid-cavity segments, where
-the wall reaches $13.99$ and $13.43$~mm against $8.55$ and $8.57$~mm in the
-normal group, which is the septal-dominant pattern typical of hypertrophic
-cardiomyopathy. The reconstructed measurements show descriptive separation
-between the two groups in this cohort.
-
-Systolic thickening behaves differently from absolute thickness. The
-hypertrophic group thickens by $47.8\%$ against $52.9\%$ in the normal group, so
-the two groups are much closer in relative terms than in absolute ones. This is
-consistent with hypertrophic myocardium being thicker at rest without
-contracting proportionally more. Taking the thickest segment of each patient as
-a simple severity index, the normal cases reach $9.07$~mm on average and none
-exceeds the $15$~mm clinical threshold, whereas the hypertrophic cases reach
-$14.44$~mm and three of the ten exceed it. The direction of the effect is
-therefore correct, but the reconstruction still under-states the most extreme
-walls, so this must not be read as a diagnostic result.
-
-One property of this analysis should be stated explicitly. Each patient
-contributes seventeen segment values, so the segment observations are not
-independent of one another. Segments from the same heart share the same
-reconstruction, the same input contours and the same anatomy. For this reason
-the segment values are used as a descriptive regional summary, and the group
-comparisons above are made at the patient level, where each patient counts once.
-The segment-level numbers should not be treated as if they came from independent
-observations.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{results_recon_aha17}
-  \caption{AHA 17-segment analysis of the reconstructed left-ventricular
+  \caption[AHA 17-segment wall-thickness analysis]{AHA 17-segment analysis of the reconstructed left-ventricular
     geometry at end-diastole for the representative case. Panel~(a) shows the
     reconstructed surface partitioned into the seventeen segments, each coloured
-    by its mean calibrated analytic offset, as in
-    \cref{fig:recon-thickness-3d}; panel~(b) unrolls the same offset values onto
-    the standard bullseye, where basal segments form the outer ring (1--6),
-    mid-cavity segments the middle ring (7--12), apical segments the inner ring
-    (13--16), and the apical cap the centre (17). The two panels share the
-    colour scale, so the bullseye is a flattening of the geometry beside it
-    rather than an independent summary.}
+    by its mean wall thickness measured with the Laplace field method and
+    separated from its neighbours by a black boundary line; panel~(b) unrolls
+    the same segment values onto the standard bullseye, where basal segments
+    form the outer ring (1--6), mid-cavity segments the middle ring (7--12),
+    apical segments the inner ring (13--16), and the apical cap the centre
+    (17). The two panels share the colour scale, so the bullseye is a
+    flattening of the geometry beside it rather than an independent summary.}
   \label{fig:aha17-bullseye}
 \end{figure}
 
+\Cref{fig:aha17-bullseye} shows the partition applied to the reconstructed
+geometry of the representative case together with a bullseye of the
+Laplace-derived wall thickness. The regional results are then read in two steps.
+
+\Cref{tab:aha17-model-voxel} first compares the reconstruction with the
+voxel-based geometry over the whole cohort, which shows how far the regional
+pattern depends on the reconstruction at all. \Cref{tab:aha17-thickening} then
+reports the reconstruction alone, split into the normal and the hypertrophic
+patients, which shows whether the model reacts to an abnormal ventricle or simply
+reproduces an average one. All values are measured with the Laplace field, for
+the reasons given in \cref{subsec:wall-thickness-results}.
+
 \begin{table}[H]
   \centering
-  \caption{Regional wall thickness over the AHA 17-segment model for the
+  \caption[AHA 17-segment thickness: model versus voxel geometry]{Regional wall thickness over the AHA 17-segment model for the
+    $30$-patient cohort, comparing the reconstructed model geometry with the
+    voxel-based geometry derived from the same input segmentation. Both are
+    measured with the Laplace field. Columns give the mean end-diastolic (ED) and
+    end-systolic (ES) thickness in millimetres and the relative thickening
+    $\Delta$ as a percentage of the ED value. The voxel geometry is a
+    segmentation-derived comparator, not an independent reference.}
+  \label{tab:aha17-model-voxel}
+  \footnotesize
+  \setlength{\tabcolsep}{5pt}
+  \begin{tabular}{c l ccc ccc}
+    \toprule
+    & & \multicolumn{3}{c}{Model geometry}
+      & \multicolumn{3}{c}{Voxel geometry} \\
+    \cmidrule(lr){3-5} \cmidrule(lr){6-8}
+    \# & Segment & ED & ES & $\Delta$~(\%) & ED & ES & $\Delta$~(\%) \\
+    \midrule
+    1  & Basal Anterior       &  9.99 & 13.71 & $+37.1$ & 10.05 & 14.22 & $+41.4$ \\
+    2  & Basal Anteroseptal   & 10.15 & 13.40 & $+32.1$ &  9.81 & 13.13 & $+33.9$ \\
+    3  & Basal Inferoseptal   &  9.89 & 13.43 & $+35.7$ &  9.72 & 13.63 & $+40.2$ \\
+    4  & Basal Inferior       &  9.09 & 13.81 & $+51.9$ &  8.51 & 13.77 & $+61.9$ \\
+    5  & Basal Inferolateral  &  8.93 & 14.27 & $+59.8$ &  8.45 & 14.25 & $+68.6$ \\
+    6  & Basal Anterolateral  &  9.53 & 13.87 & $+45.5$ &  9.07 & 14.23 & $+56.9$ \\
+    \addlinespace
+    7  & Mid Anterior         &  9.19 & 13.79 & $+50.0$ &  8.21 & 14.01 & $+70.6$ \\
+    8  & Mid Anteroseptal     & 10.37 & 14.68 & $+41.6$ & 10.11 & 15.44 & $+52.7$ \\
+    9  & Mid Inferoseptal     & 10.19 & 15.05 & $+47.6$ & 10.16 & 15.30 & $+50.6$ \\
+    10 & Mid Inferior         &  9.25 & 14.41 & $+55.8$ &  8.48 & 14.35 & $+69.3$ \\
+    11 & Mid Inferolateral    &  9.09 & 14.96 & $+64.6$ &  8.27 & 15.00 & $+81.3$ \\
+    12 & Mid Anterolateral    &  8.99 & 14.17 & $+57.6$ &  8.30 & 14.73 & $+77.5$ \\
+    \addlinespace
+    13 & Apical Anterior      &  8.50 & 13.63 & $+60.3$ &  7.72 & 13.67 & $+77.0$ \\
+    14 & Apical Septal        &  8.77 & 13.86 & $+58.1$ &  8.23 & 13.86 & $+68.4$ \\
+    15 & Apical Inferior      &  8.44 & 13.29 & $+57.5$ &  7.55 & 13.24 & $+75.3$ \\
+    16 & Apical Lateral       &  8.43 & 13.78 & $+63.6$ &  7.58 & 14.21 & $+87.5$ \\
+    \addlinespace
+    17 & Apex                 &  7.76 & 11.69 & $+50.7$ &  6.98 & 12.64 & $+81.1$ \\
+    \midrule
+    \multicolumn{2}{l}{Overall} & 9.21 & 13.87 & $+50.6$ & 8.66 & 14.10 & $+62.8$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Over the whole cohort the two geometries agree on the size and the arrangement of
+the wall at end-diastole. The reconstruction averages $9.21$~mm and the
+voxel-based geometry $8.66$~mm, and both place the thickest wall in the septal
+mid-cavity segments and the thinnest at the apical cap, which reads $7.76$~mm on
+the reconstruction and $6.98$~mm on the voxel geometry. The reconstruction is the
+thicker of the two in sixteen of the seventeen segments, the single exception
+being the basal anterior segment.
+
+The end-systolic phase is where the two geometries part. The voxel-based geometry
+thickens by $62.8\%$ between the phases and the reconstruction by $50.6\%$, and
+the gap is widest at the apex, where the two report $81.1\%$ and $50.7\%$. The
+reconstruction therefore describes the end-diastolic wall more faithfully than it
+describes the change between the phases, which is consistent with the
+end-systolic limitation discussed in \cref{sec:discussion}. Both geometries are
+built from the same sparse SAX contours, so the voxel column is a
+segmentation-derived comparator and not an independent measurement of the
+anatomy.
+
+\begin{table}[H]
+  \centering
+  \caption[AHA 17-segment thickness: NOR versus HCM]{Regional wall thickness over the AHA 17-segment model for the
     reconstructed model geometry, measured with the Laplace field and reported
     separately for the $20$ normal (NOR) and the $10$ hypertrophic (HCM)
     patients. Columns give the mean end-diastolic (ED) and end-systolic (ES)
@@ -515,12 +543,52 @@ observations.
     15 & Apical Inferior      &  7.28 & 11.72 & $+61.1$ & 10.76 & 16.43 & $+52.6$ \\
     16 & Apical Lateral       &  7.33 & 12.03 & $+64.0$ & 10.61 & 17.28 & $+62.9$ \\
     \addlinespace
-    17 & Apex                 &  6.80 & 10.32 & $+51.8$ &  9.67 & 14.71 & $+52.1$ \\
+    17 & Apex                 &  6.80 & 10.32 & $+51.8$ &  9.87 & 14.71 & $+49.0$ \\
     \midrule
-    \multicolumn{2}{l}{Overall} & 7.99 & 12.21 & $+52.9$ & 11.66 & 17.23 & $+47.8$ \\
+    \multicolumn{2}{l}{Overall} & 7.99 & 12.21 & $+52.9$ & 11.68 & 17.23 & $+47.5$ \\
     \bottomrule
   \end{tabular}
 \end{table}
+
+The regional pattern is anatomically consistent in both groups. In the normal
+cases the end-diastolic thickness varies little around the base and the
+mid-cavity, from $7.92$ to $8.81$~mm, and tapers towards the apex, where the
+apical cap at $6.80$~mm is the thinnest region. Every segment thickens from
+end-diastole to end-systole, and the thickening is graded along the long axis:
+the apical segments thicken by $52\%$ to $64\%$, the mid-cavity segments by
+$51\%$ to $64\%$ and the basal segments by $37\%$ to $61\%$. Over the normal
+group the mean thickness rises from $7.99$~mm to $12.21$~mm, a thickening of
+$52.9\%$.
+ 
+The hypertrophic group is thicker everywhere, which is the effect the comparison
+was designed to expose. Its cohort-average end-diastolic thickness is
+$11.68$~mm against $7.99$~mm in the normal group, a difference of $3.70$~mm, and
+every one of the seventeen segments is thicker than its normal counterpart. The
+difference is largest in the septal and anteroseptal mid-cavity segments, where
+the wall reaches $13.99$ and $13.43$~mm against $8.55$ and $8.57$~mm in the
+normal group, which is the septal-dominant pattern typical of hypertrophic
+cardiomyopathy. The reconstructed measurements show descriptive separation
+between the two groups in this cohort.
+
+Systolic thickening behaves differently from absolute thickness. The
+hypertrophic group thickens by $47.5\%$ against $52.9\%$ in the normal group, so
+the two groups are much closer in relative terms than in absolute ones. This is
+consistent with hypertrophic myocardium being thicker at rest without
+contracting proportionally more. Taking the thickest segment of each patient as
+a simple severity index, the normal cases reach $9.07$~mm on average and none
+exceeds the $15$~mm clinical threshold, whereas the hypertrophic cases reach
+$14.44$~mm and three of the ten exceed it. The direction of the effect is
+therefore correct, but the reconstruction still under-states the most extreme
+walls, so this must not be read as a diagnostic result.
+
+One property of this analysis should be stated explicitly. Each patient
+contributes seventeen segment values, so the segment observations are not
+independent of one another. Segments from the same heart share the same
+reconstruction, the same input contours and the same anatomy. For this reason
+the segment values are used as a descriptive regional summary, and the group
+comparisons above are made at the patient level, where each patient counts once.
+The segment-level numbers should not be treated as if they came from independent
+observations.
 
 \section{Discussion}
 \label{sec:discussion}
@@ -549,7 +617,7 @@ construction, and the thesis should not be read as claiming otherwise.
 
 The comparison between the two clinical groups is the more informative result.
 The model does not collapse abnormal ventricles towards a normal mean shape: the
-hypertrophic group is reconstructed $3.67$~mm thicker than the normal group at
+hypertrophic group is reconstructed $3.70$~mm thicker than the normal group at
 end-diastole, and the excess is concentrated in the septal and anteroseptal
 segments, which is where hypertrophic cardiomyopathy is expected to appear. The
 reconstruction quality itself degrades only mildly on those cases, from a
@@ -560,7 +628,7 @@ clinical threshold, so the most extreme walls are still under-stated even though
 the group separation is clear.
 
 The end-systolic phase remains the harder of the two. The normal group thickens
-by $52.9\%$ between the two phases and the hypertrophic group by $47.8\%$, and
+by $52.9\%$ between the two phases and the hypertrophic group by $47.5\%$, and
 in both the thickening is stronger in the apical segments than at the base. Two
 properties of the design plausibly
 contribute. The phase information reaching the model is a single binary label

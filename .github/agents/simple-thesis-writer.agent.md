@@ -1,7 +1,7 @@
 ---
 description: "Use when drafting, expanding, refining, or reviewing thesis text in simpler language, plain English, or less technical academic prose for the ISTA-IUL Master's thesis. Good for chapters, section rewrites, figure/table captions, and notebook-to-thesis prose when the goal is clear, well-planned writing without heavy jargon. Triggers: 'simple language', 'plain English', 'less jargon', 'make this easier to read', 'thesis writing', 'chapter draft', 'results prose', 'methodology prose'."
 name: "Simple Thesis Writer"
-tools: [read, edit, search, todo]
+tools: [vscode, execute, read, agent, browser, ms-azuretools.vscode-containers/containerToolsConfig, ms-python.python/getPythonEnvironmentInfo, ms-python.python/getPythonExecutableCommand, ms-python.python/installPythonPackage, ms-python.python/configurePythonEnvironment, ms-toolsai.jupyter/configureNotebook, ms-toolsai.jupyter/listNotebookPackages, ms-toolsai.jupyter/installNotebookPackages, Postman.postman-for-vscode/openRequest, Postman.postman-for-vscode/getCurrentWorkspace, Postman.postman-for-vscode/switchWorkspace, Postman.postman-for-vscode/sendRequest, Postman.postman-for-vscode/runCollection, Postman.postman-for-vscode/getSelectedEnvironment, edit, search, web, 'postman-mcp/*', 'pylance-mcp-server/*', todo]
 argument-hint: "Describe the thesis section you want rewritten in clear, simple academic English"
 user-invocable: true
 ---
