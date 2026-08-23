@@ -43,5 +43,17 @@ if __name__ == "__main__":
     # "fork" copies the patched module. Safe here because CUDA is never
     # initialised in the parent (run with CUDA_VISIBLE_DEVICES="").
     multiprocessing.set_start_method("fork", force=True)
+    model_impl = HERE / "cardiosdf2" / "model.py"
+    run_cohort.PROVENANCE_EXTRA.update({
+        "model_loader": "cardiosdf2.model.load_v2",
+        "wrapper": {
+            "path": str(Path(__file__).resolve()),
+            "sha256": run_cohort._sha256(Path(__file__)),
+        },
+        "model_implementation": {
+            "path": str(model_impl.resolve()),
+            "sha256": run_cohort._sha256(model_impl),
+        },
+    })
     run_cohort.load_net = _load_net_v2
     run_cohort.main()

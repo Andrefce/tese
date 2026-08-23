@@ -6,44 +6,77 @@
 \label{ch:conclusions}
 
 \noindent
-This thesis investigated whether continuous three-dimensional left-ventricular
-(LV) geometry can be reconstructed from sparse short-axis (SAX) contour
-observations using an implicit neural representation. The proposed pipeline
-combines synthetic pre-training based on a statistical shape model (SSM) with
-fine-tuning on clinical contour observations and segmentation-derived surrogate
-geometry. A phase-conditioned signed-distance decoder then reconstructs coupled
-endocardial and epicardial surfaces at end-diastole (ED) and end-systole (ES).
-The resulting surfaces support local and regional computational estimates of
-myocardial wall thickness. The findings show that the pipeline can transform
-sparse clinical observations into continuous paired surfaces and represent the
-expected differences between the cardiac phases. The reconstructed geometry also
-supports exploratory wall-thickness analysis across the LV. Together, these
-outcomes answer the research questions at a technical level and demonstrate the
-potential of implicit representations for completing sparse cardiac imaging
-data.
+This thesis investigated the reconstruction of continuous three-dimensional
+left ventricular (LV) geometry from sparse short-axis (SAX) contours with an
+implicit neural representation. It also examined whether the reconstructed
+surfaces support computational estimates of myocardial wall thickness. The
+evaluation establishes what the proposed approach achieves and where the
+present evidence remains limited.
 
-The work should nevertheless be interpreted within its scope. The clinical
-reference geometry was derived from image segmentations and was not an
-independent anatomical ground truth. Surface repair and post-processing also
-contributed to the final meshes, while the wall-thickness values were
-computational estimates rather than clinical measurements. The comparison
-between normal and hypertrophic cases was descriptive, and no competing
-reconstruction methods or architectural ablations were included. The results
-therefore support geometric consistency and methodological feasibility, but do
-not establish clinical validity or diagnostic performance.
+\section{Answers to the Research Questions}
+\label{sec:conclusion-research-questions}
+\noindent
+For \textbf{RQ1}, the answer is positive within the evaluated cohort. The model
+reconstructs continuous endocardial and epicardial surfaces with mean errors
+close to the in-plane image resolution, and every evaluated surface is
+watertight after repair. The remaining systematic cavity underestimation shows
+that closed and visually smooth surfaces are not necessarily unbiased in
+volume.
 
-Future work should evaluate the approach against withheld acquired contours and
-higher-resolution or independently annotated anatomical data. Comparisons with
-contour lofting, volumetric interpolation, and SSM fitting
-would clarify the value of the proposed reconstruction strategy. Ablation studies
-could also determine the individual effects of synthetic pre-training, phase
-conditioning, and coupled surface prediction. Larger and more diverse cohorts
-would allow the behaviour of the method across pathology groups to be studied
-more reliably. Extending the model to enforce temporal consistency throughout
-the cardiac cycle would provide a more complete representation of ventricular
-motion and function.
+For \textbf{RQ2}, the model represents both surfaces at ED and ES while
+maintaining a positive separation between their implicit fields. It reproduces
+the expected smaller cavity and thicker wall at ES. However, systolic thickening
+is lower than in the segmentation-derived comparator, so the result supports
+phase-conditioned representation more strongly than equal accuracy at both
+phases.
 
-In conclusion, this thesis provides a foundation for reconstructing continuous,
-patient-specific LV geometry from routinely available sparse imaging data. The
-proposed pipeline offers a basis for further evaluation of three-dimensional
-cardiac reconstruction and computational wall-thickness analysis.
+For \textbf{RQ3}, the reconstructed and segmentation-derived geometries preserve
+similar between-patient thickness variation for the field-based estimators, but
+their absolute values differ. The larger and phase-dependent disagreement of
+the cone-ray estimator also shows that wall thickness depends on the chosen
+measurement path. The answer is therefore one of computational agreement, not
+validation against true anatomy.
+
+\section{Contributions}
+\label{sec:conclusion-contributions}
+\noindent
+The first contribution is a common contour-and-surface data pipeline for
+synthetic LV shapes and clinical ED/ES segmentations. The second is a
+phase-conditioned implicit model that combines global and local contour
+features and couples the epicardial field to the endocardial field through a
+positive offset. The third is an evaluation framework that connects surface and
+volume metrics with four local thickness estimators, continuous 3D maps, AHA-17
+regional summaries, and patient-level NOR--HCM comparisons. Together, these
+components provide a reproducible way to study geometric completion and derived
+measurements from sparse SAX observations.
+
+\section{Limitations}
+\label{sec:conclusion-limitations}
+\noindent
+As detailed in \cref{sec:threats}, the comparator is derived from the same sparse
+segmentations and is not independent 3D ground truth. Mesh repair contributes to
+the final watertight surfaces, and calibrated decoder-offset figures inherit
+their absolute scale from the segmentation reference. The cohort is small,
+especially for HCM, and the group analysis is descriptive. Finally, no matched
+reconstruction baseline or controlled architectural ablation was completed, so
+the current experiments do not isolate the contribution of each model component
+or establish superiority over conventional contour interpolation.
+
+\section{Future Work}
+\label{sec:conclusion-future-work}
+\noindent
+The first priority is evaluation against independent anatomical evidence, such
+as higher-resolution volumetric imaging or expert 3D surface and wall-thickness
+annotations, followed by validation on a larger external cohort. The second is
+a matched comparison with contour lofting and shape-model fitting, using the
+same patients, physical spacing, repair procedure, and metrics, together with
+point-wise error maps that localise failures at the apex, base, and highly
+curved wall regions. The third is a targeted experimental study of synthetic
+pre-training, local conditioning, positive surface coupling, and wall-offset
+supervision. Extending phase conditioning beyond a binary ED/ES label would then
+allow temporal consistency across the full cardiac cycle to be investigated.
+
+The thesis therefore provides evidence that continuous paired LV geometry and
+locally resolved thickness summaries can be obtained from sparse SAX contours,
+while defining the additional comparisons and reference data required before
+clinical conclusions can be drawn.

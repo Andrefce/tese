@@ -1,15 +1,14 @@
 % ============================================================
 %  Master's Thesis — ISTA-IUL
-%  Compile with: latexmk -pdf main.tex
+%  Compile with: latexmk main.tex
 %  See thesis-build references at .github/skills/ista-tese-mestrado
 % ============================================================
 
-\documentclass[12pt, reqno, twoside, openright]{amsbook}
+\documentclass[10pt, reqno, twoside, openright]{amsbook}
 
 % --- Encoding & language -------------------------------------
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage{mathptmx}             % Times New Roman-like text & math
+\usepackage{fontspec}
+\setmainfont{Arial}
 \usepackage[english,portuguese]{babel}
 
 % --- Math ----------------------------------------------------
@@ -96,7 +95,7 @@
 }
 
 % --- Heading styles (matched to the ISCTE Word template) -----
-%  Body: Times 12pt justified, first-line indent 0.7cm.
+%  Body: Times New Roman 12pt justified, first-line indent 0.7cm.
 %  Section 14pt bold, Subsection 12pt bold (left-aligned).
 %  Chapter: "CHAPTER N" 12pt caps centred + 18pt bold centred title.
 \setlength{\parindent}{0.7cm}
@@ -185,14 +184,23 @@
 \setcounter{page}{1}
 \pagenumbering{roman}
 
+\begingroup
+\makeatletter
+\let\addcontentsline\@gobblethree
+\makeatother
 \input{frontmatter/acknowledgments}
 \input{frontmatter/resumo}
 \input{frontmatter/abstract}
-\input{frontmatter/acronyms}
+\endgroup
 
 \tableofcontents
+\selectlanguage{english}
 \listoffigures
+\selectlanguage{english}
 \listoftables
+\selectlanguage{english}
+\input{frontmatter/acronyms}
+\selectlanguage{english}
 
 % ============================================================
 \mainmatter

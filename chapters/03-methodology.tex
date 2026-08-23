@@ -15,48 +15,26 @@ of local wall-thickness algorithms.
 \section{Overview}
 \label{sec:method-overview}
 \noindent
-The complete thesis workflow can be read as a progression from sparse clinical
-observations to continuous three-dimensional geometry and then to quantitative
-wall-thickness summaries. It starts from segmented SAX cardiac MRI stacks or
-meshes sampled from a statistical shape model (SSM). In both cases, the
-available geometry is converted into a common contour-based representation
-composed of endocardial and epicardial points sampled across SAX slices. These
-points are passed to a PointNet-style encoder that produces a compact latent
-code for the observed LV geometry. A signed-distance implicit decoder then
-predicts two coupled surfaces: the endocardium and the epicardium. The
-epicardial field is parameterised as a monotone offset from the endocardial
-field, which guarantees positive field separation by construction. The resulting
-surfaces are finally used to compute local thickness maps and regional AHA-17
-summaries.
+The method is determined by three constraints. First, SAX contours provide
+detailed boundaries only on a small number of image planes. Second, clinical
+datasets do not provide independent 3D surfaces for direct supervision. Third,
+the endocardium and epicardium must remain ordered so that they define a valid
+myocardial wall. The pipeline addresses these constraints with a shared contour
+representation, synthetic pre-training followed by clinical fine-tuning, and a
+coupled implicit decoder with positive wall separation.
 
-The methodological design is organised around four objectives. First, the input
-representation must be compatible with both synthetic and real cases. Second,
-the model must reconstruct smooth watertight LV surfaces from sparse 2D
-observations. Third, the decoder must produce a valid myocardial wall everywhere,
-not only at the observed slices. Fourth, the reconstructed geometry must support
-local wall-thickness measurements that can be visualised as surface colour maps
-and regional AHA-17 bullseye plots. The contribution is therefore a method for
-geometrical completion and reconstruction consistency from sparse observations.
-It does not establish independently validated anatomical truth.
+\Cref{sec:data-preparation} describes how synthetic and clinical cases are
+placed in the common representation. \Cref{sec:architecture} presents the
+contour encoder and implicit decoder, and \cref{sec:training-inference} gives
+the optimisation and surface-extraction procedure. Finally,
+\cref{sec:wall-thickness-protocol} defines the local estimators and AHA-17
+aggregation applied to the reconstructed surfaces. The method evaluates
+geometric completion and computational measurement consistency; it does not
+establish independent anatomical truth.
 
-The chapter is therefore organised as a technical pipeline rather than as a
-single model description. \Cref{sec:data-preparation} explains how synthetic and
-real data were converted into a shared cache representation. \Cref{sec:architecture}
-describes the model encoder and decoder, with particular attention to the
-monotone-epi parameterisation used to prevent collapse of the two fields.
-\Cref{sec:training-inference} presents the training and inference procedure, and
-\cref{sec:wall-thickness-protocol} describes the wall-thickness algorithms used
-to evaluate local measurements on the reconstructed geometry.
-
-\Cref{fig:methodology-pipeline} summarises this end-to-end workflow and should
-be interpreted as an overview of the thesis methodology rather than as a figure
-belonging only to data preparation. The first panels illustrate the sparse SAX
-observation and contour extraction, the mesh panel represents the reconstructed
-LV surface domain, and the lower panels show how the reconstructed geometry is
-converted into local and regional wall-thickness measurements. In this preview,
-panels~(a) and~(b) are drawn from the ACDC Challenge dataset, whereas
-panels~(c),~(d), and~(e) are drawn from the UK Digital Heart Project LV SSM
-pipeline.
+\Cref{fig:methodology-pipeline} summarises the complete workflow. Panels~(a)
+and~(b) use ACDC data, while panels~(c)--(e) use examples from the UK Digital
+Heart Project LV SSM pipeline.
 
 \begin{figure}[H]
 	\centering
@@ -619,38 +597,20 @@ The epicardial field is defined through a positive offset from the endocardial
 field, preventing collapse of the two predicted fields. Anatomical wall thickness
 is subsequently measured between the extracted surfaces.
 
-\begin{figure}[H]
+\begin{figure}[p]
 	\centering
 	\includegraphics[width=\linewidth]{fig_model_architecture}
 	\vspace{2mm}
-	\caption[Proposed model architecture.]{High-level view of the model. (a)~Sparse endocardial and epicardial SAX
-	contours, together with a tissue and a cardiac-phase label, form the
-	observation. (b)~A shared per-point network and tissue-specific max-pooling
-	produce a global latent code $z$, while a parallel local contour-volume branch
-	builds a 3D feature field. (c)~A Fourier-encoded query point, the global code,
-	and the interpolated local features are passed to an eight-layer implicit
-	network with a middle skip connection. (d)~The decoder emits the endocardial
-	signed-distance field and a bounded positive wall-offset field $\delta$, from
-	which the epicardial field is obtained and collapse of the two fields is
-	prevented. (e)~Marching cubes on a $96^{3}$ grid yields the two watertight
-	endocardial and epicardial surfaces.}
+	\caption[Proposed model architecture.]{Phase-conditioned model architecture. Tissue-specific global and
+	local contour features condition an implicit decoder, which predicts the
+	endocardial field and a positive wall offset before mesh extraction.}
 	\label{fig:model-architecture}
 \end{figure}
 
-\Cref{fig:model-architecture} summarises the model as five stages. The sparse SAX
-contour observation of panel~(a) is reduced by the encoder of panel~(b) to a
-single 256-dimensional latent code using separate endocardial and epicardial
-max-pooling, while the same point features are also scattered into a local 3D
-feature volume. The global code captures the overall LV shape, and the local
-volume keeps the spatial context that is useful for estimating wall thickness.
-Both are passed to the implicit decoder of panel~(c), which is evaluated at
-arbitrary three-dimensional points and therefore represents the geometry
-continuously rather than on a fixed mesh. Panel~(d) shows the key geometric
-constraint: the model predicts the endocardial field together with a strictly
-positive bounded wall offset, so the two predicted fields cannot collapse onto
-each other. This offset is not a measured transmural distance. Panel~(e) shows the final output: the two
-watertight endocardial and epicardial surfaces extracted by marching cubes. The
-encoder is formalised in \cref{subsec:contour-encoder} and the decoder in
+\Cref{fig:model-architecture} links the global shape code, local feature volume,
+and coupled decoder. The offset shown in the figure is a separation between
+implicit fields, not a measured transmural distance. The encoder is formalised
+in \cref{subsec:contour-encoder} and the decoder in
 \cref{subsec:monotone-epi-decoder}.
 
 \subsection{Contour encoder}
@@ -698,13 +658,8 @@ sampled at each query point by trilinear interpolation,
 This local field adds spatial detail to the decoder while the global latent vector
 keeps the overall chamber shape compact and stable.
 
-Pooling the two tissues separately keeps their information distinct. The
-endocardial points describe the cavity, while the epicardial points describe the
-outer boundary of the wall. If all points were pooled together, these roles would
-be mixed and the network would have a harder time separating the cavity from the
-wall. Keeping them separate gives the latent code clear access to both surfaces,
-while the local volume gives the decoder additional context at the myocardial
-boundary.
+Separate pooling preserves the distinct roles of the cavity and outer wall,
+while the local volume supplies spatial context near each query point.
 
 \subsection{Implicit decoder and positive-wall coupling}
 \label{subsec:monotone-epi-decoder}
@@ -1154,7 +1109,7 @@ the apical cap the central disc.
 	\centering
 	\includegraphics[width=\linewidth]{fig_aha17_cut}
 	\vspace{2mm}
-	\caption[AHA-17 partitioning of the reconstructed LV surface.]{Cutting the reconstructed LV surface into the AHA-17 segments.
+	\caption[AHA-17 surface partition.]{Cutting the reconstructed LV surface into the AHA-17 segments.
 	Panel~(a) shows the endocardial surface partitioned along the long axis into
 	basal, mid, apical, and apical-cap levels and angularly into sectors, with
 	each of the 17 regions drawn in a distinct colour. Panel~(b) unrolls the same

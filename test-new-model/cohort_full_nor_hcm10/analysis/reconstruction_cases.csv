@@ -1,0 +1,16 @@
+metric,role,patient,group,value
+endo_chamfer_mm,best,patient077,NOR,0.8775550803228525
+endo_chamfer_mm,median,patient070,NOR,1.183635542774565
+endo_chamfer_mm,difficult,patient029,HCM,1.7669311630367557
+epi_chamfer_mm,best,patient065,NOR,0.759439400395018
+epi_chamfer_mm,median,patient079,NOR,1.0620794675725589
+epi_chamfer_mm,difficult,patient023,HCM,1.4334332363533582
+myo_dice,best,patient030,HCM,0.8916597395400387
+myo_dice,median,patient067,NOR,0.8464339091446248
+myo_dice,difficult,patient068,NOR,0.7959022617966319
+cavity_volume_abs_error,best,patient077,NOR,0.008827319785775223
+cavity_volume_abs_error,median,patient061,NOR,0.0808144645372798
+cavity_volume_abs_error,difficult,patient030,HCM,0.13387155144595653
+epicardial_volume_abs_error,best,patient024,HCM,0.0020900511847699033
+epicardial_volume_abs_error,median,patient071,NOR,0.01957408534678251
+epicardial_volume_abs_error,difficult,patient030,HCM,0.06586217383534576

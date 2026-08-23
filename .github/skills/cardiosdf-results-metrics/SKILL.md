@@ -1,10 +1,16 @@
 ---
 name: cardiosdf-results-metrics
-description: "Use when asked to compute, recompute, regenerate, verify, or update the Results-chapter metrics or figures of this thesis — the CardioSDF LV reconstruction meshes (ED/ES figure), reconstruction-quality metrics (Chamfer, ASSD, HD95, Dice/IoU, watertight rate, volume ratio), and the myocardial wall-thickness measurements (Laplace, Yezzi-Prince, SDF cone rays, EDT boundary sum, AHA-17). Explains where the inference pipeline lives, how to run the figure/metric scripts, the mandatory slice-spacing calibration fix, the watertight/orientation fixes, known caveats, and which thesis table/figure each script produces. Triggers: 'do the metrics', 'recompute results', 'regenerate the meshes/figure', 'wall thickness numbers', 'reconstruction quality table'."
+description: "Use when asked to compute, recompute, regenerate, verify, or update the Results-chapter metrics or figures of this thesis — the unnamed model's LV reconstruction meshes (ED/ES figure), reconstruction-quality metrics (Chamfer, ASSD, HD95, Dice/IoU, watertight rate, volume ratio), and the myocardial wall-thickness measurements (Laplace, Yezzi-Prince, SDF cone rays, EDT boundary sum, AHA-17). Explains where the inference pipeline lives, how to run the figure/metric scripts, the mandatory slice-spacing calibration fix, the watertight/orientation fixes, known caveats, and which thesis table/figure each script produces. Triggers: 'do the metrics', 'recompute results', 'regenerate the meshes/figure', 'wall thickness numbers', 'reconstruction quality table'."
 argument-hint: "Which metric, table, or figure to (re)compute"
 ---
 
-# CardioSDF Results & Metrics Pipeline
+# Model Results & Metrics Pipeline
+
+The reconstruction model has no proper name. Thesis prose, captions, tables,
+and figure labels must call it ``the model'', ``the proposed model'', or ``the
+proposed approach''. The lowercase term retained in this skill's folder name,
+image filenames, checkpoint paths, and Python identifiers is legacy
+implementation vocabulary only.
 
 Authoritative procedure for (re)generating everything in
 [chapters/04-results.tex](../../../chapters/04-results.tex). Follow this before

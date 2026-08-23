@@ -15,8 +15,8 @@ it. For sourcing or summarising papers, delegate to the
 
 ## Build
 
-- Compile with `latexmk -pdf main.tex` (config in [.latexmkrc](.latexmkrc)).
-- Pipeline: pdflatex → biber → pdflatex → pdflatex.
+- Compile with `latexmk main.tex` (XeLaTeX config in [.latexmkrc](.latexmkrc)).
+- Pipeline: XeLaTeX → biber → XeLaTeX → XeLaTeX.
 - After non-trivial edits, rebuild and read `main.log` for `Citation undefined`,
   `Reference … undefined`, and overfull `\hbox` warnings before reporting done.
 
@@ -39,6 +39,19 @@ it. For sourcing or summarising papers, delegate to the
 ## Language Policy
 
 - Body language is **English**.
+- The reconstruction model has **no proper name**. In prose, captions, tables,
+  and figure labels, call it ``the model'', ``the proposed model'', or ``the
+  proposed approach''. Never call it ``CardioSDF''; lowercase occurrences in
+  legacy filenames, checkpoint paths, and Python identifiers are implementation
+  details only.
+- Use only the v2 model for thesis experiments and Results. Never compare v2
+  against the earlier model. Earlier checkpoints and outputs are implementation
+  history only and must not appear as thesis evidence.
+- Do not alter or re-audit the existing epoch counts, training-history metrics,
+  or training-curve figure; treat that material as v2. Current revision work
+  adds new Results content only.
+- Use mesh renders when a result needs spatial geometry. Use Matplotlib for new
+  quantitative metric plots.
 - [frontmatter/resumo.tex](frontmatter/resumo.tex) is **mandatory in
   Portuguese** at ISCTE — never translate, remove, or change its
   `\selectlanguage{portuguese}` switch.

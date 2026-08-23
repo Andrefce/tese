@@ -114,7 +114,7 @@ See [notebook-to-thesis.md](./references/notebook-to-thesis.md). Summary:
 ## Build & Validate
 
 ```bash
-latexmk -pdf main.tex
+latexmk main.tex
 ```
 
 After non-trivial edits:

@@ -36,7 +36,7 @@ That skill has progressive references — load only the section relevant to the 
 - DO NOT invent ISTA-specific facts (programme names, regulation numbers, dates) — ask the user.
 - DO NOT use obsolete font commands (`\bf`, `\it`, `\rm`) — use `\textbf{}`, `\textit{}`, `\textrm{}`.
 - DO NOT hardcode reference numbers (`[3]`, `Figure 2.4`) — use `\cite{}` and `\cref{}`/`\ref{}`.
-- ONLY produce LaTeX that compiles cleanly with `pdflatex` + `biber`/`bibtex`.
+- ONLY produce LaTeX that compiles cleanly with `XeLaTeX` + `biber`.
 
 ## Workflow
 

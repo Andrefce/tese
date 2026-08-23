@@ -42,6 +42,22 @@ FLOW_GREEN = "#009E73"
 FLOW_DARK = "#243447"
 FLOW_LIGHT = "#F6F8FA"
 
+# Monochrome plate style, shared with scripts/fig_model_architecture.py.
+PLATE_RC = {
+    "font.family": "serif",
+    "font.serif": ["DejaVu Serif"],
+    "font.size": 7.0,
+    "mathtext.fontset": "dejavuserif",
+    "axes.linewidth": 0.6,
+}
+PLATE_INK = "#000000"
+PLATE_GREY = "#555555"
+PLATE_RULE = "#B5B5B5"
+PLATE_SURFACE = "#9B9B9B"
+PLATE_CMAP = "viridis"
+PLATE_DASH = (0, (3.0, 1.8))
+PLATE_DOT = (0, (1.0, 1.6))
+
 
 def ensure_ssm_dir() -> Path:
     candidates = [
@@ -416,25 +432,32 @@ def draw_ssm_mesh(
     ax: plt.Axes,
     vertices: np.ndarray,
     faces: np.ndarray,
-    facecolor: str = FLOW_BLUE,
+    *,
+    facecolor: str = PLATE_SURFACE,
     values: np.ndarray | None = None,
-    cmap_name: str = "turbo",
+    cmap_name: str = PLATE_CMAP,
     norm: colors.Normalize | None = None,
-    stride: int = 5,
-    alpha: float = 0.96,
+    stride: int = 1,
+    alpha: float = 1.0,
+    cutaway: bool = False,
 ) -> Poly3DCollection:
     selected_faces = faces[::stride]
+    if cutaway:
+        # Remove the octant facing the camera so the inner surface stays visible.
+        centroids = vertices[selected_faces].mean(axis=1) - vertices.mean(axis=0)
+        selected_faces = selected_faces[~((centroids[:, 0] > 0.0) & (centroids[:, 1] < 0.0))]
+
     polygons = vertices[selected_faces]
     face_normals = np.cross(polygons[:, 1] - polygons[:, 0], polygons[:, 2] - polygons[:, 0])
     face_normals = face_normals / np.maximum(np.linalg.norm(face_normals, axis=1, keepdims=True), 1e-8)
     light_direction = np.asarray([-0.25, -0.50, 0.83])
     light_direction = light_direction / np.linalg.norm(light_direction)
-    light = 0.50 + 0.50 * np.clip(face_normals @ light_direction, 0.0, 1.0)
+    light = 0.45 + 0.55 * np.clip(np.abs(face_normals @ light_direction), 0.0, 1.0)
 
     if values is None:
         base = np.asarray(colors.to_rgb(facecolor))
         facecolors = np.empty((len(selected_faces), 4))
-        facecolors[:, :3] = np.clip(base[None, :] * light[:, None] + 0.18 * (1.0 - light[:, None]), 0.0, 1.0)
+        facecolors[:, :3] = np.clip(base[None, :] * light[:, None] + 0.16 * (1.0 - light[:, None]), 0.0, 1.0)
         facecolors[:, 3] = alpha
     else:
         face_values = values[selected_faces].mean(axis=1)
@@ -442,7 +465,7 @@ def draw_ssm_mesh(
         if norm is None:
             norm = colors.Normalize(vmin=float(np.nanmin(values)), vmax=float(np.nanmax(values)))
         facecolors = colormap(norm(face_values))
-        facecolors[:, :3] = np.clip(facecolors[:, :3] * (0.68 + 0.32 * light[:, None]), 0.0, 1.0)
+        facecolors[:, :3] = np.clip(facecolors[:, :3] * (0.72 + 0.28 * light[:, None]), 0.0, 1.0)
         facecolors[:, 3] = alpha
 
     collection = Poly3DCollection(
@@ -452,7 +475,6 @@ def draw_ssm_mesh(
         linewidths=0.0,
     )
     ax.add_collection3d(collection)
-    set_mesh_axes(ax, vertices)
     return collection
 
 

@@ -5,6 +5,11 @@
 \chapter{Introduction}
 \label{ch:introduction}
 
+\noindent
+This chapter introduces the clinical and technical motivation for reconstructing
+three-dimensional left-ventricular geometry from sparse cardiac MRI. It defines
+the problem, research questions, objectives, and contributions of the thesis.
+
 \section{Motivation}
 \label{sec:motivation}
 \noindent
@@ -42,7 +47,9 @@ unobserved between them. This makes 3D reconstruction difficult. Simply
 connecting the slices can create rough surfaces, gaps, or a myocardial wall
 that does not represent the anatomy well.
 
-Two related surfaces must be reconstructed. The endocardium is the inner
+The problem has two linked parts. First, the unobserved geometry between slices
+must be completed without removing patient-specific shape. Second, two related
+surfaces must be reconstructed. The endocardium is the inner
 boundary of the LV cavity, and the epicardium is the outer boundary of the
 myocardium. The space between them must remain a valid wall everywhere. Public
 cardiac MRI datasets usually provide images and segmentation masks for each
@@ -82,7 +89,18 @@ regional wall thickness are compared.
 \noindent This thesis provides a data pipeline that converts synthetic LV
 shapes and real cardiac MRI segmentations into a shared representation of sparse
 SAX contours and 3D meshes. It also presents a phase-conditioned signed-distance
-SDF model that predicts the endocardial and epicardial LV surfaces while preserving
+model that predicts the endocardial and epicardial LV surfaces while preserving
 a positive wall between them. Finally, it evaluates the reconstructed geometry
 on data not used for training and compares local and regional wall-thickness
 methods on reconstructed and segmentation-derived LV geometry.
+
+\section{Document Structure}
+\label{sec:document-structure}
+\noindent
+\Cref{ch:literature-review} reviews cardiac MRI reconstruction, statistical
+shape models, implicit representations, and wall-thickness measurement.
+\Cref{ch:methodology} describes the data preparation, model, training process,
+and evaluation protocol. \Cref{ch:results} reports the reconstruction and
+wall-thickness results and discusses their validity. Finally,
+\cref{ch:conclusions} summarises the answers to the research questions and the
+main directions for future work.

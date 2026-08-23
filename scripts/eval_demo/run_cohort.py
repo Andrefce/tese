@@ -15,12 +15,14 @@ repeats the reconstruction. Per-patient metric payloads are cached the same way.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
 import time
 import warnings
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from datetime import datetime, timezone
 from pathlib import Path
 
 for _var in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
@@ -53,10 +55,68 @@ REFERENCE_METHOD = "Laplace field"
 AGREEMENT_POINTS_PER_PATIENT = 560
 
 _MODEL_CACHE: dict = {}
+PROVENANCE_EXTRA: dict[str, object] = {}
 
 
 def log(msg: str) -> None:
     print(f"[{time.strftime('%H:%M:%S')}] {msg}", flush=True)
+
+
+def _sha256(path: Path) -> str | None:
+    if not path.is_file():
+        return None
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _write_provenance(args, requested: list[Path], payloads: list[dict]) -> None:
+    source_paths = {
+        "cohort_runner": Path(__file__),
+        "geometry": HERE / "geometry.py",
+        "model_loader": HERE / "cardiosdf_model.py",
+        "reconstruction_metrics": HERE / "recon_metrics.py",
+        "thickness": HERE / "thickness.py",
+    }
+    source_files = {
+        name: {"path": str(path.resolve()), "sha256": _sha256(path)}
+        for name, path in source_paths.items()
+    }
+    completed = sorted(str(payload.get("patient", "")) for payload in payloads)
+    requested_names = [patient.name for patient in requested]
+    manifest = {
+        "schema_version": 1,
+        "generated_utc": datetime.now(timezone.utc).isoformat(),
+        "command": [sys.executable, *sys.argv],
+        "python": {"executable": sys.executable, "version": sys.version},
+        "model": {
+            "path": str(args.model.resolve()),
+            "sha256": _sha256(args.model),
+        },
+        "dataset": {
+            "root": str(args.data_root.resolve()),
+            "group": args.group,
+            "requested_patients": requested_names,
+            "completed_patients": completed,
+            "failed_patients": sorted(set(requested_names) - set(completed)),
+        },
+        "evaluation": {
+            "voxel_pitch_mm": args.pitch,
+            "grid_resolution": args.grid_res,
+            "reconstruction_phase": "ED",
+            "wall_thickness_phases": ["ED", "ES"],
+            "workers": args.workers,
+            "force_mesh": args.force_mesh,
+            "force_metrics": args.force_metrics,
+        },
+        "source_files": source_files,
+        "extra": PROVENANCE_EXTRA,
+    }
+    (args.out / "provenance.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n"
+    )
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -430,6 +490,7 @@ def main() -> None:
     log(f"{len(payloads)} patients in {time.perf_counter() - t0:.0f} s")
     if payloads:
         aggregate(payloads, args.out)
+        _write_provenance(args, patients, payloads)
 
 
 if __name__ == "__main__":

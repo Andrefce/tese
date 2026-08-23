@@ -1,0 +1,27 @@
+{
+  "analysis_script_sha256": "d683f10a91db8e0d44d2e63bcb64002baed374f982c44a4aba0468a91bf0c35d",
+  "analysis_status": "unverified_missing_provenance",
+  "bootstrap_samples": 10000,
+  "cohort": "/home/andre/Downloads/tese/test-new-model/cohort_full_nor_hcm10",
+  "groups": {
+    "HCM": 10,
+    "NOR": 20
+  },
+  "outputs": [
+    "group_effects.csv",
+    "method_finite_fraction.csv",
+    "patient_summaries.csv",
+    "phase_method_summary.csv",
+    "reconstruction_cases.csv"
+  ],
+  "patient_count": 30,
+  "reference_method": "Laplace field",
+  "seed": 20260823,
+  "source_hashes": {
+    "agreement.csv": "b11a9500de7d6b66a103c48b70746a052e9231b6ee475b3669b2f38816d56776",
+    "aha17.csv": "f3d5c3fe3aa06b6216949f087c8a5166bd59a925a26989302a999f682fac719c",
+    "recon_quality.csv": "5d6a13f0f5ca1d0d97233f32b592f89d0b52ab2adadb64679f81f0775913c657",
+    "wall_methods.csv": "819573de0511a5175f129605dc36ee19550a21fe11ecf8a0a07a8a6f078d78e8"
+  },
+  "source_provenance": null
+}
