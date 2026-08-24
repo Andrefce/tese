@@ -58,6 +58,11 @@ PLATE_CMAP = "viridis"
 PLATE_DASH = (0, (3.0, 1.8))
 PLATE_DOT = (0, (1.0, 1.6))
 
+# Figure-fraction height of the horizontal segment linking the two panel rows.
+WRAP_Y = 0.500
+MESH_ELEV = 16.0
+MESH_AZIM = -58.0
+
 
 def ensure_ssm_dir() -> Path:
     candidates = [
@@ -177,12 +182,33 @@ def window_bounds(*volumes: np.ndarray, crop: tuple[slice, slice]) -> tuple[floa
     return tuple(float(value) for value in np.percentile(values, [1.0, 99.4]))
 
 
-def draw_contours(ax: plt.Axes, segmentation: np.ndarray) -> None:
-    for label in DRAW_ORDER:
-        _, color = LABELS[label]
-        binary = (segmentation == label).astype(float)
-        if np.any(binary):
-            ax.contour(binary, levels=[0.5], colors=[color], linewidths=1.30)
+def draw_contours(ax: plt.Axes, segmentation: np.ndarray, *, plate: bool = False) -> None:
+    if not plate:
+        for label in DRAW_ORDER:
+            _, color = LABELS[label]
+            binary = (segmentation == label).astype(float)
+            if np.any(binary):
+                ax.contour(binary, levels=[0.5], colors=[color], linewidths=1.30)
+        return
+
+    # Colour keeps the clinical labels readable; the line style repeats the
+    # same information for greyscale printing.
+    strokes = [
+        (np.isin(segmentation, [2, 3]), FLOW_ORANGE, "dashed"),
+        (segmentation == 3, FLOW_BLUE, "solid"),
+        (segmentation == 1, FLOW_GREEN, "dotted"),
+    ]
+    for binary, color, linestyle in strokes:
+        if not np.any(binary):
+            continue
+        contour = ax.contour(
+            binary.astype(float),
+            levels=[0.5],
+            colors=[color],
+            linewidths=1.15,
+            linestyles=[linestyle],
+        )
+        contour.set_path_effects([patheffects.withStroke(linewidth=2.1, foreground="white")])
 
 
 def contour_segments(binary: np.ndarray) -> list[np.ndarray]:
@@ -415,17 +441,63 @@ def make_problem_visualisation_combined(clinical_viewer: Path, stack_3d: Path) -
     return output
 
 
-def set_mesh_axes(ax: plt.Axes, vertices: np.ndarray) -> None:
+def set_mesh_axes(ax: plt.Axes, vertices: np.ndarray, *, zoom: float = 1.0) -> None:
     mins = vertices.min(axis=0)
     maxs = vertices.max(axis=0)
-    centre = (mins + maxs) / 2.0
-    half_range = float(np.max(maxs - mins) / 2.0)
-    ax.set_xlim(centre[0] - half_range, centre[0] + half_range)
-    ax.set_ylim(centre[1] - half_range, centre[1] + half_range)
-    ax.set_zlim(centre[2] - half_range, centre[2] + half_range)
-    ax.set_box_aspect((1.0, 1.0, 1.0))
+    spans = np.maximum(maxs - mins, 1e-8)
+    ax.set_xlim(mins[0], maxs[0])
+    ax.set_ylim(mins[1], maxs[1])
+    ax.set_zlim(mins[2], maxs[2])
+    ax.set_box_aspect(tuple(spans / spans.max()), zoom=zoom)
     ax.set_axis_off()
-    ax.view_init(elev=16, azim=-58)
+    ax.view_init(elev=MESH_ELEV, azim=MESH_AZIM)
+
+
+def shade_faces(
+    vertices: np.ndarray,
+    faces: np.ndarray,
+    *,
+    facecolor: str = PLATE_SURFACE,
+    values: np.ndarray | None = None,
+    cmap_name: str = PLATE_CMAP,
+    norm: colors.Normalize | None = None,
+    alpha: float = 1.0,
+) -> tuple[np.ndarray, np.ndarray]:
+    polygons = vertices[faces]
+    face_normals = np.cross(polygons[:, 1] - polygons[:, 0], polygons[:, 2] - polygons[:, 0])
+    face_normals = face_normals / np.maximum(np.linalg.norm(face_normals, axis=1, keepdims=True), 1e-8)
+    light_direction = np.asarray([-0.25, -0.50, 0.83])
+    light_direction = light_direction / np.linalg.norm(light_direction)
+    light = 0.45 + 0.55 * np.clip(np.abs(face_normals @ light_direction), 0.0, 1.0)
+
+    if values is None:
+        base = np.asarray(colors.to_rgb(facecolor))
+        facecolors = np.empty((len(faces), 4))
+        facecolors[:, :3] = np.clip(base[None, :] * light[:, None] + 0.16 * (1.0 - light[:, None]), 0.0, 1.0)
+        facecolors[:, 3] = alpha
+    else:
+        face_values = values[faces].mean(axis=1)
+        colormap = plt.get_cmap(cmap_name)
+        if norm is None:
+            norm = colors.Normalize(vmin=float(np.nanmin(values)), vmax=float(np.nanmax(values)))
+        facecolors = colormap(norm(face_values))
+        facecolors[:, :3] = np.clip(facecolors[:, :3] * (0.72 + 0.28 * light[:, None]), 0.0, 1.0)
+        facecolors[:, 3] = alpha
+
+    return polygons, facecolors
+
+
+def near_quadrant_mask(vertices: np.ndarray, faces: np.ndarray, *, elev: float, azim: float) -> np.ndarray:
+    """Faces of the quadrant closest to the camera, i.e. the wedge to cut away."""
+    elev_rad, azim_rad = np.deg2rad(elev), np.deg2rad(azim)
+    view = np.asarray([
+        np.cos(elev_rad) * np.cos(azim_rad),
+        np.cos(elev_rad) * np.sin(azim_rad),
+        np.sin(elev_rad),
+    ])
+    right = np.asarray([-np.sin(azim_rad), np.cos(azim_rad), 0.0])
+    centroids = vertices[faces].mean(axis=1) - vertices.mean(axis=0)
+    return (centroids @ view > 0.0) & (centroids @ right > 0.0)
 
 
 def draw_ssm_mesh(
@@ -439,43 +511,42 @@ def draw_ssm_mesh(
     norm: colors.Normalize | None = None,
     stride: int = 1,
     alpha: float = 1.0,
-    cutaway: bool = False,
 ) -> Poly3DCollection:
-    selected_faces = faces[::stride]
-    if cutaway:
-        # Remove the octant facing the camera so the inner surface stays visible.
-        centroids = vertices[selected_faces].mean(axis=1) - vertices.mean(axis=0)
-        selected_faces = selected_faces[~((centroids[:, 0] > 0.0) & (centroids[:, 1] < 0.0))]
-
-    polygons = vertices[selected_faces]
-    face_normals = np.cross(polygons[:, 1] - polygons[:, 0], polygons[:, 2] - polygons[:, 0])
-    face_normals = face_normals / np.maximum(np.linalg.norm(face_normals, axis=1, keepdims=True), 1e-8)
-    light_direction = np.asarray([-0.25, -0.50, 0.83])
-    light_direction = light_direction / np.linalg.norm(light_direction)
-    light = 0.45 + 0.55 * np.clip(np.abs(face_normals @ light_direction), 0.0, 1.0)
-
-    if values is None:
-        base = np.asarray(colors.to_rgb(facecolor))
-        facecolors = np.empty((len(selected_faces), 4))
-        facecolors[:, :3] = np.clip(base[None, :] * light[:, None] + 0.16 * (1.0 - light[:, None]), 0.0, 1.0)
-        facecolors[:, 3] = alpha
-    else:
-        face_values = values[selected_faces].mean(axis=1)
-        colormap = plt.get_cmap(cmap_name)
-        if norm is None:
-            norm = colors.Normalize(vmin=float(np.nanmin(values)), vmax=float(np.nanmax(values)))
-        facecolors = colormap(norm(face_values))
-        facecolors[:, :3] = np.clip(facecolors[:, :3] * (0.72 + 0.28 * light[:, None]), 0.0, 1.0)
-        facecolors[:, 3] = alpha
-
-    collection = Poly3DCollection(
-        polygons,
-        facecolors=facecolors,
-        edgecolors="none",
-        linewidths=0.0,
+    polygons, facecolors = shade_faces(
+        vertices,
+        faces[::stride],
+        facecolor=facecolor,
+        values=values,
+        cmap_name=cmap_name,
+        norm=norm,
+        alpha=alpha,
     )
+    collection = Poly3DCollection(polygons, facecolors=facecolors, edgecolors="none", linewidths=0.0)
     ax.add_collection3d(collection)
     return collection
+
+
+def draw_wall_cutaway(
+    ax: plt.Axes,
+    endocardium: np.ndarray,
+    epicardium: np.ndarray,
+    faces: np.ndarray,
+    *,
+    endo_color: str,
+    epi_color: str,
+    elev: float = MESH_ELEV,
+    azim: float = MESH_AZIM,
+) -> None:
+    """Both surfaces in one collection so depth sorting stays consistent."""
+    kept_epi = faces[~near_quadrant_mask(epicardium, faces, elev=elev, azim=azim)]
+    endo_polygons, endo_colors = shade_faces(endocardium, faces, facecolor=endo_color)
+    epi_polygons, epi_colors = shade_faces(epicardium, kept_epi, facecolor=epi_color)
+    ax.add_collection3d(Poly3DCollection(
+        np.concatenate([endo_polygons, epi_polygons], axis=0),
+        facecolors=np.concatenate([endo_colors, epi_colors], axis=0),
+        edgecolors="none",
+        linewidths=0.0,
+    ))
 
 
 def selected_lv_slices(segmentation: np.ndarray, count: int = 10) -> np.ndarray:
@@ -507,19 +578,26 @@ def draw_contour_stack(
             [x_min, x_max, x_max, x_min, x_min],
             [y_min, y_min, y_max, y_max, y_min],
             [z_value] * 5,
-            color="#D6DCE2",
-            linewidth=0.42,
-            alpha=0.86,
+            color=PLATE_RULE,
+            linewidth=0.35,
+            alpha=0.90,
         )
-        for binary_mask, line_color, line_width in [
-            (np.isin(labels, [2, 3]), FLOW_ORANGE, 1.25),
-            (labels == 3, FLOW_BLUE, 1.15),
+        for binary_mask, line_style, line_width in [
+            (np.isin(labels, [2, 3]), PLATE_DASH, 0.75),
+            (labels == 3, "solid", 0.90),
         ]:
             segments = contour_segments(binary_mask)
             for segment in segments:
                 x_coords = (segment[:, 0] - col_count / 2.0) * spacing[0]
                 y_coords = (segment[:, 1] - row_count / 2.0) * spacing[1]
-                ax.plot(x_coords, y_coords, np.full_like(x_coords, z_value), color=line_color, linewidth=line_width)
+                ax.plot(
+                    x_coords,
+                    y_coords,
+                    np.full_like(x_coords, z_value),
+                    color=PLATE_INK,
+                    linestyle=line_style,
+                    linewidth=line_width,
+                )
 
     ax.view_init(elev=24, azim=-58)
     ax.set_box_aspect((1.0, 1.0, 0.76))
@@ -535,6 +613,8 @@ def draw_slice_panel(
     segmentation: np.ndarray,
     spacing: tuple[float, float, float],
     crop: tuple[slice, slice],
+    *,
+    plate: bool = False,
 ) -> None:
     slice_index = representative_lv_slice(segmentation)
     vmin, vmax = window_bounds(volume, crop=crop)
@@ -546,9 +626,13 @@ def draw_slice_panel(
         vmax=vmax,
         interpolation="nearest",
     )
-    draw_contours(ax, segmentation[crop[0], crop[1], slice_index])
+    draw_contours(ax, segmentation[crop[0], crop[1], slice_index], plate=plate)
     draw_scale_bar(ax, spacing[0], length_mm=20.0)
     style_viewport(ax)
+    if plate:
+        for spine in ax.spines.values():
+            spine.set_color(PLATE_INK)
+            spine.set_linewidth(0.6)
 
 
 def aha_segment_values(vertices: np.ndarray, thickness: np.ndarray) -> dict[int, float]:
@@ -575,7 +659,8 @@ def aha_segment_values(vertices: np.ndarray, thickness: np.ndarray) -> dict[int,
 
 
 def draw_aha17(ax: plt.Axes, segment_values: dict[int, float], norm: colors.Normalize) -> None:
-    colormap = plt.get_cmap("turbo")
+    colormap = plt.get_cmap(PLATE_CMAP)
+    number_effects = [patheffects.withStroke(linewidth=1.3, foreground="black")]
     rings = [
         (0.72, 1.00, 6, 1, 90.0),
         (0.45, 0.72, 6, 7, 90.0),
@@ -593,77 +678,105 @@ def draw_aha17(ax: plt.Axes, segment_values: dict[int, float], norm: colors.Norm
                 theta2,
                 width=outer_radius - inner_radius,
                 facecolor=colormap(norm(segment_values[segment_id])),
-                edgecolor="white",
-                linewidth=1.2,
+                edgecolor=PLATE_INK,
+                linewidth=0.45,
             )
             ax.add_patch(wedge)
             mid_angle = np.deg2rad((theta1 + theta2) / 2.0)
             radius = (inner_radius + outer_radius) / 2.0
-            ax.text(
+            label = ax.text(
                 radius * np.cos(mid_angle),
                 radius * np.sin(mid_angle),
                 str(segment_id),
                 ha="center",
                 va="center",
-                fontsize=5.6,
+                fontsize=5.4,
                 color="white",
-                weight="bold",
             )
+            label.set_path_effects(number_effects)
 
     centre = patches.Circle(
         (0.0, 0.0),
         0.20,
         facecolor=colormap(norm(segment_values[17])),
-        edgecolor="white",
-        linewidth=1.2,
+        edgecolor=PLATE_INK,
+        linewidth=0.45,
     )
     ax.add_patch(centre)
-    ax.text(0.0, 0.0, "17", ha="center", va="center", fontsize=5.6, color="white", weight="bold")
+    centre_label = ax.text(0.0, 0.0, "17", ha="center", va="center", fontsize=5.4, color="white")
+    centre_label.set_path_effects(number_effects)
     ax.set_aspect("equal")
     ax.set_xlim(-1.04, 1.04)
     ax.set_ylim(-1.04, 1.04)
     ax.axis("off")
 
 
-def set_panel_caption(ax: plt.Axes, label: str, caption: str, *, y: float | None = None) -> None:
-    title_kwargs = {
-        "fontsize": 7.5,
-        "color": "#333333",
-        "pad": 4,
-        "style": "italic",
-    }
-    if y is not None:
-        title_kwargs["y"] = y
-        title_kwargs["pad"] = 0
-    ax.set_title(f"{label} {caption}", **title_kwargs)
-
-
-def segmentation_legend_handles(*, include_rv: bool = False) -> list[Line2D]:
+def plate_legend_handles(*, include_rv: bool = False) -> list[Line2D]:
     handles = [
-        Line2D([0], [0], color=FLOW_BLUE, lw=1.4, label="Endocardium"),
-        Line2D([0], [0], color=FLOW_ORANGE, lw=1.4, label="Epicardium"),
+        Line2D([0], [0], color=PLATE_INK, lw=0.9, label="endocardium"),
+        Line2D([0], [0], color=PLATE_INK, lw=0.9, linestyle=PLATE_DASH, label="epicardium"),
     ]
     if include_rv:
-        handles.append(Line2D([0], [0], color=FLOW_GREEN, lw=1.4, label="RV"))
+        handles.append(
+            Line2D([0], [0], color=PLATE_INK, lw=0.9, linestyle=PLATE_DOT, label="right ventricle")
+        )
     return handles
+
+
+def label_legend_handles() -> list[Line2D]:
+    return [
+        Line2D([0], [0], color=FLOW_BLUE, lw=1.1, label="endocardium"),
+        Line2D([0], [0], color=FLOW_ORANGE, lw=1.1, linestyle=(0, (3.0, 1.8)), label="epicardium"),
+        Line2D([0], [0], color=FLOW_GREEN, lw=1.1, linestyle=(0, (1.0, 1.6)), label="right ventricle"),
+    ]
+
+
+def plate_legend(ax: plt.Axes, handles: list[Line2D], *, y: float) -> None:
+    ax.legend(
+        handles=handles,
+        loc="upper center",
+        bbox_to_anchor=(0.50, y),
+        frameon=False,
+        ncol=len(handles),
+        fontsize=5.9,
+        labelcolor=PLATE_GREY,
+        handlelength=1.60,
+        columnspacing=0.90,
+        handletextpad=0.35,
+        borderaxespad=0.0,
+    )
+
+
+def plate_header(fig: plt.Figure, ax: plt.Axes, tag: str, title: str, note: str | None = None) -> None:
+    box = ax.get_position()
+    fig.text(box.x0, box.y1 + 0.030, f"({tag})", ha="left", va="baseline",
+             fontsize=7.2, fontweight="bold", color=PLATE_INK)
+    fig.text(box.x0 + 0.033, box.y1 + 0.030, title, ha="left", va="baseline",
+             fontsize=7.2, fontweight="bold", color=PLATE_INK)
+    if note is not None:
+        fig.text(box.x0, box.y1 + 0.008, note, ha="left", va="baseline",
+                 fontsize=5.9, color=PLATE_GREY, style="italic")
+
+
+def plate_arrow(fig: plt.Figure, start: tuple[float, float], end: tuple[float, float]) -> None:
+    fig.add_artist(patches.FancyArrowPatch(
+        start, end, transform=fig.transFigure, arrowstyle="-|>", mutation_scale=7.0,
+        linewidth=0.7, color=PLATE_INK, shrinkA=0, shrinkB=0, clip_on=False, zorder=40))
+
+
+def plate_route(fig: plt.Figure, points: list[tuple[float, float]]) -> None:
+    for start, end in zip(points[:-2], points[1:-1]):
+        fig.add_artist(Line2D(
+            [start[0], end[0]], [start[1], end[1]], transform=fig.transFigure,
+            color=PLATE_INK, lw=0.7, solid_capstyle="round", clip_on=False, zorder=40))
+    plate_arrow(fig, points[-2], points[-1])
 
 
 def draw_pipeline_arrows(fig: plt.Figure, axes: list[plt.Axes]) -> None:
     slice_axis, contour_axis, ssm_axis, heatmap_axis, aha_axis = axes
-    arrow_kw = dict(
-        transform=fig.transFigure,
-        arrowstyle="-|>",
-        mutation_scale=11.0,
-        linewidth=1.0,
-        color="#444444",
-        shrinkA=0,
-        shrinkB=0,
-        clip_on=False,
-        zorder=40,
-    )
-
-    def box(axis: plt.Axes) -> object:
-        return axis.get_position()
+    boxes = [axis.get_position() for axis in
+             (slice_axis, contour_axis, ssm_axis, heatmap_axis, aha_axis)]
+    slice_box, contour_box, ssm_box, heatmap_box, aha_box = boxes
 
     def mid_y(axis_box: object) -> float:
         return 0.5 * (axis_box.y0 + axis_box.y1)
@@ -671,21 +784,21 @@ def draw_pipeline_arrows(fig: plt.Figure, axes: list[plt.Axes]) -> None:
     def mid_x(axis_box: object) -> float:
         return 0.5 * (axis_box.x0 + axis_box.x1)
 
-    slice_box = box(slice_axis)
-    contour_box = box(contour_axis)
-    ssm_box = box(ssm_axis)
-    heatmap_box = box(heatmap_axis)
-    aha_box = box(aha_axis)
+    plate_arrow(fig, (slice_box.x1 + 0.010, mid_y(slice_box)),
+                (contour_box.x0 - 0.010, mid_y(contour_box)))
+    plate_arrow(fig, (contour_box.x1 + 0.010, mid_y(contour_box)),
+                (ssm_box.x0 - 0.010, mid_y(ssm_box)))
+    plate_arrow(fig, (heatmap_box.x1 + 0.010, mid_y(heatmap_box)),
+                (aha_box.x0 - 0.010, mid_y(aha_box)))
 
-    arrows = [
-        ((slice_box.x1 + 0.014, mid_y(slice_box)), (contour_box.x0 - 0.014, mid_y(contour_box))),
-        ((contour_box.x1 + 0.014, mid_y(contour_box)), (ssm_box.x0 - 0.014, mid_y(ssm_box))),
-        ((mid_x(ssm_box), ssm_box.y0 - 0.010), (mid_x(heatmap_box), heatmap_box.y1 + 0.010)),
-        ((heatmap_box.x0 - 0.014, mid_y(heatmap_box)), (aha_box.x1 + 0.014, mid_y(aha_box))),
-    ]
-
-    for start, end in arrows:
-        fig.add_artist(patches.FancyArrowPatch(start, end, **arrow_kw))
+    # Return sweep from the end of the top row to the start of the bottom row.
+    plate_route(fig, [
+        (mid_x(ssm_box), ssm_box.y0 - 0.050),
+        (mid_x(ssm_box), WRAP_Y),
+        (0.018, WRAP_Y),
+        (0.018, mid_y(heatmap_box)),
+        (heatmap_box.x0 - 0.010, mid_y(heatmap_box)),
+    ])
 
 
 def make_pipeline_visual_flow(
@@ -698,104 +811,77 @@ def make_pipeline_visual_flow(
     thickness_norm = colors.Normalize(vmin=4.0, vmax=12.0)
     segment_values = aha_segment_values(endocardium, thickness)
 
-    # --- Figure: 2 rows, academic journal style ---
-    fig = plt.figure(figsize=(7.2, 4.8), facecolor="white")
+    with plt.rc_context(PLATE_RC):
+        fig = plt.figure(figsize=(7.2, 5.4), facecolor="white")
 
-    # Top row: (a) SAX slice, (b) contours, (c) LV mesh
-    top_y, top_h = 0.55, 0.38
-    top_positions = [
-        [0.04, top_y, 0.24, top_h],
-        [0.36, top_y, 0.26, top_h],
-        [0.70, top_y, 0.26, top_h],
-    ]
+        # Two rows read left to right; the return sweep links (c) to (d).
+        slice_axis = fig.add_axes([0.045, 0.585, 0.250, 0.340])
+        contour_axis = fig.add_axes([0.355, 0.570, 0.270, 0.370], projection="3d")
+        ssm_axis = fig.add_axes([0.690, 0.570, 0.270, 0.370], projection="3d")
+        heatmap_axis = fig.add_axes([0.050, 0.070, 0.330, 0.370], projection="3d")
+        aha_axis = fig.add_axes([0.470, 0.085, 0.300, 0.345])
 
-    # Bottom row (reversed): (d) thickness directly under (c), (e) AHA-17
-    bot_y, bot_h = 0.07, 0.38
-    bot_positions = [
-        [0.70, bot_y, 0.26, bot_h],   # (d) same x as (c)
-        [0.36, bot_y, 0.22, bot_h],   # (e) closer to (d)
-    ]
+        draw_slice_panel(slice_axis, volume, segmentation, spacing, crop, plate=True)
+        draw_contour_stack(contour_axis, segmentation, spacing, crop)
 
-    slice_axis = fig.add_axes(top_positions[0])
-    contour_axis = fig.add_axes(top_positions[1], projection="3d")
-    ssm_axis = fig.add_axes(top_positions[2], projection="3d")
-    heatmap_axis = fig.add_axes(bot_positions[0], projection="3d")
-    aha_axis = fig.add_axes(bot_positions[1])
+        draw_wall_cutaway(ssm_axis, endocardium, epicardium, faces,
+                          endo_color="#6F6F6F", epi_color="#CFCFCF")
+        set_mesh_axes(ssm_axis, epicardium, zoom=1.22)
 
-    # --- Draw content ---
-    draw_slice_panel(slice_axis, volume, segmentation, spacing, crop)
-    draw_contour_stack(contour_axis, segmentation, spacing, crop)
-    draw_ssm_mesh(ssm_axis, epicardium, faces, facecolor=FLOW_ORANGE, stride=2, alpha=0.50)
-    draw_ssm_mesh(ssm_axis, endocardium, faces, facecolor=FLOW_BLUE, stride=2, alpha=0.86)
-    draw_ssm_mesh(heatmap_axis, endocardium, faces, values=thickness, norm=thickness_norm, stride=2, alpha=0.98)
-    draw_aha17(aha_axis, segment_values, thickness_norm)
+        draw_ssm_mesh(heatmap_axis, endocardium, faces, values=thickness,
+                      norm=thickness_norm, alpha=1.0)
+        set_mesh_axes(heatmap_axis, endocardium, zoom=1.30)
 
-    all_axes = [slice_axis, contour_axis, ssm_axis, heatmap_axis, aha_axis]
-    captions = ["SAX slice", "Contour extraction", "LV mesh (SSM)", "Wall thickness", "AHA-17"]
-    for idx, (ax, caption) in enumerate(zip(all_axes, captions)):
-        label = f"({chr(ord('a') + idx)})"
-        if ax is heatmap_axis:
-            set_panel_caption(ax, label, caption, y=0.96)
-        else:
-            set_panel_caption(ax, label, caption)
+        draw_aha17(aha_axis, segment_values, thickness_norm)
 
-    slice_axis.legend(
-        handles=segmentation_legend_handles(include_rv=True),
-        loc="upper center",
-        bbox_to_anchor=(0.50, -0.055),
-        frameon=False,
-        ncol=3,
-        fontsize=5.9,
-        labelcolor="#333333",
-        handlelength=1.20,
-        columnspacing=0.70,
-        handletextpad=0.35,
-        borderaxespad=0.0,
-    )
-    contour_axis.legend(
-        handles=segmentation_legend_handles(),
-        loc="lower center",
-        bbox_to_anchor=(0.50, 0.02),
-        frameon=False,
-        ncol=2,
-        fontsize=6.2,
-        labelcolor="#333333",
-        handlelength=1.35,
-        columnspacing=0.80,
-        handletextpad=0.40,
-    )
-    ssm_axis.legend(
-        handles=segmentation_legend_handles(),
-        loc="lower center",
-        bbox_to_anchor=(0.50, 0.02),
-        frameon=False,
-        ncol=2,
-        fontsize=6.2,
-        labelcolor="#333333",
-        handlelength=1.35,
-        columnspacing=0.80,
-        handletextpad=0.40,
-    )
+        headers = [
+            (slice_axis, "a", "Short-axis observation",
+             "ACDC end-diastolic frame with expert labels"),
+            (contour_axis, "b", "Contour extraction",
+             "rings at their physical slice positions"),
+            (ssm_axis, "c", "LV surface pair",
+             "endocardial and epicardial geometry"),
+            (heatmap_axis, "d", "Local wall thickness",
+             "one value per endocardial vertex"),
+            (aha_axis, "e", "AHA-17 summary",
+             "segment means of the surface field"),
+        ]
+        for axis, tag, title, note in headers:
+            plate_header(fig, axis, tag, title, note)
 
-    # --- Colorbar ---
-    heatmap_box = heatmap_axis.get_position()
-    colorbar_axis = fig.add_axes([
-        heatmap_box.x0 + 0.10 * heatmap_box.width,
-        heatmap_box.y0 - 0.035,
-        0.80 * heatmap_box.width,
-        0.014,
-    ])
-    scalar_mappable = plt.cm.ScalarMappable(norm=thickness_norm, cmap="turbo")
-    colorbar = fig.colorbar(scalar_mappable, cax=colorbar_axis, orientation="horizontal")
-    colorbar.set_label("Thickness (mm)", fontsize=6.0, labelpad=1)
-    colorbar.ax.tick_params(labelsize=5.5, length=2)
+        plate_legend(slice_axis, label_legend_handles(), y=-0.030)
+        plate_legend(contour_axis, plate_legend_handles(), y=0.145)
+        ssm_axis.legend(
+            handles=[
+                patches.Patch(facecolor="#6F6F6F", edgecolor="none", label="endocardium"),
+                patches.Patch(facecolor="#CFCFCF", edgecolor="none", label="epicardium (cut away)"),
+            ],
+            loc="upper center",
+            bbox_to_anchor=(0.50, -0.020),
+            frameon=False,
+            ncol=2,
+            fontsize=5.9,
+            labelcolor=PLATE_GREY,
+            handlelength=1.10,
+            handleheight=0.80,
+            columnspacing=0.90,
+            handletextpad=0.35,
+            borderaxespad=0.0,
+        )
 
-    # --- Arrows ---
-    draw_pipeline_arrows(fig, all_axes)
+        colorbar_axis = fig.add_axes([0.815, 0.145, 0.016, 0.250])
+        scalar_mappable = plt.cm.ScalarMappable(norm=thickness_norm, cmap=PLATE_CMAP)
+        colorbar = fig.colorbar(scalar_mappable, cax=colorbar_axis, orientation="vertical")
+        colorbar.set_label("wall thickness (mm)", fontsize=6.2, color=PLATE_INK, labelpad=3)
+        colorbar.outline.set_linewidth(0.5)
+        colorbar.outline.set_edgecolor(PLATE_INK)
+        colorbar.ax.tick_params(labelsize=5.7, length=2, width=0.5, colors=PLATE_INK)
 
-    output = OUT_DIR / "cardiosdf_pipeline_visual_flow.png"
-    save_rgb_figure(fig, output, dpi=300, bbox_inches="tight", pad_inches=0.04)
-    plt.close(fig)
+        draw_pipeline_arrows(fig, [slice_axis, contour_axis, ssm_axis, heatmap_axis, aha_axis])
+
+        output = OUT_DIR / "cardiosdf_pipeline_visual_flow.png"
+        save_rgb_figure(fig, output, dpi=400, bbox_inches="tight", pad_inches=0.05)
+        plt.close(fig)
     return output
 
 
