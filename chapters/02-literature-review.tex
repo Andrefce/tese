@@ -378,6 +378,13 @@ seek continuous cardiac shape from incomplete observations. Br{\'a}s et al.
 use image data directly, whereas this thesis isolates the geometric problem by
 using segmented contour points.
 
+\textcite{muffoletto2026nihc} also reconstruct three-dimensional cardiac shape
+from sparse segmentations with a neural implicit representation. Their method
+uses a learned biventricular shape prior and includes both SAX and long-axis
+views. It is therefore broader than the LV-focused SDF reconstruction considered
+here. The study does not report a public dataset or code release, which limits
+its direct reproducibility and comparison with this work.
+
 Two techniques are critical for applying INRs to thin cardiac structures where
 high-frequency geometric detail must be preserved. Fourier features reduce the
 low-frequency bias of standard multilayer perceptrons, and Eikonal regularisation

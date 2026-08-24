@@ -8,7 +8,7 @@
 
 % --- Encoding & language -------------------------------------
 \usepackage{fontspec}
-\setmainfont{Arial}
+\setmainfont{Arimo}
 \usepackage[english,portuguese]{babel}
 
 % --- Math ----------------------------------------------------
@@ -33,6 +33,7 @@
 \graphicspath{{images/}}
 \usepackage{float}
 \usepackage{placeins}
+\usepackage{needspace}
 \usepackage{eurosym}
 \usepackage{enumitem}
 \usepackage{etoolbox}
@@ -69,7 +70,8 @@
   backend     = biber,
   style       = apa,         % ISCTE-IUL default for CS theses; switch with care
   sorting     = nyt,         % APA convention: name, year, title
-  maxbibnames = 99,
+  maxbibnames = 20,          % APA 7: list up to 20 authors in the bibliography
+  minbibnames = 20,
   giveninits  = true,
   url         = false,
   doi         = true,
@@ -77,10 +79,10 @@
 ]{biblatex}
 \addbibresource{bibliography/references.bib}
 
-% References: same size as text, single-spaced, 0.7cm hanging, no gap (norm 2.1.xii)
-\renewcommand*{\bibfont}{\normalfont\normalsize\singlespacing}
+% APA 7: double-spaced entries with a 0.5-inch hanging indent and no blank lines.
+\renewcommand*{\bibfont}{\normalfont\normalsize\doublespacing}
 \setlength{\bibitemsep}{0pt}
-\setlength{\bibhang}{0.7cm}
+\setlength{\bibhang}{1.27cm}
 
 % --- Cross-references (load AFTER hyperref) ------------------
 \usepackage[hidelinks]{hyperref}
@@ -221,8 +223,8 @@
 % ============================================================
 \backmatter
 
-\renewcommand{\bibname}{References}
-\printbibliography[title={References}]
+\renewcommand{\bibname}{Bibliography}
+\printbibliography[title={Bibliography}]
 
 \appendix
 \input{appendices/appendix-a}

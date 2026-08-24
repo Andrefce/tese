@@ -457,6 +457,64 @@ def isotropic_grid(meshes: list, pitch: float, pad_mm: float = 3.0):
 # ──────────────────────────────────────────────────────────────────────────
 # Geometry builders
 # ──────────────────────────────────────────────────────────────────────────
+def build_loft_geometry(contours: dict, taubin_iters: int = 12) -> dict:
+    """Non-neural baseline: join corresponding SAX contour points linearly."""
+    xyz = np.asarray(contours["xyz_mm"], dtype=np.float64)
+    tissue = np.asarray(contours["tissue"], dtype=np.float64)
+    meshes: dict[str, trimesh.Trimesh] = {}
+    reports: list[dict] = []
+
+    for name, tissue_id in (("endo", 0.0), ("epi", 1.0)):
+        surface_points = xyz[np.isclose(tissue, tissue_id)]
+        rings = [surface_points[np.isclose(surface_points[:, 2], z)]
+                 for z in np.unique(surface_points[:, 2])]
+        rings = [ring for ring in rings if len(ring) >= 3]
+        if len(rings) < 2:
+            raise ValueError(f"Contour lofting needs at least two {name} rings.")
+
+        aligned = [rings[0]]
+        for ring in rings[1:]:
+            previous = aligned[-1]
+            if len(ring) != len(previous):
+                ring = _resample_ring(np.vstack([ring, ring[0]]), len(previous))
+            ring = min(
+                (np.roll(ring, shift, axis=0) for shift in range(len(ring))),
+                key=lambda candidate: np.mean(np.sum((candidate[:, :2] - previous[:, :2]) ** 2,
+                                                     axis=1)),
+            )
+            aligned.append(ring)
+
+        vertices = np.vstack(aligned)
+        ring_size = len(aligned[0])
+        faces: list[list[int]] = []
+        for ring_index in range(len(aligned) - 1):
+            lower = ring_index * ring_size
+            upper = (ring_index + 1) * ring_size
+            for point_index in range(ring_size):
+                next_index = (point_index + 1) % ring_size
+                faces.append([lower + point_index, upper + point_index, upper + next_index])
+                faces.append([lower + point_index, upper + next_index, lower + next_index])
+
+        for ring_index in (0, len(aligned) - 1):
+            centre_index = len(vertices)
+            vertices = np.vstack([vertices, aligned[ring_index].mean(axis=0)])
+            offset = ring_index * ring_size
+            for point_index in range(ring_size):
+                next_index = (point_index + 1) % ring_size
+                faces.append([centre_index, offset + point_index, offset + next_index])
+
+        raw = trimesh.Trimesh(vertices=vertices, faces=np.asarray(faces), process=False)
+        origin, shape = isotropic_grid([raw], pitch=1.0, pad_mm=3.0)
+        inside = _clean_inside(voxelise_surface(raw, origin, 1.0, shape))
+        field = signed_distance_from_mask(inside, np.ones(3), smooth_sigma=0.0)
+        dense = marching_cubes_mesh(field, origin, np.ones(3))
+        mesh, report = make_watertight(dense, f"loft-{name}", taubin_iters)
+        meshes[name] = mesh
+        reports.append(report)
+
+    return {**meshes, "reports": reports, "source": "linear contour lofting"}
+
+
 def _crop_bounds(mask: np.ndarray, spacing: np.ndarray, margin_mm: float = 8.0):
     """Tight bounding box around ``mask`` plus a margin, in voxel index space."""
     idx = np.argwhere(mask)

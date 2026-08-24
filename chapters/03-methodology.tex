@@ -918,6 +918,21 @@ the reconstructed meshes by the methods in \cref{sec:wall-thickness-protocol};
 the method judged most consistent in the comparison provides the final regional
 measurements.
 
+The reconstruction is also compared with a simple non-neural baseline built
+from exactly the same SAX contour rings. Each ring is represented by 60 points.
+The starting point of each successive ring is shifted to minimise its mean
+in-plane distance from the preceding ring, while preserving the contour
+direction. Corresponding points on adjacent rings are then joined by triangles,
+and the first and last rings are closed with planar caps. The resulting loft is
+rasterised on a 1.0~mm isotropic grid and extracted again with marching cubes so
+that its mesh density is comparable with the other evaluation meshes. It then
+passes through the same watertight repair and smoothing procedure used for the
+model output. The model and the lofting baseline are evaluated on the same
+patients against the same segmentation-derived geometry and with the same
+surface, overlap, and volume metrics. This comparison tests learned geometric
+completion against direct linear interpolation between the observed contours;
+it does not isolate the contribution of individual model components.
+
 \section{Wall-Thickness Evaluation Protocol}
 \label{sec:wall-thickness-protocol}
 \noindent

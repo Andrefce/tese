@@ -86,10 +86,15 @@ constant amount, which only the bias reveals.
 \subsection{Comparators}
 \label{subsec:baselines}
 \noindent
-Because no paired independent 3D mesh exists for the clinical scans (see
-\cref{subsec:missing-ground-truth}), the segmentation-derived geometry
-introduced above is used as the reconstruction comparator. Wall thickness is
-measured on both geometries with the four algorithms selected in
+No paired independent 3D mesh exists for the clinical scans, as discussed in
+\cref{subsec:missing-ground-truth}. The segmentation-derived geometry is
+therefore used as the common evaluation reference. It is not a competing
+reconstruction method or independent ground truth. The competing reconstruction
+is a matched linear contour-lofting baseline. It uses the same input contour
+rings as the model and the same mesh repair and metric pipeline, as described in
+\cref{subsec:inference-offset-extraction}. This baseline is used only for the
+reconstruction-quality comparison. Wall thickness is compared between the model
+and the segmentation-derived geometry with the four algorithms selected in
 \cref{subsec:thickness-methods}: the Laplace field method, the Yezzi--Prince
 method, the SDF cone-ray method, and the Euclidean Distance Transform (EDT)
 boundary sum. The thickness computed directly on the input label mask is reported
@@ -220,15 +225,7 @@ irregular wall geometry of the hypertrophic cases.
 epicardial surfaces for one normal case at both cardiac phases, beside the
 geometry derived from the same segmentation. The
 end-systolic cavity is visibly smaller than the end-diastolic one, and the
-surroun\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.9\linewidth]{cardiosdf_pipeline_visual_flow}
-	\vspace{2mm}
-	\caption[End-to-end reconstruction and thickness-measurement pipeline]{Preview
-	of the end-to-end methodology from sparse SAX observations
-	to reconstructed LV geometry and wall-thickness outputs.}
-	\label{fig:methodology-pipeline}
-\end{figure}ding wall correspondingly thicker. This shows that the pipeline
+surrounding wall correspondingly thicker. This shows that the pipeline
 reconstructs the expected phase-dependent change. Both reconstructed surfaces are zero-level sets of
 the same continuous field rather than stacks of per-slice contours, and the
 comparison with the segmentation-derived surfaces shows that the reconstruction
@@ -237,29 +234,57 @@ mask.
 
 \begin{table}[H]
   \centering
-  \caption[Reconstruction quality of the final model]{Reconstruction quality of the final model over the
-    $30$-patient evaluation cohort at end-diastole, reported as mean $\pm$
-    standard deviation across patients. The metrics report typical and tail
-    surface error, volumetric overlap, and systematic volume bias. Distances are
-    in millimetres; the Dice similarity coefficient and the volume ratio are
-    dimensionless. Every reconstruction in the cohort is watertight on both
-    surfaces.}
+  \caption[Model versus matched contour lofting]{Reconstruction quality of the model and the matched linear
+    contour-lofting baseline at end-diastole. Both are compared with the same
+    segmentation-derived reference; that reference is not an independent ground
+    truth or a baseline row. Values are mean $\pm$ standard deviation across the
+    $30$ patients. The final column is the paired lofting-minus-model difference
+    with a 95\% percentile-bootstrap confidence interval from 10\,000
+    patient-level resamples. Distances are in millimetres; Dice and volume ratio
+    are dimensionless.}
   \label{tab:reconstruction-quality}
-  \begin{tabular}{l c c}
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{l l c c c}
     \toprule
-    Metric & Endocardium & Epicardium \\
+    Metric & Structure & Model & Lofting & Difference (95\% CI) \\
     \midrule
-    Chamfer distance (mm) & $1.22 \pm 0.21$ & $1.05 \pm 0.18$ \\
-    ASSD (mm)              & $1.21 \pm 0.23$ & $1.09 \pm 0.20$ \\
-    HD95 (mm)              & $3.30 \pm 0.91$ & $3.47 \pm 1.41$ \\
-    Volume ratio          & $0.92 \pm 0.03$ & $1.00 \pm 0.03$ \\
-    \midrule
-                          & Cavity & Myocardium \\
-    \cmidrule(lr){2-2} \cmidrule(lr){3-3}
-    Dice similarity coefficient & $0.93 \pm 0.02$ & $0.85 \pm 0.02$ \\
+    Chamfer distance & Endocardium & $1.22 \pm 0.21$ & $1.60 \pm 0.20$ & $+0.38\ [0.28,\ 0.47]$ \\
+                     & Epicardium  & $1.05 \pm 0.18$ & $1.86 \pm 0.22$ & $+0.81\ [0.73,\ 0.89]$ \\
+    ASSD             & Endocardium & $1.21 \pm 0.23$ & $1.55 \pm 0.20$ & $+0.34\ [0.23,\ 0.44]$ \\
+                     & Epicardium  & $1.09 \pm 0.20$ & $1.85 \pm 0.24$ & $+0.77\ [0.68,\ 0.85]$ \\
+    HD95             & Endocardium & $3.30 \pm 0.91$ & $6.88 \pm 1.91$ & $+3.59\ [3.03,\ 4.17]$ \\
+                     & Epicardium  & $3.47 \pm 1.41$ & $8.35 \pm 2.50$ & $+4.88\ [4.18,\ 5.56]$ \\
+    Dice             & Cavity      & $0.93 \pm 0.02$ & $0.92 \pm 0.01$ & $-0.010\ [-0.016,\ -0.004]$ \\
+                     & Myocardium  & $0.85 \pm 0.02$ & $0.81 \pm 0.04$ & $-0.043\ [-0.054,\ -0.032]$ \\
+    Volume ratio     & Cavity      & $0.92 \pm 0.03$ & $0.89 \pm 0.02$ & $-0.034\ [-0.044,\ -0.024]$ \\
+                     & Epicardial solid & $1.00 \pm 0.03$ & $0.89 \pm 0.02$ & $-0.115\ [-0.126,\ -0.105]$ \\
     \bottomrule
   \end{tabular}
 \end{table}
+
+\subsubsection{Matched contour-lofting baseline}
+\label{subsubsec:contour-lofting-baseline}
+\noindent
+\Cref{tab:reconstruction-quality} compares the model with direct linear
+lofting between the same input contours. Both methods are evaluated on all
+$30$ patients against the same segmentation-derived geometry. Both also produce
+watertight endocardial and epicardial surfaces in every case after the shared
+repair stage.
+
+The model has lower mean and tail surface error for both surfaces. The largest
+difference is in HD95: contour lofting reaches $6.88$~mm on the endocardium and
+$8.35$~mm on the epicardium, compared with $3.30$ and $3.47$~mm for the model.
+The paired confidence intervals exclude zero for every reported difference.
+The cavity Dice advantage is small, at $0.01$, but the myocardial Dice improves
+from $0.81$ to $0.85$. Linear lofting also produces a volume ratio of about
+$0.89$ for both solids, whereas the model reaches $1.00$ for the epicardial
+solid. These results show that the learned reconstruction does more than direct
+linear interpolation and smoothing under this matched evaluation. In
+particular, it better controls between-slice surface excursions and epicardial
+volume. The comparison does not show which architectural component causes the
+improvement, and it does not establish superiority over more advanced
+reconstruction methods.
 
 \subsubsection{Patient-level error analysis}
 \label{subsubsec:reconstruction-error-analysis}
@@ -712,7 +737,11 @@ close to the in-plane resolution of the source images, and every extracted
 endocardial and epicardial surface is watertight after repair
 (\cref{tab:reconstruction-quality}). The continuous representation also removes
 much of the voxel staircasing visible in the segmentation-derived geometry
-(\cref{fig:recon-ed-es-meshes}). However, closure still depends on the repair
+(\cref{fig:recon-ed-es-meshes}). Compared with matched linear contour lofting,
+the model reduces the Chamfer distance, ASSD, and HD95 on both surfaces and
+improves myocardial overlap (\cref{tab:reconstruction-quality}). This provides
+evidence that the learned completion improves on direct interpolation between
+the observed contours. However, closure still depends on the repair
 stage described in \cref{ch:methodology}; it is not guaranteed by surface
 extraction alone.
 
@@ -739,7 +768,8 @@ anatomical ground truth.
 
 Taken together, the demonstrated result is geometric and computational: the
 model completes sparse contours into paired surfaces, preserves relative
-between-patient thickness variation, and supports regional summaries. The
+between-patient thickness variation, supports regional summaries, and performs
+better than a matched linear contour-lofting baseline. The
 observed ES shortfall may be explained by ED-only synthetic pre-training and
 binary phase conditioning, but their individual effects were not isolated by
 an ablation experiment. Likewise, the NOR--HCM separation in
@@ -792,3 +822,13 @@ construction rather than a measured surface, which the fine-tuning stage on real
 data is designed to correct but cannot fully rule out as a residual prior. A
 larger cohort, and ideally a dataset with genuine 3D ground truth, would be
 needed to confirm the results reported here.
+
+The baseline comparison is deliberately narrow. Linear contour lofting tests
+whether the complete neural pipeline improves on direct between-slice
+interpolation under matched evaluation conditions. It does not cover spline
+lofting, shape-model fitting, Poisson reconstruction, or other learned models.
+No controlled ablation removes synthetic pre-training, local conditioning,
+phase conditioning, or positive surface coupling. The experiment therefore
+supports an advantage over one simple conventional baseline, but it cannot
+attribute that advantage to a specific component or establish that the full
+architecture is necessary.

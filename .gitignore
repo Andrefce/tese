@@ -37,3 +37,4 @@ Thumbs.db
 scripts/webapp
 /webapp
 test-new-model/training
+test-new-model/**/loft_cache/

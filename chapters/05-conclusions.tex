@@ -58,9 +58,10 @@ segmentations and is not independent 3D ground truth. Mesh repair contributes to
 the final watertight surfaces, and calibrated decoder-offset figures inherit
 their absolute scale from the segmentation reference. The cohort is small,
 especially for HCM, and the group analysis is descriptive. Finally, no matched
-reconstruction baseline or controlled architectural ablation was completed, so
-the current experiments do not isolate the contribution of each model component
-or establish superiority over conventional contour interpolation.
+comparison beyond linear contour lofting or controlled architectural ablation
+was completed. The current experiments show an improvement over direct linear
+interpolation, but they do not isolate the contribution of each model component
+or establish superiority over more advanced reconstruction methods.
 
 \section{Future Work}
 \label{sec:conclusion-future-work}
@@ -68,9 +69,9 @@ or establish superiority over conventional contour interpolation.
 The first priority is evaluation against independent anatomical evidence, such
 as higher-resolution volumetric imaging or expert 3D surface and wall-thickness
 annotations, followed by validation on a larger external cohort. The second is
-a matched comparison with contour lofting and shape-model fitting, using the
-same patients, physical spacing, repair procedure, and metrics, together with
-point-wise error maps that localise failures at the apex, base, and highly
+a matched comparison with spline-based lofting and shape-model fitting, using
+the same patients, physical spacing, repair procedure, and metrics, together
+with point-wise error maps that localise failures at the apex, base, and highly
 curved wall regions. The third is a targeted experimental study of synthetic
 pre-training, local conditioning, positive surface coupling, and wall-offset
 supervision. Extending phase conditioning beyond a binary ED/ES label would then

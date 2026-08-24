@@ -25,6 +25,35 @@ and AHA-17 tables in `chapters/04-results.tex`.
 | `agreement.csv` | `b11a9500de7d6b66a103c48b70746a052e9231b6ee475b3669b2f38816d56776` |
 | `aha17.csv` | `f3d5c3fe3aa06b6216949f087c8a5166bd59a925a26989302a999f682fac719c` |
 
+## Matched linear contour-lofting baseline
+
+The baseline was evaluated on 2026-08-24 with the same 30 ED patients and the
+cached segmentation-derived comparator meshes used by the reconstruction
+quality analysis. The evaluator extracts the same SAX contour rings supplied to
+the model, joins corresponding points on adjacent rings, closes the terminal
+rings with planar caps, rasterises the result at 1.0 mm, and applies the shared
+watertight repair and metric code.
+
+```bash
+/home/C052246/tese/.venv/bin/python scripts/evaluate_contour_lofting.py \
+  --data-root notebooks/data/training \
+  --cohort test-new-model/cohort_full_nor_hcm10 \
+  --workers 4 --bootstrap-samples 10000
+```
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `scripts/evaluate_contour_lofting.py` | `2615396e4fe936ad3b60dc826b93c307d5029babd983ade25c4dc31c9541813e` |
+| `contour_lofting.csv` | `76917d89db9feb7d95f41ed7af6b69ac000d92828cba51ab018119c67b79080a` |
+| `contour_lofting_summary.csv` | `62bac5f5a6221e62c9d094aa2f5f93d884bbd1c8ab2cc9f7b21aadd097c86963` |
+
+The model and lofting baseline were watertight on both surfaces in all 30
+patients after repair. The model had lower endocardial/epicardial Chamfer
+distance (1.22/1.05 mm versus 1.60/1.86 mm), lower HD95 (3.30/3.47 mm versus
+6.88/8.35 mm), and higher myocardial Dice (0.85 versus 0.81). The patient-level
+paired bootstrap intervals reported in Chapter 4 were computed from 10,000
+resamples with deterministic seeds.
+
 ## Verified cohort facts
 
 - 30 ACDC patients: HCM `patient021`--`patient030` and NOR
