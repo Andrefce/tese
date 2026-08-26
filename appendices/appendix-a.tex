@@ -6,22 +6,13 @@
 \label{app:supplementary-methods}
 
 \noindent
-This appendix records supporting methodological material that would otherwise
-repeat information established in the main text.
+This appendix summarises the training streams, data partitions, clinical
+mesh-preparation operations, and model configuration described in
+\cref{ch:methodology}.
 
-\section{Training data streams}
-\label{sec:appendix-training-streams}
-\noindent
-\Needspace{0.38\textheight}
-All three training streams use the shared cache representation described in
-\cref{subsec:training-cache-representation}. \Cref{tab:method-datasets} provides
-a compact reference for their source, cardiac phase, and role in the two-stage
-training procedure, complementing the source datasets listed in
-\cref{tab:dataset-summary}.
-
-\begin{table}[H]
+\begin{table}[htbp]
 	\centering
-	\caption[Training data streams and their roles.]{Data streams sharing the cache schema and their role in training.}
+	\caption[Training data streams and their roles]{Training data streams and their roles.}
 	\label{tab:method-datasets}
 	\small
 	\renewcommand{\arraystretch}{1.12}
@@ -36,35 +27,20 @@ training procedure, complementing the source datasets listed in
 	\end{tabular}
 \end{table}
 
-\Needspace{0.58\textheight}
-\noindent
-\Cref{fig:dataset-selection-splits} presents the same composition graphically.
-
-\begin{figure}[H]
+\begin{figure}[htbp]
 	\centering
 	\includegraphics[width=0.85\linewidth]{dataset_selection_and_splits}
 	\vspace{2mm}
-	\caption[Composition and splits of the training data streams.]{Composition of the three data streams. Each bar shows how the valid
-	samples of one stream are distributed over the 70\,\%/15\,\%/15\,\%
-	train/validation/test partitions, with the number of patients annotated inside
-	each segment. The synthetic stream, of which 1300 meshes were accepted out of
-	2048 sampled shape vectors, is reserved entirely for pre-training and is
-	therefore not partitioned.}
+	\caption[Composition and splits of the training data streams]{Valid clinical
+	samples divided into the 70\,\%/15\,\%/15\,\% partitions. The 1300 accepted
+	synthetic meshes are reserved for pre-training.}
 	\label{fig:dataset-selection-splits}
 \end{figure}
 
-\section{Real ED and ES mesh-preparation pipeline}
-\label{sec:appendix-real-pipeline}
-\noindent
-\Needspace{0.58\textheight}
-\Cref{tab:real-pipeline} lists, in order, the operations that convert a clinical
-segmentation stack into the watertight mesh used as derived supervision. The
-four stages of this conversion are described in
-\cref{subsec:real-ed-es-datasets}.
-
-\begin{table}[H]
+\begin{table}[htbp]
 	\centering
-	\caption[Main operations in the real ED/ES mesh-preparation pipeline.]{Main operations in the real ED/ES mesh-preparation pipeline.}
+	\caption[Clinical mesh-preparation operations]{Operations used to construct
+	the segmentation-derived supervision meshes.}
 	\label{tab:real-pipeline}
 	\small
 	\renewcommand{\arraystretch}{1.12}
@@ -82,6 +58,32 @@ four stages of this conversion are described in
 		Basal cap perpendicular to the apex--base axis & Replaces the non-anatomical basal dome at the valve-plane boundary \\
 		Quadric decimation to 4000 vertices & Produces a consistently sized mesh for all cases \\
 		Plausibility checks (7 criteria) & Rejects geometrically implausible or corrupted cases \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+	\centering
+	\caption[Model architecture settings]{Main architecture settings of the
+	model.}
+	\label{tab:model-hyperparameters}
+	\small
+	\begin{tabular}{p{0.30\textwidth} p{0.48\textwidth}}
+		\toprule
+		Component & Configuration \\
+		\midrule
+		Input features & 3D coordinates, tissue label, and cardiac phase \\
+		Global encoder type & Shared network with endocardial and epicardial max-pooling \\
+		Local conditioning & Coarse 3D contour feature volume with trilinear interpolation \\
+		Latent dimension & 256 \\
+		Local volume size & $16^3$ with 32 channels \\
+		Positional encoding & Fourier features with $L=3$ frequency bands \\
+		Decoder & 8-layer network, width 512, skip connection at layer 4 \\
+		Activation & Softplus (smooth) \\
+		Local injections & Local feature paths into the decoder trunk and offset head \\
+		Output heads & Endocardial signed distance and positive decoder wall-offset field \\
+		Offset mapping & Sigmoid component with $\tau_{\min}=0.05$ and $\delta_{\mathrm{cap}}=0.45$, plus learned soft-hinge headroom \\
+		Inference grid & $96^3$ query grid for marching cubes \\
 		\bottomrule
 	\end{tabular}
 \end{table}

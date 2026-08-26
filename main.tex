@@ -8,7 +8,7 @@
 
 % --- Encoding & language -------------------------------------
 \usepackage{fontspec}
-\setmainfont{Arimo}
+\setmainfont{Arial}
 \usepackage[english,portuguese]{babel}
 
 % --- Math ----------------------------------------------------
@@ -172,7 +172,7 @@
 \begin{document}
 
 \frontmatter
-\addtocontents{toc}{\setcounter{tocdepth}{1}}
+\addtocontents{toc}{\setcounter{tocdepth}{2}}
 
 % frontmatter pieces open on the next page; only numbered chapters force a recto
 \makeatletter
@@ -197,11 +197,11 @@
 
 \tableofcontents
 \selectlanguage{english}
+\input{frontmatter/acronyms}
+\selectlanguage{english}
 \listoffigures
 \selectlanguage{english}
 \listoftables
-\selectlanguage{english}
-\input{frontmatter/acronyms}
 \selectlanguage{english}
 
 % ============================================================

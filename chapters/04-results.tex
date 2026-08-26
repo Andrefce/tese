@@ -548,22 +548,24 @@ the reasons given in \cref{subsec:wall-thickness-results}.
 
 \begin{table}[H]
   \centering
-  \caption[AHA 17-segment thickness: model versus voxel geometry]{Regional wall thickness over the AHA 17-segment model for the
-    $30$-patient cohort, comparing the reconstructed model geometry with the
-    voxel-based geometry derived from the same input segmentation. Both are
-    measured with the Laplace field. Columns give the mean end-diastolic (ED) and
-    end-systolic (ES) thickness in millimetres and the relative thickening
-    $\Delta$ as a percentage of the ED value. The voxel geometry is a
-    segmentation-derived comparator, not an independent reference.}
+  \captionsetup{width=0.92\textwidth}
+  \caption[AHA 17-segment thickness: model versus voxel geometry]{Regional AHA 17-segment wall thickness on the reconstructed and
+    segmentation-derived geometries.}
   \label{tab:aha17-model-voxel}
-  \footnotesize
-  \setlength{\tabcolsep}{5pt}
-  \begin{tabular}{c l ccc ccc}
+  \normalsize
+  \singlespacing
+  \renewcommand{\arraystretch}{1.20}
+  \setlength{\tabcolsep}{4.5pt}
+  \begin{tabular}{@{}r l rrr @{\hspace{1.4em}} rrr@{}}
     \toprule
     & & \multicolumn{3}{c}{Model geometry}
       & \multicolumn{3}{c}{Voxel geometry} \\
     \cmidrule(lr){3-5} \cmidrule(lr){6-8}
-    \# & Segment & ED & ES & $\Delta$~(\%) & ED & ES & $\Delta$~(\%) \\
+    \multicolumn{1}{c}{\#} & Segment
+      & \multicolumn{1}{c}{ED} & \multicolumn{1}{c}{ES} & \multicolumn{1}{c}{$\Delta$}
+      & \multicolumn{1}{c}{ED} & \multicolumn{1}{c}{ES} & \multicolumn{1}{c}{$\Delta$} \\
+    & & \multicolumn{2}{c}{(mm)} & \multicolumn{1}{c}{(\%)}
+      & \multicolumn{2}{c}{(mm)} & \multicolumn{1}{c}{(\%)} \\
     \midrule
     1  & Basal Anterior       &  9.99 & 13.71 & $+37.1$ & 10.05 & 14.22 & $+41.4$ \\
     2  & Basal Anteroseptal   & 10.15 & 13.40 & $+32.1$ &  9.81 & 13.13 & $+33.9$ \\
@@ -586,9 +588,19 @@ the reasons given in \cref{subsec:wall-thickness-results}.
     \addlinespace
     17 & Apex                 &  7.76 & 11.69 & $+50.7$ &  6.98 & 12.64 & $+81.1$ \\
     \midrule
-    \multicolumn{2}{l}{Overall} & 9.21 & 13.87 & $+50.6$ & 8.66 & 14.10 & $+62.8$ \\
+    \multicolumn{2}{@{}l}{\textbf{Overall}} & \textbf{9.21} & \textbf{13.87} & $\mathbf{+50.6}$
+      & \textbf{8.66} & \textbf{14.10} & $\mathbf{+62.8}$ \\
     \bottomrule
   \end{tabular}
+  \vspace{0.8em}
+
+  \begin{minipage}{0.92\textwidth}
+    \footnotesize\singlespacing
+    \textit{Note.} Values are cohort means for $30$ patients, measured with the
+    Laplace field. ED and ES denote end-diastole and end-systole, respectively;
+    $\Delta$ is the relative thickening from ED to ES. The voxel geometry is
+    derived from the same input segmentation and is not an independent reference.
+  \end{minipage}
 \end{table}
 
 Over the whole cohort the two geometries agree on the size and the arrangement of
@@ -611,23 +623,24 @@ anatomy.
 
 \begin{table}[H]
   \centering
-  \caption[AHA 17-segment thickness: NOR versus HCM]{Regional wall thickness over the AHA 17-segment model for the
-    reconstructed model geometry, measured with the Laplace field and reported
-    separately for the $20$ normal (NOR) and the $10$ hypertrophic (HCM)
-    patients. Each group reports mean end-diastolic (ED) and end-systolic (ES)
-    thickness in millimetres, together with relative thickening $\Delta$. The
-    values derive from the same sparse SAX
-    contours as the reconstruction, so they summarise the model output and are
-    not an independent reference.}
+  \captionsetup{width=0.92\textwidth}
+  \caption[AHA 17-segment thickness: NOR versus HCM]{Regional AHA 17-segment wall thickness on the reconstructed geometry for
+    the normal and hypertrophic groups.}
   \label{tab:aha17-thickening}
-  \footnotesize
-  \setlength{\tabcolsep}{5pt}
-  \begin{tabular}{c l ccc ccc}
+  \normalsize
+  \singlespacing
+  \renewcommand{\arraystretch}{1.20}
+  \setlength{\tabcolsep}{4.5pt}
+  \begin{tabular}{@{}r l rrr @{\hspace{1.4em}} rrr@{}}
     \toprule
     & & \multicolumn{3}{c}{Normal (NOR, $n=20$)}
       & \multicolumn{3}{c}{Hypertrophic (HCM, $n=10$)} \\
     \cmidrule(lr){3-5} \cmidrule(lr){6-8}
-    \# & Segment & ED & ES & $\Delta$~(\%) & ED & ES & $\Delta$~(\%) \\
+    \multicolumn{1}{c}{\#} & Segment
+      & \multicolumn{1}{c}{ED} & \multicolumn{1}{c}{ES} & \multicolumn{1}{c}{$\Delta$}
+      & \multicolumn{1}{c}{ED} & \multicolumn{1}{c}{ES} & \multicolumn{1}{c}{$\Delta$} \\
+    & & \multicolumn{2}{c}{(mm)} & \multicolumn{1}{c}{(\%)}
+      & \multicolumn{2}{c}{(mm)} & \multicolumn{1}{c}{(\%)} \\
     \midrule
     1  & Basal Anterior       &  8.72 & 12.25 & $+40.4$ & 12.54 & 16.62 & $+32.6$ \\
     2  & Basal Anteroseptal   &  8.81 & 12.10 & $+37.4$ & 12.83 & 16.02 & $+24.9$ \\
@@ -650,9 +663,20 @@ anatomy.
     \addlinespace
     17 & Apex                 &  6.80 & 10.32 & $+51.8$ &  9.67 & 14.71 & $+52.1$ \\
     \midrule
-    \multicolumn{2}{l}{Overall} & 7.99 & 12.21 & $+52.9$ & 11.68 & 17.23 & $+47.5$ \\
+    \multicolumn{2}{@{}l}{\textbf{Overall}} & \textbf{7.99} & \textbf{12.21} & $\mathbf{+52.9}$
+      & \textbf{11.68} & \textbf{17.23} & $\mathbf{+47.5}$ \\
     \bottomrule
   \end{tabular}
+  \vspace{0.8em}
+
+  \begin{minipage}{0.92\textwidth}
+    \footnotesize\singlespacing
+    \textit{Note.} Values are group means measured with the Laplace field. ED
+    and ES denote end-diastole and end-systole, respectively; $\Delta$ is the
+    relative thickening from ED to ES. These measurements summarise the model
+    output reconstructed from sparse SAX contours and are not an independent
+    anatomical reference.
+  \end{minipage}
 \end{table}
 
 The regional pattern is internally coherent in both groups. In the normal

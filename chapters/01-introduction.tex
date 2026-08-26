@@ -1,85 +1,150 @@
 % ============================================================
 % !TeX root = ../main.tex
-%  Chapter 1 — Introduction
+% Chapter 1 — Introduction
 % ============================================================
+
 \chapter{Introduction}
+
 \label{ch:introduction}
 
 \noindent
 This chapter introduces the clinical and technical motivation for reconstructing
-three-dimensional left-ventricular geometry from sparse cardiac MRI. It defines
-the problem, research questions, objectives, and contributions of the thesis.
+three-dimensional left-ventricular geometry from sparse cardiac magnetic
+resonance imaging (MRI). It defines the reconstruction problem, presents the
+research questions and objectives, and summarises the main contributions of
+this thesis.
 
 \section{Motivation}
+
 \label{sec:motivation}
+
 \noindent
-The heart keeps blood moving through the body. The left ventricle (LV) has a
-central role because it pumps oxygen-rich blood into the aorta and from there
-to the rest of the body. Its size, shape, motion, and wall thickness can
-therefore provide important information about cardiac function. Changes in LV
-shape and wall thickness can also be associated with disease
-\parencite{grossman1974wallthickness,demarvao2014atlas}.
+Understanding cardiac structure is fundamentally a geometric problem. The
+left ventricle (LV) is a continuously varying three-dimensional structure whose
+shape, size, and wall thickness change throughout the cardiac cycle. These
+properties provide important information about cardiac function and structural
+remodelling, with changes in ventricular geometry and myocardial thickness
+being associated with several forms of cardiac disease
+\parencite{grossman1974wallthickness,demarvao2014atlas,medrano2014lvshapevariation}.
 
-Cardiac magnetic resonance imaging (MRI) allows the LV to be observed without
-an invasive procedure. Short-axis (SAX) images show the heart as a stack of
-slices from the base to the apex. These images make it possible to identify the
-inner and outer boundaries of the myocardium, which is the muscular wall of the
-heart. However, the slices alone do not provide a complete three-dimensional
-view. A 3D model can describe the full LV shape and support measurements in the
-regions between slices. Consistent descriptions of LV anatomy are useful in
-large imaging studies and automated analysis
-\parencite{bai2015biventricularatlas,bai2018automated}.
+Cardiac magnetic resonance imaging (MRI) provides detailed observations of
+this anatomy, but these observations are acquired as a set of two-dimensional
+slices rather than as a complete three-dimensional representation. In a
+short-axis (SAX) acquisition, the LV is sampled from the base towards the
+apex, allowing the endocardial and epicardial boundaries to be delineated on
+individual slices. Within each slice, the spatial resolution can be relatively
+high, while the distance between adjacent slices is substantially larger.
+Consequently, a structure that is anatomically continuous is represented by a
+limited number of discrete observations.
 
-Myocardial wall thickness is one such measurement. A wall that is unusually
-thick, thin, or uneven can contain useful information about the state of the
-heart. In clinical images, wall thickness is often measured only on the
-acquired slices. A smooth 3D representation could provide a more complete and
-more easily visualised measurement across the LV. This thesis studies how sparse
-SAX observations can be used to reconstruct the LV in three dimensions and to
-measure myocardial wall thickness.
+This distinction becomes important when measurements are extended beyond the
+acquired slices. Myocardial wall thickness, for example, is not simply a
+property of isolated contours. It varies across the ventricle and can reflect
+changes in cardiac structure, including myocardial hypertrophy
+\parencite{grossman1974wallthickness}. Estimating such quantities from sparse
+observations therefore depends not only on the accuracy of the segmentation,
+but also on how well the underlying three-dimensional geometry is represented.
+
+A continuous reconstruction can provide a more coherent description of the
+LV and enable measurements in regions that are not directly observed. Such
+representations are particularly relevant in large imaging studies, where
+consistent anatomical descriptions are needed for automated analysis and
+comparison across subjects
+\parencite{bai2015biventricularatlas,bai2018automated}. They can also support
+regional analysis of myocardial structure, including measurements organised
+according to the American Heart Association 17-segment model
+\parencite{cerqueira2002segmentation}.
+
+The central challenge addressed in this thesis is therefore not the extraction
+of LV contours alone, but the inference of the three-dimensional geometry that
+lies between sparse observations. A useful reconstruction must recover
+continuous endocardial and epicardial surfaces while preserving patient-specific
+shape and maintaining a anatomically plausible myocardial wall. Simple
+interpolation or surface lofting can provide continuity, but does not
+necessarily recover the geometry that best represents the underlying anatomy.
+
+This thesis investigates whether a phase-conditioned implicit neural
+representation can learn this reconstruction problem from synthetic LV
+geometries and meshes derived from real cardiac MRI segmentations. The proposed
+approach represents the LV surfaces as continuous functions in three-dimensional
+space, allowing geometry to be queried at arbitrary locations rather than only
+at the acquired slices. The reconstructed surfaces are subsequently used to
+study myocardial wall thickness and to compare the resulting measurements with
+those obtained from segmentation-derived geometry. The aim is not to replace
+clinical interpretation, but to investigate whether continuous geometric
+representations can provide a more consistent basis for quantitative analysis
+of sparse cardiac MRI.
 
 \section{Problem Statement}
+
 \label{sec:problem}
+
 \noindent
-SAX cardiac MRI is useful, but it is not a detailed 3D scan of the heart. The
-slices are separated along the long axis of the LV, leaving part of the shape
-unobserved between them. This makes 3D reconstruction difficult. Simply
-connecting the slices can create rough surfaces, gaps, or a myocardial wall
-that does not represent the anatomy well.
+SAX cardiac MRI provides detailed cross-sectional information about the LV, but
+does not directly provide a complete three-dimensional representation. The
+slices are separated along the ventricular long axis, leaving portions of the
+geometry unobserved between adjacent acquisitions. As a result, the spatial
+resolution within each slice is typically much finer than the resolution
+between slices. Reconstructing a continuous surface from these sparse
+observations is therefore an ill-posed geometric problem.
 
-The problem has two linked parts. First, the unobserved geometry between slices
-must be completed without removing patient-specific shape. Second, two related
-surfaces must be reconstructed. The endocardium is the inner
-boundary of the LV cavity, and the epicardium is the outer boundary of the
-myocardium. The space between them must remain a valid wall everywhere. Public
-cardiac MRI datasets usually provide images and segmentation masks for each
-slice, rather than complete 3D LV meshes. Such meshes are needed to train and
-evaluate a surface-reconstruction model directly.
+A simple connection of the segmented contours may produce a continuous surface,
+but continuity alone does not guarantee a plausible reconstruction. Such
+approaches can introduce irregularities, gaps, or local distortions, especially
+when the distance between slices is large. The challenge is particularly
+important when both the endocardial and epicardial surfaces are considered,
+because they must be reconstructed as a consistent pair. The endocardium
+defines the inner boundary of the LV cavity, while the epicardium defines the
+outer boundary of the myocardium. Their relative position must remain
+physiologically plausible so that the reconstructed wall retains positive and
+spatially coherent thickness.
 
-This work addresses the problem with a phase-conditioned implicit neural
-representation (INR) model trained using both synthetic LV shapes and meshes derived from real cardiac MRI
-segmentations. The model receives sparse contours as input and predicts
-continuous 3D LV surfaces. The outer surface is constrained to remain outside
-the inner surface, producing a myocardial wall with positive thickness. The
-reconstructed geometry is then used to study wall-thickness measurements and
-compare them with measurements from segmentation-derived geometry.
+The problem is further constrained by the characteristics of publicly
+available cardiac MRI datasets. These datasets commonly provide images and
+segmentation masks for individual slices rather than complete three-dimensional
+LV meshes. Meshes are nevertheless useful for directly training and evaluating
+surface-reconstruction models because they provide an explicit representation
+of the continuous geometry. A method is therefore required to bridge the gap
+between sparse slice-based observations and continuous three-dimensional
+surfaces.
+
+This thesis addresses this problem using a phase-conditioned implicit neural
+representation (INR) trained on synthetic LV shapes and meshes derived from
+real cardiac MRI segmentations. The model receives sparse contours as input
+and represents the endocardial and epicardial surfaces as continuous
+three-dimensional functions. Conditioning the representation on cardiac phase
+allows the model to distinguish between end-diastolic and end-systolic
+geometry. In addition, the reconstruction is constrained so that the outer
+surface remains outside the inner surface, preserving a positive myocardial
+wall thickness.
+
+The reconstructed geometry is evaluated at both the surface and measurement
+levels. Geometric agreement is assessed against reference surfaces, while
+myocardial wall thickness is measured on the reconstructed geometry and
+compared with measurements obtained from segmentation-derived geometry. This
+makes it possible to evaluate not only whether the proposed model produces
+visually continuous surfaces, but also whether the resulting geometry preserves
+quantities relevant to cardiac analysis.
 
 \section{Research Questions}
-\label{sec:research-questions}
-\noindent This work addresses three research questions. \textbf{RQ1} asks
-whether a model can reconstruct smooth, closed 3D LV surfaces from sparse SAX
-contours. \textbf{RQ2} asks whether the model can represent the endocardium and
-epicardium while maintaining a valid myocardial wall at end-diastole (ED) and
-end-systole (ES). \textbf{RQ3} asks how closely wall-thickness measurements from the
-reconstructed LV agree with measurements from segmentation-derived geometry.
 
-\section{Objectives}
-\label{sec:objectives}
-\noindent The first objective is to prepare synthetic and real cardiac MRI
-data in a shared contour-based format. The second objective is to develop a
-phase-conditioned signed distance function (SDF) model that reconstructs the inner and outer
-LV surfaces from sparse SAX contours. A further objective is to encourage smooth,
-closed reconstructed surfaces and prevent collapse of the endocardial and
-epicardial implicit fields. Finally, the reconstructed surfaces are evaluated against
-segmentation-derived meshes, and several methods for measuring local and
-regional wall thickness are compared.
+\label{sec:research-questions}
+
+\noindent
+This thesis addresses the following research questions:
+
+\begin{enumerate}[label=\textbf{RQ\arabic*.}]
+\item To what extent can the proposed model reconstruct continuous,
+watertight endocardial and epicardial LV surfaces from sparse SAX contours,
+and does it improve geometric agreement over matched linear contour
+lofting?
+
+\item Can the phase-conditioned model represent end-diastolic and
+end-systolic LV geometry while maintaining a positive myocardial-wall
+separation between the endocardial and epicardial surfaces?
+
+\item To what extent do local and regional wall-thickness measurements on
+the reconstructed geometry agree with those obtained from
+segmentation-derived geometry, and how does that agreement depend on the
+measurement method?
+\end{enumerate}

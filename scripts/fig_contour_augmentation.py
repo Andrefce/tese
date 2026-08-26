@@ -125,10 +125,10 @@ def augment(contour: np.ndarray, slice_ids: np.ndarray, operation: str) -> np.nd
 def style_3d(ax: plt.Axes) -> None:
     ax.view_init(elev=17, azim=-61)
     ax.set_proj_type("ortho")
-    ax.set_box_aspect((1.0, 1.0, 1.0))
-    ax.set_xlim(-0.62, 0.62)
-    ax.set_ylim(-0.62, 0.62)
-    ax.set_zlim(-0.62, 0.62)
+    ax.set_box_aspect((1.0, 1.0, 1.0), zoom=1.2)
+    ax.set_xlim(-0.52, 0.52)
+    ax.set_ylim(-0.52, 0.52)
+    ax.set_zlim(-0.52, 0.52)
     ax.set_axis_off()
     ax.set_facecolor("white")
 
@@ -211,14 +211,15 @@ def main() -> None:
         ("(e)", augment(original, slice_ids, "point_dropout")),
     ]
 
-    fig = plt.figure(figsize=(16.0, 3.4), dpi=300, facecolor="white")
-    grid = fig.add_gridspec(1, 6, left=0.01, right=0.99, bottom=0.02, top=0.98, wspace=0.05)
+    fig = plt.figure(figsize=(10.5, 7.0), dpi=300, facecolor="white")
+    grid = fig.add_gridspec(2, 3, left=0.01, right=0.99, bottom=0.02, top=0.98,
+                            wspace=0.02, hspace=0.02)
     for index, (label, points) in enumerate(panels):
-        ax = fig.add_subplot(grid[0, index], projection="3d")
+        ax = fig.add_subplot(grid[divmod(index, 3)], projection="3d")
         draw_contours(ax, points)
         label_panel(ax, label)
 
-    target_ax = fig.add_subplot(grid[0, 5], projection="3d")
+    target_ax = fig.add_subplot(grid[1, 2], projection="3d")
     draw_target(target_ax, seg, spacing)
     label_panel(target_ax, "(f)")
 
