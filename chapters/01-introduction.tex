@@ -83,24 +83,3 @@ closed reconstructed surfaces and prevent collapse of the endocardial and
 epicardial implicit fields. Finally, the reconstructed surfaces are evaluated against
 segmentation-derived meshes, and several methods for measuring local and
 regional wall thickness are compared.
-
-\section{Contributions}
-\label{sec:contributions}
-\noindent This thesis provides a data pipeline that converts synthetic LV
-shapes and real cardiac MRI segmentations into a shared representation of sparse
-SAX contours and 3D meshes. It also presents a phase-conditioned signed-distance
-model that predicts the endocardial and epicardial LV surfaces while preserving
-a positive wall between them. Finally, it evaluates the reconstructed geometry
-on data not used for training and compares local and regional wall-thickness
-methods on reconstructed and segmentation-derived LV geometry.
-
-\section{Document Structure}
-\label{sec:document-structure}
-\noindent
-\Cref{ch:literature-review} reviews cardiac MRI reconstruction, statistical
-shape models, implicit representations, and wall-thickness measurement.
-\Cref{ch:methodology} describes the data preparation, model, training process,
-and evaluation protocol. \Cref{ch:results} reports the reconstruction and
-wall-thickness results and discusses their validity. Finally,
-\cref{ch:conclusions} summarises the answers to the research questions and the
-main directions for future work.
