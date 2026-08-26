@@ -125,19 +125,20 @@ def augment(contour: np.ndarray, slice_ids: np.ndarray, operation: str) -> np.nd
 def style_3d(ax: plt.Axes) -> None:
     ax.view_init(elev=17, azim=-61)
     ax.set_proj_type("ortho")
-    ax.set_box_aspect((1.0, 1.0, 1.0), zoom=1.2)
-    ax.set_xlim(-0.52, 0.52)
-    ax.set_ylim(-0.52, 0.52)
-    ax.set_zlim(-0.52, 0.52)
+    ax.set_box_aspect((1.0, 1.0, 1.0), zoom=0.86)
+    ax.set_xlim(-0.28, 0.28)
+    ax.set_ylim(-0.28, 0.28)
+    ax.set_zlim(-0.28, 0.28)
     ax.set_axis_off()
     ax.set_facecolor("white")
 
 
 def draw_contours(ax: plt.Axes, contour: np.ndarray) -> None:
     contour = contour.copy()
+    contour[:, :3] *= 0.72
     for tissue, colour in ((0, C_ENDO), (1, C_EPI)):
         points = contour[contour[:, 3] == tissue]
-        ax.scatter(points[:, 0], points[:, 1], points[:, 2], s=4.5,
+        ax.scatter(points[:, 0], points[:, 1], points[:, 2], s=3.2,
                    c=colour, alpha=0.82, depthshade=False, linewidths=0)
     style_3d(ax)
 
@@ -171,6 +172,7 @@ def draw_target(ax: plt.Axes, seg: np.ndarray, spacing: tuple[float, float, floa
     light = light / np.linalg.norm(light)
     for vertices, faces, colour, alpha in meshes:
         vertices = (vertices - centre) / max(scale, 1e-8)
+        vertices *= 0.72
         # Match the contour treatment: flip the long axis only.
         vertices[:, 2] *= -1.0
         tris = vertices[faces]
@@ -211,9 +213,9 @@ def main() -> None:
         ("(e)", augment(original, slice_ids, "point_dropout")),
     ]
 
-    fig = plt.figure(figsize=(10.5, 7.0), dpi=300, facecolor="white")
-    grid = fig.add_gridspec(2, 3, left=0.01, right=0.99, bottom=0.02, top=0.98,
-                            wspace=0.02, hspace=0.02)
+    fig = plt.figure(figsize=(8.6, 5.8), dpi=700, facecolor="white")
+    grid = fig.add_gridspec(2, 3, left=0.04, right=0.98, bottom=0.04, top=0.97,
+                            wspace=0.30, hspace=0.24)
     for index, (label, points) in enumerate(panels):
         ax = fig.add_subplot(grid[divmod(index, 3)], projection="3d")
         draw_contours(ax, points)
