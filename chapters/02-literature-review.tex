@@ -272,18 +272,67 @@ the surface continuity learned from complete meshes. Combining SSM and clinical
 data assigns each source a distinct role and avoids treating either as sufficient
 on its own.
 
+\subsection{Surface fitting from sparse contours}
+\label{subsec:surface-fitting-review}
+
+\noindent
+Before a learned model can be supervised with clinical data, the segmented SAX
+contours must be related to a three-dimensional surface. Linear contour
+interpolation, SSM fitting, and Radial Basis Function (RBF) fitting offer three
+different ways to supply the missing through-plane geometry. Their principal
+difference is the source of the reconstruction prior: linear interpolation uses
+only neighbouring contours, an SSM uses population-level modes of anatomical
+variation, and an RBF fit imposes smoothness through a continuous implicit field.
+
+Linear contour lofting first establishes correspondence between points on
+adjacent rings and then joins those points with triangular strips. It is
+transparent, computationally inexpensive, and passes directly through the
+observed contours. However, the geometry between two slices is piecewise linear
+and depends on the chosen starting-point alignment and point correspondence.
+Large inter-slice gaps therefore produce abrupt changes in slope, while the apex
+and base require explicit closure rules. These limitations make lofting useful
+as a direct interpolation baseline, but less suitable as the sole source of
+smooth three-dimensional supervision from anisotropic SAX data
+\parencite{petitjean2011segmentationreview}.
+
+SSM fitting instead aligns a template with the observations and optimises its
+shape coefficients so that the deformed surface approaches the contours. The
+result retains a fixed topology and population-informed anatomical plausibility,
+which are valuable when observations are sparse
+\parencite{cootes1995asm,heimann2009ssmreview}. The same prior also limits the
+fit: anatomy outside the variation represented by the atlas cannot be recovered
+faithfully, and fitting requires a model appropriate to the structure and
+cardiac phase under study. An ED-only SSM cannot provide equivalent supervision
+for ES without imposing a diastolic shape space on systolic observations.
+
+RBF reconstruction represents the surface as the zero level set of a smooth
+function fitted to scattered points. Surface samples are assigned zero values,
+while additional samples displaced to either side of the contour provide the
+sign needed to distinguish interior from exterior. The resulting implicit field
+can be evaluated on a regular grid and converted to a mesh with marching cubes
+\parencite{carr2001rbf,lorensen1987marchingcubes}. Unlike SSM fitting, this
+procedure does not require a phase-specific template or fixed mesh
+correspondence. Unlike linear lofting, it defines the intervening geometry as a
+smooth field rather than as strips between paired vertices. Its limitations are
+different: the reconstruction depends on the kernel, smoothing, and off-surface
+constraints, and strong regularisation can suppress genuine local variation.
+
+For the clinical data in this thesis, the absence of an ES shape model when the
+data pipeline was developed prevented a consistent SSM-fitting procedure across
+both phases. RBF fitting was therefore selected to construct the ACDC and
+M\&Ms-2 surrogate surfaces for both ED and ES, while linear lofting was retained
+as the matched non-learning comparator. The SSM serves a separate role by
+providing complete synthetic ED geometries for pre-training.
+
 \subsection{Deep learning models for 3D shape reconstruction}
 \label{subsec:dl-reconstruction-review}
 
 \noindent
-Classical reconstruction methods interpolate between segmented SAX slices using
-splines or deformable surfaces. Their result depends on the sampled contours and
-the assumptions imposed between slices, particularly near the apex and base
-\parencite{petitjean2011segmentationreview,heimann2009ssmreview}.
-Simple interpolation can preserve the observations but may introduce staircase
-artefacts, whereas restrictive parametric surfaces can smooth away individual
-shape. Learned reconstruction methods address this trade-off through two main
-families: template deformation and implicit field prediction.
+Classical reconstruction methods depend on the sampled contours and on the
+assumptions imposed between slices, particularly near the apex and base, as
+discussed in \cref{subsec:surface-fitting-review}. Learned reconstruction methods
+address the same trade-off between observation fidelity and geometric prior
+through two main families: template deformation and implicit field prediction.
 
 Template methods learn to displace the vertices of a fixed mesh. Pixel2Mesh and
 Pose2Mesh demonstrate that graph-based deformation can recover dense geometry

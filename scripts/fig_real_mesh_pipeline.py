@@ -1,18 +1,23 @@
 #!/usr/bin/env python3
 """
-Real-data mesh pipeline figure — horizontal left-to-right layout with a
-horizontal bifurcation into endocardial and epicardial flows.
+Real-data RBF mesh pipeline figure with separate endocardial and epicardial
+branches.
 
 Layout (landscape):
 
-                                          ┌─→ (c)  endo SAX contours → (d)  raw → (e)  smoothed
+                                          ┌─→ (c)  endo contours → (d) RBF extraction → (e) quality controlled
     (a) SAX + contours → (b) binary masks ┤
-                                          └─→ (c') epi  SAX contours → (d') raw → (e') smoothed
+                                          └─→ (c') epi contours → (d') RBF extraction → (e') quality controlled
 
 The shared inputs (a, b) sit on the left, vertically centred; the pipeline
 branches horizontally into two colour-coded rows (endocardium in blue,
 epicardium in orange). Panel labels are placed BELOW each axis.
 """
+import argparse
+import json
+from pathlib import Path
+import sys
+
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
@@ -23,12 +28,32 @@ from matplotlib.colors import to_rgb
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import nibabel as nib
-from skimage.measure import marching_cubes, find_contours
+from scipy.interpolate import RBFInterpolator
 import trimesh
 
-# Paths
-ED_MRI = "notebooks/patient002/patient002_frame01.nii/DCM04Gate1.nii"
-ED_SEG = "notebooks/patient002/patient002_frame01_gt.nii/DCM04-OH-AL_V2_1.nii"
+THESIS = Path(__file__).resolve().parents[1]
+EVAL_DIR = THESIS / "scripts" / "eval_demo"
+sys.path.insert(0, str(EVAL_DIR))
+
+from geometry import (  # noqa: E402
+    _clean_inside,
+    marching_cubes_mesh,
+    repair_if_invalid,
+    signed_distance_from_mask,
+)
+
+# One ACDC case throughout, so the MRI slice and the contours are the same volume.
+CASE_ID = "patient002"
+CACHE_PATH = THESIS / "test-new-model/cache/patient002_ED.npz"
+MRI_PATH = THESIS / "notebooks/patient002/patient002_frame01.nii/DCM04Gate1.nii"
+MRI_SEG_PATH = THESIS / "notebooks/patient002/patient002_frame01_gt.nii/DCM04-OH-AL_V2_1.nii"
+RBF_CACHE_PATH = THESIS / "scripts/eval_demo/outputs/fig_real_mesh_pipeline_rbf.npz"
+RBF_PARAMETERS = {
+    "offset_mm": 2.5,
+    "pitch_mm": 1.0,
+    "rbf_regularisation": 0.5,
+    "field_smoothing_mm": 1.2,
+}
 
 # Okabe-Ito colorblind-safe palette
 C_ENDO = "#0072B2"   # blue
@@ -37,16 +62,11 @@ C_RV   = "#009E73"   # green
 C_BG   = "#0e0e12"   # near-black panel background for masks
 
 
-def canonical_reorient(path):
-    nii = nib.load(path)
-    nii_c = nib.as_closest_canonical(nii)
-    return nii_c.get_fdata(), nii_c.affine, nii_c.header.get_zooms()
-
-
 def phong_colors(verts, faces, base_hex, ambient=0.38, diffuse=0.62):
     base = np.array(to_rgb(base_hex))
     mesh_t = trimesh.Trimesh(vertices=verts, faces=faces, process=False)
-    fn = mesh_t.face_normals
+    normals = np.asarray(mesh_t.vertex_normals)[faces].mean(axis=1)
+    fn = normals / np.maximum(np.linalg.norm(normals, axis=1, keepdims=True), 1e-9)
     key  = np.array([-0.4, -0.3,  0.9]); key  /= np.linalg.norm(key)
     fill = np.array([ 0.6,  0.4, -0.2]); fill /= np.linalg.norm(fill)
     light = ambient + diffuse * (0.7 * np.maximum(0, fn @ key)
@@ -54,7 +74,7 @@ def phong_colors(verts, faces, base_hex, ambient=0.38, diffuse=0.62):
     return np.clip(base[None] * np.clip(light, 0, 1)[:, None], 0, 1)
 
 
-def set_3d_view(ax, verts, z_boost=5.5):
+def set_3d_view(ax, verts, z_boost=1.0):
     ax.view_init(elev=18, azim=-65, roll=0)
     r = [np.ptp(verts[:, i]) for i in range(3)]
     rmax = max(r) if max(r) > 0 else 1.0
@@ -91,148 +111,274 @@ def add_figspace_arrow(fig, posA, posB, color, lw=1.6, rad=0.0):
     fig.add_artist(arr)
 
 
-# ── Geometry helpers ─────────────────────────────────────────
-
-def myo_slices(seg, n=3):
-    """Return n slice indices (basal→apical) that contain myocardium."""
-    counts = [(np.isin(seg[:, :, z], [2, 3])).sum() for z in range(seg.shape[2])]
-    valid = [z for z, c in enumerate(counts) if c > 25]
-    if len(valid) < n:
-        return valid
-    picks = np.linspace(0, len(valid) - 1, n).round().astype(int)
-    return [valid[i] for i in picks]
-
-
-def heart_bbox(seg, zs, pad):
-    """Bounding box (axis0, axis1) of myocardium over the given slices."""
-    m = np.zeros(seg.shape[:2], dtype=bool)
-    for z in zs:
-        m |= np.isin(seg[:, :, z], [2, 3])
-    a0, a1 = np.where(m)
-    return (a0.min() - pad, a0.max() + pad, a1.min() - pad, a1.max() + pad)
-
-
 # ── Panel content ────────────────────────────────────────────
 
-def panel_mri_with_contours(ax, vol, seg, zs):
-    mid_z = zs[len(zs) // 2]
-    r0, r1, c0, c1 = heart_bbox(seg, [mid_z], pad=42)
-    r0 = max(0, r0); c0 = max(0, c0)
-    r1 = min(vol.shape[0], r1); c1 = min(vol.shape[1], c1)
+def load_canonical_nifti(path):
+    image = nib.as_closest_canonical(nib.load(path))
+    return image.get_fdata()
 
-    ax.imshow(vol[:, :, mid_z].T, cmap="gray", origin="lower", aspect="equal")
-    for label, color in [(3, C_ENDO), (2, C_EPI), (1, C_RV)]:
-        m = (seg[:, :, mid_z].T == label)
-        if m.sum() > 0:
-            ax.contour(m, levels=[0.5], colors=[color], linewidths=2.0,
+
+def panel_mri_with_contours(ax, volume, segmentation):
+    counts = np.count_nonzero(np.isin(segmentation, [2, 3]), axis=(0, 1))
+    levels = np.flatnonzero(counts > 25)
+    z = int(levels[len(levels) // 2])
+    mask = np.isin(segmentation[:, :, z], [2, 3])
+    rows, columns = np.where(mask)
+    padding = 38
+    row_min = max(0, int(rows.min()) - padding)
+    row_max = min(volume.shape[0], int(rows.max()) + padding)
+    col_min = max(0, int(columns.min()) - padding)
+    col_max = min(volume.shape[1], int(columns.max()) + padding)
+
+    plane = segmentation[:, :, z].T
+    # The epicardium bounds cavity + myocardium; the myocardium label alone is an annulus.
+    boundaries = (
+        (plane == 3, C_ENDO),
+        (np.isin(plane, [2, 3]), C_EPI),
+        (plane == 1, C_RV),
+    )
+    ax.imshow(volume[:, :, z].T, cmap="gray", origin="lower", aspect="equal")
+    for label_mask, color in boundaries:
+        if label_mask.any():
+            ax.contour(label_mask, levels=[0.5], colors=[color], linewidths=2.0,
                        origin="lower")
-    ax.set_xlim(r0, r1)
-    ax.set_ylim(c0, c1)
+    ax.set_xlim(row_min, row_max)
+    ax.set_ylim(col_min, col_max)
+    ax.axis("off")
     patches = [
-        mpatches.Patch(color=C_ENDO, label='Endocardium'),
-        mpatches.Patch(color=C_EPI,  label='Epicardium'),
-        mpatches.Patch(color=C_RV,   label='RV'),
+        mpatches.Patch(color=C_ENDO, label="Endocardium"),
+        mpatches.Patch(color=C_EPI, label="Epicardium"),
+        mpatches.Patch(color=C_RV, label="RV"),
     ]
-    ax.legend(handles=patches, loc='lower center',
-              bbox_to_anchor=(0.5, -0.30), ncol=3, fontsize=7.5,
-              framealpha=0.0, handlelength=1.0, borderpad=0.3,
+    ax.legend(handles=patches, loc="lower center", bbox_to_anchor=(0.5, -0.22),
+              ncol=3, fontsize=7.5, framealpha=0.0, handlelength=1.0,
+              columnspacing=0.8, handletextpad=0.4)
+
+
+def _ring_at(points, z):
+    return points[np.isclose(points[:, 2], z)]
+
+
+def _draw_filled_ring(ax, endo, epi, y_offset=0.0, alpha=1.0):
+    centre = np.vstack([endo, epi])[:, :2].mean(axis=0)
+    endo_xy = endo[:, :2] - centre
+    epi_xy = epi[:, :2] - centre
+    endo_xy[:, 1] += y_offset
+    epi_xy[:, 1] += y_offset
+    ax.fill(epi_xy[:, 0], epi_xy[:, 1], color=C_EPI, alpha=alpha, linewidth=0)
+    ax.fill(endo_xy[:, 0], endo_xy[:, 1], color=C_ENDO, alpha=alpha, linewidth=0)
+
+
+def panel_mid_sax_labels(ax, surface_points):
+    levels = np.unique(surface_points["endo"][:, 2])
+    z = levels[len(levels) // 2]
+    _draw_filled_ring(
+        ax,
+        _ring_at(surface_points["endo"], z),
+        _ring_at(surface_points["epi"], z),
+    )
+    ax.set_aspect("equal")
+    ax.axis("off")
+    patches = [
+        mpatches.Patch(color=C_ENDO, label="Endocardium"),
+        mpatches.Patch(color=C_EPI, label="Epicardium"),
+    ]
+    ax.legend(handles=patches, loc="lower center", bbox_to_anchor=(0.5, -0.22),
+              ncol=2, fontsize=7.5, framealpha=0.0, handlelength=1.0,
               columnspacing=1.0, handletextpad=0.4)
-    ax.axis("off")
 
 
-def panel_stacked_masks(ax, seg, zs):
-    """3 SAX levels stacked vertically, cropped to the heart, on dark bg."""
-    r0, r1, c0, c1 = heart_bbox(seg, zs, pad=12)
-    r0 = max(0, r0); c0 = max(0, c0)
-    r1 = min(seg.shape[0], r1); c1 = min(seg.shape[1], c1)
-
-    tiles = []
-    for z in zs:                       # basal → apical
-        sub = seg[r0:r1, c0:c1, z].T   # (W, H) display orientation
-        rgb = np.tile(np.array(to_rgb(C_BG), np.float32),
-                      (sub.shape[0], sub.shape[1], 1))
-        rgb[sub == 2] = to_rgb(C_EPI)  # myocardial shell
-        rgb[sub == 3] = to_rgb(C_ENDO) # cavity
-        tiles.append(rgb)
-
-    h = max(t.shape[0] for t in tiles)
-    w = max(t.shape[1] for t in tiles)
-    sep = 5
-    canvas = np.ones((len(tiles) * h + (len(tiles) - 1) * sep, w, 3),
-                     np.float32)
-    for i, t in enumerate(tiles):
-        y = i * (h + sep)
-        canvas[y:y + t.shape[0], :t.shape[1]] = t
-
-    ax.imshow(canvas, origin="upper", aspect="equal")
-    names = ["Basal", "Mid", "Apical"][:len(tiles)]
-    for i, name in enumerate(names):
-        ax.text(3, i * (h + sep) + 3, name, ha="left", va="top",
-                fontsize=7.5, color="white", fontweight="bold")
-    ax.axis("off")
+def panel_stacked_labels(ax, surface_points):
+    levels = np.unique(surface_points["endo"][:, 2])
+    selected = levels[np.linspace(0, len(levels) - 1, 3).round().astype(int)]
+    span = np.ptp(np.vstack(list(surface_points.values()))[:, 1])
+    names = ("Basal", "Mid", "Apical")
+    for index, (name, z) in enumerate(zip(names, selected)):
+        offset = (1 - index) * span * 1.35
+        _draw_filled_ring(
+            ax,
+            _ring_at(surface_points["endo"], z),
+            _ring_at(surface_points["epi"], z),
+            y_offset=offset,
+        )
+        ax.text(-0.55 * span, offset + 0.35 * span, name, color="white",
+                fontsize=7.5, fontweight="bold", ha="left", va="top")
+    ax.set_facecolor(C_BG)
+    ax.set_aspect("equal")
+    ax.set_xticks([])
+    ax.set_yticks([])
+    for spine in ax.spines.values():
+        spine.set_visible(False)
 
 
-def panel_sax_stack(ax, seg, spacing, label_val, color):
+def _rings_of(points):
+    return [points[np.isclose(points[:, 2], z)] for z in np.unique(points[:, 2])]
+
+
+def _ring_normals(ring):
+    tangent = np.roll(ring, -1, axis=0) - np.roll(ring, 1, axis=0)
+    normal = np.column_stack([tangent[:, 1], -tangent[:, 0], np.zeros(len(ring))])
+    normal /= np.maximum(np.linalg.norm(normal, axis=1, keepdims=True), 1e-9)
+    radial = ring - ring.mean(axis=0)
+    radial[:, 2] = 0.0
+    flip = np.sign(np.sum(normal * radial, axis=1))
+    flip[flip == 0] = 1.0
+    return normal * flip[:, None]
+
+
+def build_rbf_stages(points, surface, offset_mm=2.5, pitch=1.0,
+                     smoothing=0.5, field_smoothing_mm=1.2):
+    rings = [ring for ring in _rings_of(points) if len(ring) >= 3]
+    if len(rings) < 2:
+        raise ValueError(f"RBF fitting needs at least two {surface} rings.")
+
+    on_surface = np.vstack(rings)
+    normals = np.vstack([_ring_normals(ring) for ring in rings])
+    centres = np.vstack([
+        on_surface,
+        on_surface + offset_mm * normals,
+        on_surface - offset_mm * normals,
+    ])
+    values = np.concatenate([
+        np.zeros(len(on_surface)),
+        np.full(len(on_surface), offset_mm),
+        np.full(len(on_surface), -offset_mm),
+    ])
+    interpolator = RBFInterpolator(
+        centres,
+        values,
+        kernel="thin_plate_spline",
+        degree=1,
+        smoothing=smoothing,
+    )
+
+    lower = on_surface.min(axis=0) - np.array([8.0, 8.0, 1.5])
+    upper = on_surface.max(axis=0) + np.array([8.0, 8.0, 1.5])
+    shape = tuple(
+        int(np.ceil((upper[axis] - lower[axis]) / pitch)) + 1
+        for axis in range(3)
+    )
+    axes = [lower[axis] + np.arange(shape[axis]) * pitch for axis in range(3)]
+    grid = np.stack(np.meshgrid(*axes, indexing="ij"), axis=-1).reshape(-1, 3)
+    field = np.empty(len(grid), dtype=np.float64)
+    for start in range(0, len(grid), 50_000):
+        field[start:start + 50_000] = interpolator(grid[start:start + 50_000])
+    field = field.reshape(shape)
+
+    inside = _clean_inside(field <= 0.0)
+    redistanced = signed_distance_from_mask(
+        inside,
+        np.full(3, pitch),
+        smooth_sigma=field_smoothing_mm / pitch,
+    )
+    extracted = marching_cubes_mesh(redistanced, lower, np.full(3, pitch))
+    final, _ = repair_if_invalid(extracted, f"figure-rbf-{surface}")
+    return extracted, final
+
+
+def load_or_build_rbf_stages(surface_points, refresh=False):
+    metadata = {
+        "case_id": CASE_ID,
+        "source_mtime_ns": CACHE_PATH.stat().st_mtime_ns,
+        **RBF_PARAMETERS,
+    }
+    if RBF_CACHE_PATH.exists() and not refresh:
+        with np.load(RBF_CACHE_PATH, allow_pickle=False) as cached:
+            stored = json.loads(str(cached["metadata"]))
+            if stored == metadata:
+                print(f"  Using cached RBF surfaces: {RBF_CACHE_PATH.relative_to(THESIS)}")
+                return {
+                    surface: (
+                        trimesh.Trimesh(
+                            vertices=cached[f"{surface}_extracted_vertices"],
+                            faces=cached[f"{surface}_extracted_faces"],
+                            process=False,
+                        ),
+                        trimesh.Trimesh(
+                            vertices=cached[f"{surface}_final_vertices"],
+                            faces=cached[f"{surface}_final_faces"],
+                            process=False,
+                        ),
+                    )
+                    for surface in ("endo", "epi")
+                }
+
+    print("  Computing RBF surfaces ...")
+    stages = {
+        surface: build_rbf_stages(
+            points,
+            surface,
+            offset_mm=RBF_PARAMETERS["offset_mm"],
+            pitch=RBF_PARAMETERS["pitch_mm"],
+            smoothing=RBF_PARAMETERS["rbf_regularisation"],
+            field_smoothing_mm=RBF_PARAMETERS["field_smoothing_mm"],
+        )
+        for surface, points in surface_points.items()
+    }
+    RBF_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    payload = {"metadata": np.asarray(json.dumps(metadata, sort_keys=True))}
+    for surface, (extracted, final) in stages.items():
+        payload.update({
+            f"{surface}_extracted_vertices": np.asarray(extracted.vertices),
+            f"{surface}_extracted_faces": np.asarray(extracted.faces),
+            f"{surface}_final_vertices": np.asarray(final.vertices),
+            f"{surface}_final_faces": np.asarray(final.faces),
+        })
+    np.savez_compressed(RBF_CACHE_PATH, **payload)
+    print(f"  Cached RBF surfaces: {RBF_CACHE_PATH.relative_to(THESIS)}")
+    return stages
+
+
+def _display_points(points, centre):
+    displayed = np.asarray(points, dtype=np.float64).copy() - centre
+    displayed[:, 2] *= -1.0
+    return displayed
+
+
+def panel_sax_stack(ax, points, centre, color):
     ax.set_proj_type('ortho')
-    N = 10
-    z_indices = np.linspace(0, seg.shape[2]-1, N, dtype=int)
-    mask_vol = (seg == 3) if label_val == 3 else np.isin(seg, [2, 3])
-    pts = []
-    for z_idx in z_indices:
-        m2d = mask_vol[:, :, z_idx]
-        if m2d.sum() == 0:
-            continue
-        for cnt in find_contours(m2d.astype(float), 0.5):
-            for pt in cnt:
-                pts.append([pt[1]*spacing[1], pt[0]*spacing[0], z_idx*spacing[2]])
-    if not pts:
-        ax.axis("off"); return
-    pts = np.array(pts)
-    pts -= pts.mean(axis=0)
-    pts[:, 2] = -pts[:, 2]
+    pts = _display_points(points, centre)
     ax.scatter(pts[:, 0], pts[:, 1], pts[:, 2], c=color, s=1.0, alpha=0.6)
-    set_3d_view(ax, pts, z_boost=5.5)
+    set_3d_view(ax, pts)
 
 
-def _build_mesh(seg, spacing, label_val):
-    mask = (seg == 3) if label_val == 3 else np.isin(seg, [2, 3])
-    pad = 2
-    padded = np.pad(mask.astype(float), pad, constant_values=0)
-    verts, faces, _, _ = marching_cubes(padded, level=0.5, spacing=spacing)
-    verts -= np.array([pad*spacing[0], pad*spacing[1], pad*spacing[2]])
-    verts -= verts.mean(axis=0)
-    verts[:, 2] = -verts[:, 2]
-    return verts, faces
-
-
-def panel_raw_mesh(ax, seg, spacing, label_val, color):
+def panel_mesh(ax, mesh, centre, color, alpha=0.95, contour_points=None):
     ax.set_proj_type('ortho')
-    verts, faces = _build_mesh(seg, spacing, label_val)
+    verts = _display_points(mesh.vertices, centre)
+    faces = np.asarray(mesh.faces)
     fc = phong_colors(verts, faces, color)
     ax.add_collection3d(Poly3DCollection(verts[faces], facecolors=fc,
-                                         edgecolors="none", alpha=0.95))
-    set_3d_view(ax, verts, z_boost=5.5)
-
-
-def panel_taubin_mesh(ax, seg, spacing, label_val, color):
-    ax.set_proj_type('ortho')
-    verts, faces = _build_mesh(seg, spacing, label_val)
-    mesh = trimesh.Trimesh(vertices=verts, faces=faces, process=False)
-    trimesh.smoothing.filter_taubin(mesh, lamb=0.5, nu=-0.53, iterations=25)
-    verts, faces = mesh.vertices.copy(), mesh.faces.copy()
-    verts -= verts.mean(axis=0)
-    fc = phong_colors(verts, faces, color)
-    ax.add_collection3d(Poly3DCollection(verts[faces], facecolors=fc,
-                                         edgecolors="none", alpha=0.95))
-    set_3d_view(ax, verts, z_boost=5.5)
+                                         edgecolors="none", alpha=alpha))
+    if contour_points is not None:
+        points = _display_points(contour_points, centre)
+        ax.scatter(points[:, 0], points[:, 1], points[:, 2], c=color,
+                   s=1.8, alpha=0.9, depthshade=False)
+    set_3d_view(ax, verts)
 
 
 # ── Build figure ─────────────────────────────────────────────
-print("Generating real-data mesh pipeline figure (horizontal bifurcation) …")
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--refresh", action="store_true",
+                    help="Recompute the cached RBF surfaces.")
+args = parser.parse_args()
 
-vol, _, _       = canonical_reorient(ED_MRI)
-seg, _, spacing = canonical_reorient(ED_SEG)
-zs = myo_slices(seg, n=3)
+print(f"Generating real-data RBF pipeline figure from {CASE_ID} …")
+
+mri_volume = load_canonical_nifti(MRI_PATH)
+mri_segmentation = load_canonical_nifti(MRI_SEG_PATH)
+with np.load(CACHE_PATH) as cached:
+    contour_norm = np.asarray(cached["contour_xyz"], dtype=np.float64)
+    tissue = np.asarray(cached["contour_tissue"], dtype=np.float64)
+    centroid = np.asarray(cached["centroid"], dtype=np.float64)
+    scale = float(cached["scale"])
+flip = np.array([1.0, 1.0, -1.0])
+contour_mm = contour_norm * flip * scale + centroid
+centre = contour_mm.mean(axis=0)
+surface_points = {
+    "endo": contour_mm[np.isclose(tissue, 0.0)],
+    "epi": contour_mm[np.isclose(tissue, 1.0)],
+}
+rbf_stages = load_or_build_rbf_stages(surface_points, refresh=args.refresh)
 
 fig = plt.figure(figsize=(16.5, 7.4), dpi=300)
 fig.patch.set_facecolor("white")
@@ -248,32 +394,34 @@ gs = fig.add_gridspec(
 # ── Shared inputs (vertically centred over both rows)
 ax_mri   = fig.add_subplot(gs[:, 0])
 ax_masks = fig.add_subplot(gs[:, 1])
-panel_mri_with_contours(ax_mri, vol, seg, zs)
-panel_stacked_masks(ax_masks, seg, zs)
-panel_label(ax_mri,   "(a)  SAX slice with contours")
-panel_label(ax_masks, "(b)  Binary masks")
+panel_mri_with_contours(ax_mri, mri_volume, mri_segmentation)
+panel_stacked_labels(ax_masks, surface_points)
+panel_label(ax_mri,   "(a)  SAX MRI with contours")
+panel_label(ax_masks, "(b)  Basal-to-apical labels")
 
 # ── Endocardial flow (top row)
 ax_ec = fig.add_subplot(gs[0, 2], projection='3d')
 ax_er = fig.add_subplot(gs[0, 3], projection='3d')
 ax_es = fig.add_subplot(gs[0, 4], projection='3d')
-panel_sax_stack(ax_ec,  seg, spacing, label_val=3, color=C_ENDO)
-panel_raw_mesh( ax_er,  seg, spacing, label_val=3, color=C_ENDO)
-panel_taubin_mesh(ax_es, seg, spacing, label_val=3, color=C_ENDO)
-panel_label(ax_ec, "(c)\u2009 SAX contours",       is_3d=True)
-panel_label(ax_er, "(d)\u2009 Raw surface",         is_3d=True)
-panel_label(ax_es, "(e)\u2009 Taubin-smoothed",     is_3d=True)
+panel_sax_stack(ax_ec, surface_points["endo"], centre, C_ENDO)
+panel_mesh(ax_er, rbf_stages["endo"][0], centre, C_ENDO, alpha=0.55,
+           contour_points=surface_points["endo"])
+panel_mesh(ax_es, rbf_stages["endo"][1], centre, C_ENDO)
+panel_label(ax_ec, "(c)\u2009 SAX contours",        is_3d=True)
+panel_label(ax_er, "(d)\u2009 RBF fit to contours",  is_3d=True)
+panel_label(ax_es, "(e)\u2009 Final RBF surface",    is_3d=True)
 
 # ── Epicardial flow (bottom row)
 ax_pc = fig.add_subplot(gs[1, 2], projection='3d')
 ax_pr = fig.add_subplot(gs[1, 3], projection='3d')
 ax_ps = fig.add_subplot(gs[1, 4], projection='3d')
-panel_sax_stack(ax_pc,  seg, spacing, label_val=2, color=C_EPI)
-panel_raw_mesh( ax_pr,  seg, spacing, label_val=2, color=C_EPI)
-panel_taubin_mesh(ax_ps, seg, spacing, label_val=2, color=C_EPI)
-panel_label(ax_pc, "(c\u2019)\u2009 SAX contours",   is_3d=True)
-panel_label(ax_pr, "(d\u2019)\u2009 Raw surface",     is_3d=True)
-panel_label(ax_ps, "(e\u2019)\u2009 Taubin-smoothed", is_3d=True)
+panel_sax_stack(ax_pc, surface_points["epi"], centre, C_EPI)
+panel_mesh(ax_pr, rbf_stages["epi"][0], centre, C_EPI, alpha=0.55,
+           contour_points=surface_points["epi"])
+panel_mesh(ax_ps, rbf_stages["epi"][1], centre, C_EPI)
+panel_label(ax_pc, "(c\u2019)\u2009 SAX contours",         is_3d=True)
+panel_label(ax_pr, "(d\u2019)\u2009 RBF fit to contours",   is_3d=True)
+panel_label(ax_ps, "(e\u2019)\u2009 Final RBF surface",     is_3d=True)
 
 # Force a layout pass so get_position() returns final coordinates.
 fig.canvas.draw()
@@ -329,7 +477,7 @@ add_figspace_arrow(fig, split, mid_left(ax_pc), color=C_EPI,  lw=1.9, rad=-0.16)
 add_figspace_arrow(fig, mid_right(ax_mri), mid_left(ax_masks),
                    color="#555555", lw=1.6)
 
-plt.savefig("images/fig_real_mesh_steps.png", dpi=300, bbox_inches="tight",
+plt.savefig(THESIS / "images/fig_real_mesh_steps.png", dpi=300, bbox_inches="tight",
             facecolor="white")
 print("  Saved: images/fig_real_mesh_steps.png")
 print("Done.")

@@ -18,8 +18,10 @@ Outputs
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
@@ -41,6 +43,7 @@ from geometry import (  # noqa: E402
     isotropic_grid,
     make_watertight,
     marching_cubes_mesh,
+    repair_if_invalid,
     signed_distance_from_mask,
 )
 from recon_metrics import reconstruction_quality  # noqa: E402
@@ -72,13 +75,75 @@ def surface_points(contours: np.ndarray, tissue: np.ndarray,
     return np.asarray(contours[np.abs(tissue - label) < 0.5], dtype=np.float64)
 
 
+def _evaluate_rbf(interpolator: RBFInterpolator, points: np.ndarray,
+                  chunk: int = 8192) -> np.ndarray:
+    """Evaluate a fitted thin-plate-spline interpolator through BLAS.
+
+    SciPy walks the kernel point by point, which dominates the runtime of the
+    whole baseline. Forming the squared-distance matrix with a matrix product
+    computes the same values an order of magnitude faster. The fast path is
+    accepted only after it reproduces SciPy on a random sample; otherwise the
+    SciPy evaluation is used unchanged.
+    """
+    def scipy_path() -> np.ndarray:
+        values = np.empty(len(points), dtype=np.float64)
+        for start in range(0, len(points), 50_000):
+            stop = start + 50_000
+            values[start:stop] = interpolator(points[start:stop])
+        return values
+
+    try:
+        if interpolator.kernel != "thin_plate_spline" or interpolator.neighbors:
+            return scipy_path()
+        centres = np.asarray(interpolator.y, dtype=np.float64)
+        coefficients = np.asarray(interpolator._coeffs, dtype=np.float64)
+        shift = np.asarray(interpolator._shift, dtype=np.float64)
+        scale = np.asarray(interpolator._scale, dtype=np.float64)
+        powers = np.asarray(interpolator.powers, dtype=np.int64)
+        epsilon = float(interpolator.epsilon)
+    except AttributeError:
+        return scipy_path()
+
+    scaled_centres = centres * epsilon
+    centre_norms = np.einsum("ij,ij->i", scaled_centres, scaled_centres)
+    kernel_weights = coefficients[:len(centres)]
+    polynomial_weights = coefficients[len(centres):]
+
+    def block(query: np.ndarray) -> np.ndarray:
+        scaled = query * epsilon
+        squared = (np.einsum("ij,ij->i", scaled, scaled)[:, None]
+                   + centre_norms[None, :]
+                   - 2.0 * (scaled @ scaled_centres.T))
+        # The floor keeps log finite; at that magnitude r^2 log r underflows to 0,
+        # which is the defined value of the kernel at coincident points.
+        np.maximum(squared, 1e-300, out=squared)
+        logarithm = np.log(squared)
+        squared *= logarithm
+        squared *= 0.5  # r^2 log r
+        monomials = (query - shift) / scale
+        polynomial = np.prod(monomials[:, None, :] ** powers[None, :, :], axis=2)
+        return (squared @ kernel_weights + polynomial @ polynomial_weights)[:, 0]
+
+    sample = points[::max(1, len(points) // 2048)]
+    if not np.allclose(block(sample), interpolator(sample), rtol=1e-8, atol=1e-8):
+        return scipy_path()
+
+    values = np.empty(len(points), dtype=np.float64)
+    blocks = [(start, min(start + chunk, len(points)))
+              for start in range(0, len(points), chunk)]
+    with ThreadPoolExecutor(max_workers=min(4, os.cpu_count() or 1)) as pool:
+        # NumPy releases the GIL inside these element-wise kernels.
+        pool.map(lambda span: values.__setitem__(
+            slice(*span), block(points[span[0]:span[1]])), blocks)
+    return values
+
+
 # ──────────────────────────────────────────────────────────────────────────
 # Baseline 1 — RBF implicit surface
 # ──────────────────────────────────────────────────────────────────────────
 def build_rbf_geometry(contours: np.ndarray, tissue: np.ndarray,
                        offset_mm: float = 2.5, pitch: float = 1.0,
-                       smoothing: float = 0.5,
-                       taubin_iters: int = 12) -> dict:
+                       smoothing: float = 0.5) -> dict:
     """Thin-plate-spline implicit reconstruction from the SAX contour rings."""
     meshes: dict[str, trimesh.Trimesh] = {}
     reports: list[dict] = []
@@ -111,16 +176,13 @@ def build_rbf_geometry(contours: np.ndarray, tissue: np.ndarray,
         axes = [lo[d] + np.arange(shape[d]) * pitch for d in range(3)]
         grid = np.stack(np.meshgrid(*axes, indexing="ij"), axis=-1).reshape(-1, 3)
 
-        field = np.empty(len(grid), dtype=np.float64)
-        for start in range(0, len(grid), 50_000):
-            stop = start + 50_000
-            field[start:stop] = interpolator(grid[start:stop])
+        field = _evaluate_rbf(interpolator, grid)
         field = field.reshape(shape)
 
         inside = _clean_inside(field <= 0.0)
         clean = signed_distance_from_mask(inside, np.full(3, pitch), smooth_sigma=0.6)
         raw = marching_cubes_mesh(clean, lo, np.full(3, pitch))
-        mesh, report = make_watertight(raw, f"rbf-{surface}", taubin_iters)
+        mesh, report = repair_if_invalid(raw, f"rbf-{surface}")
         meshes[surface] = mesh
         reports.append(report)
 
@@ -232,11 +294,26 @@ def similarity_from_pairs(source: np.ndarray, target: np.ndarray) -> tuple:
     return scale, rotation, target_mean - scale * rotation @ source_mean
 
 
+def stack_axis(points: np.ndarray) -> np.ndarray:
+    """Long axis of a SAX stack: the line through the per-slice ring centroids.
+
+    Taking the principal axis of the whole contour cloud fails on short stacks,
+    where the in-plane extent exceeds the axial one and the fit ends up lying on
+    its side.
+    """
+    heights = np.unique(points[:, 2])
+    if len(heights) < 3:
+        return principal_axis(points)
+    centroids = np.array([points[points[:, 2] == height].mean(axis=0)
+                          for height in heights])
+    return principal_axis(centroids)
+
+
 def initial_alignment(mean: np.ndarray, targets: dict) -> tuple:
     """Long-axis + scale + best yaw alignment of the mean shape to the contours."""
     contour_points = np.vstack(list(targets.values()))
     source_axis = apex_direction(mean, principal_axis(mean))
-    target_axis = apex_direction(contour_points, principal_axis(contour_points))
+    target_axis = apex_direction(contour_points, stack_axis(contour_points))
 
     v = np.cross(source_axis, target_axis)
     c = float(np.dot(source_axis, target_axis))

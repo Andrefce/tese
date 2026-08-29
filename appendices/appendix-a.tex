@@ -7,7 +7,7 @@
 
 \noindent
 This appendix summarises the training streams, data partitions, clinical
-mesh-preparation operations, and model configuration described in
+RBF mesh-preparation operations, and model configuration described in
 \cref{ch:methodology}.
 
 \begin{table}[htbp]
@@ -40,7 +40,7 @@ mesh-preparation operations, and model configuration described in
 \begin{table}[htbp]
 	\centering
 	\caption[Clinical mesh-preparation operations]{Operations used to construct
-	the segmentation-derived supervision meshes.}
+	the RBF-derived clinical supervision meshes.}
 	\label{tab:real-pipeline}
 	\small
 	\renewcommand{\arraystretch}{1.12}
@@ -49,15 +49,16 @@ mesh-preparation operations, and model configuration described in
 		Operation & Purpose \\
 		\midrule
 		RAS+ canonicalisation & Standardises patient-coordinate orientation while preserving physical spacing \\
-		Label harmonisation & Converts ACDC and M\&Ms-2 to a common LV/myocardium mask \\
-		Isotropic resampling at 1.5~mm & Reduces anisotropy before 3D surface extraction \\
-		Per-slice cleaning & Removes small 2D fragments and fills holes \\
-		3D largest-component filtering & Keeps the main anatomical LV region \\
-		Gaussian mask smoothing and marching cubes & Suppresses staircase artefacts and extracts the surface \\
-		Taubin smoothing and Laplacian fairing & Reduces residual artefacts while preserving global shape \\
-		Basal cap perpendicular to the apex--base axis & Replaces the non-anatomical basal dome at the valve-plane boundary \\
-		Quadric decimation to 4000 vertices & Produces a consistently sized mesh for all cases \\
-		Plausibility checks (7 criteria) & Rejects geometrically implausible or corrupted cases \\
+		Label harmonisation & Maps ACDC and M\&Ms-2 labels to common endocardial and epicardial definitions \\
+		Largest-ring extraction and resampling & Retains 60 ordered points per boundary on each acquired SAX slice \\
+		In-plane normal estimation & Defines an outward direction at every contour point \\
+		Off-surface constraints at $\pm2.5$~mm & Establishes the sign and local scale of each implicit field \\
+		Thin-plate-spline RBF fit & Interpolates a continuous field with degree 1 and regularisation parameter 0.5 \\
+		Evaluation on a 1.0~mm grid & Discretises the continuous field for surface extraction \\
+		Signed-distance regularisation ($\sigma=1.2$~mm) & Reduces voxel-scale corrugation before surface extraction \\
+		Connected-region filtering and marching cubes & Removes invalid regions and extracts the zero level set \\
+		Topology validation and conditional correction & Preserves valid RBF surfaces and corrects only failed shells \\
+		Geometric plausibility checks & Rejects failed fits and invalid endocardial--epicardial pairs \\
 		\bottomrule
 	\end{tabular}
 \end{table}

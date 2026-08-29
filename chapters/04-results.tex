@@ -20,10 +20,10 @@ $20$ normal (NOR) and $10$ hypertrophic cardiomyopathy (HCM) cases: each is reco
 at end-diastole for the geometric metrics and at both phases for the
 wall-thickness and regional analyses. The HCM group is included so that the model can
 be examined on abnormal as well as on normal LV geometry. Reconstruction
-accuracy is measured against a segmentation-derived comparator obtained by
-marching-cubes extraction on the input segmentations, which is the only reference
-available for these scans. The same thickness estimators are applied to the model
-and derived geometries. Three questions guide the evaluation: how faithfully the
+accuracy is measured against the RBF-derived comparator fitted to the input
+segmentation contours, which is the only three-dimensional reference available
+for these scans. The same thickness estimators are applied to the model and
+RBF-derived geometries. Three questions guide the evaluation: how faithfully the
 model reconstructs the LV surfaces, whether it represents the ED--ES change while
 maintaining a valid wall, and how closely the resulting thickness measurements
 agree with those from the derived geometry.
@@ -207,30 +207,37 @@ irregular wall geometry of the hypertrophic cases.
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{results_recon_ed_es}
-  \caption[Reconstructed and segmentation-derived LV surfaces]{Reconstructed and segmentation-derived left-ventricular surfaces at
-    both cardiac phases, for one normal case of the evaluation cohort. Panels~(a)
-    and~(c) show the reconstruction, panels~(b) and~(d) the geometry derived from
-    the same segmentation. The opaque red surface is the endocardium and the
-    translucent grey shell is the epicardium; all eight surfaces are watertight,
-    and the four panels share one scale and viewpoint, with the base upwards.
-    The end-systolic cavity is smaller and the wall thicker, consistent with
-    contraction. The fine circumferential banding on the reconstruction marks the
-    through-plane spacing of the input SAX slices, between which the field is
-    interpolated; the segmentation-derived surfaces instead show the voxel
-    staircase of the label mask.}
+  \caption[Reconstructed LV surfaces and matched fitting baselines]{Left-ventricular surfaces recovered from one set of SAX
+    contour rings by three methods, at both cardiac phases. Panels~(a)
+    and~(d) show the proposed model, panels~(b) and~(e) a radial-basis-function
+    implicit fit, and panel~(c) a fit of the public statistical shape model;
+    panel~(f) is empty because that shape model distributes end-diastolic modes
+    only, so only the end-systolic input contours are drawn there. The opaque
+    red surface is the endocardium, the translucent grey shell the epicardium,
+    and the thin dark rings the input contours. All six panels share one
+    camera, a parallel projection and one scale, with the apex downwards. Every
+    surface is shown over the observed slice range and carries the same
+    display-only smoothing pass, while the quantitative results are computed on
+    the untrimmed and unsmoothed meshes. The end-systolic cavity is smaller and
+    the wall thicker, consistent with contraction. The case shown is an
+    illustrative ACDC patient with dilated cardiomyopathy and lies outside the
+    $30$-patient evaluation cohort.}
   \label{fig:recon-ed-es-meshes}
 \end{figure}
 
-\Cref{fig:recon-ed-es-meshes} shows the reconstructed endocardial and
-epicardial surfaces for one normal case at both cardiac phases, beside the
-geometry derived from the same segmentation. The
-end-systolic cavity is visibly smaller than the end-diastolic one, and the
-surrounding wall correspondingly thicker. This shows that the pipeline
-reconstructs the expected phase-dependent change. Both reconstructed surfaces are zero-level sets of
-the same continuous field rather than stacks of per-slice contours, and the
-comparison with the segmentation-derived surfaces shows that the reconstruction
-recovers the same overall shape while smoothing the voxel staircase of the label
-mask.
+\Cref{fig:recon-ed-es-meshes} places the reconstruction beside two conventional
+fitting baselines driven by the same observations. The three methods recover the
+same overall ventricular shape, and the reconstruction follows the input rings as
+closely as the implicit fit does, which indicates that the learned completion
+reproduces the observed geometry rather than reverting to an average ventricle.
+The end-systolic cavity is visibly smaller than the end-diastolic one and the
+surrounding wall correspondingly thicker, so the pipeline represents the expected
+phase-dependent change. Both reconstructed surfaces are zero-level sets of the
+same continuous field rather than stacks of per-slice contours. The empty
+end-systolic panel records a practical constraint rather than a failure: the
+public shape model is distributed with end-diastolic modes only, which is why
+shape-model fitting could not serve as a comparator across both phases and
+motivated the segmentation-derived reference used throughout this chapter.
 
 \begin{table}[H]
   \centering
@@ -759,9 +766,10 @@ For \textbf{RQ1}, the model can reconstruct continuous, closed 3D LV surfaces
 from sparse SAX contours within the evaluated cohort. The surface errors are
 close to the in-plane resolution of the source images, and every extracted
 endocardial and epicardial surface is watertight after repair
-(\cref{tab:reconstruction-quality}). The continuous representation also removes
-much of the voxel staircasing visible in the segmentation-derived geometry
-(\cref{fig:recon-ed-es-meshes}). Compared with matched linear contour lofting,
+(\cref{tab:reconstruction-quality}). \Cref{fig:recon-ed-es-meshes} shows that
+the reconstruction and two conventional fitting baselines recover the same
+overall phase-dependent geometry from identical contour input.
+Compared with matched linear contour lofting,
 the model reduces the Chamfer distance, ASSD, and HD95 on both surfaces and
 improves myocardial overlap (\cref{tab:reconstruction-quality}). This provides
 evidence that the learned completion improves on direct interpolation between
@@ -775,7 +783,7 @@ evaluated point. The paired surfaces do not collapse, and they reproduce the
 expected smaller cavity and thicker wall at ES. The answer is therefore positive
 at the level of geometric representation. Accuracy is not equal across phases:
 the model underestimates systolic thickening relative to the
-segmentation-derived geometry (\cref{tab:aha17-model-voxel}). This is consistent
+RBF-derived geometry (\cref{tab:aha17-model-voxel}). This is consistent
 with the use of ED-only synthetic pre-training and a binary phase condition.
 
 For \textbf{RQ3}, measurements on the reconstructed surfaces track those from

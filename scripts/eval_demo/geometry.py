@@ -381,6 +381,40 @@ def make_watertight(mesh: trimesh.Trimesh, name: str,
     return mesh, report
 
 
+def repair_if_invalid(mesh: trimesh.Trimesh, name: str) -> tuple[trimesh.Trimesh, dict]:
+    """Preserve a valid genus-zero shell; repair only when validation fails."""
+    candidate = mesh.copy()
+    trimesh.repair.fix_normals(candidate)
+    valid = (
+        len(candidate.faces) > 0
+        and candidate.is_watertight
+        and candidate.is_winding_consistent
+        and candidate.euler_number == 2
+    )
+    if not valid:
+        repaired, report = make_watertight(candidate, name, taubin_iters=0)
+        report["repair_required"] = True
+        return repaired, report
+
+    report = {
+        "surface": name,
+        "faces_in": int(len(candidate.faces)),
+        "faces_out": int(len(candidate.faces)),
+        "vertices_out": int(len(candidate.vertices)),
+        "components_in": 1,
+        "repaired_with": "none",
+        "repair_required": False,
+        "watertight_in": True,
+        "watertight_out": True,
+        "winding_consistent": True,
+        "euler_number_in": 2,
+        "euler_number": 2,
+        "volume_ml": float(abs(candidate.volume) / 1000.0),
+        "area_cm2": float(candidate.area / 100.0),
+    }
+    return candidate, report
+
+
 def _section_polygons(mesh: trimesh.Trimesh, z: float):
     """Cross-section of a closed mesh at z = const, as world-frame shapely polygons."""
     try:

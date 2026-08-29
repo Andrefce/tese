@@ -22,7 +22,7 @@ Sparse SAX contours constrain the LV only on the acquired image planes, leaving
 the intervening geometry to be inferred. Because clinical datasets do not
 provide independent three-dimensional surfaces for direct supervision, the
 training strategy first learns complete LV geometry from synthetic SSM samples
-and then adapts this prior to segmentation-derived clinical meshes. Both stages
+and then adapts this prior to RBF-derived clinical meshes. Both stages
 use the same contour representation, allowing the model to receive a consistent
 form of sparse observation throughout training.
 
@@ -82,10 +82,11 @@ The training data were therefore constructed in two stages. First, 1300
 synthetic ED geometries were generated from the UK Digital Heart Project LV
 SSM for pre-training. These samples provide controlled variation consistent
 with the shape distribution represented by the SSM. Second, ED and ES
-segmentations from ACDC and M\&Ms-2 were converted into watertight meshes for
-fine-tuning, introducing patient-specific anatomy, acquisition variability,
-and cardiac-phase variation. The clinical meshes are segmentation-derived
-surrogate targets rather than independent anatomical ground truth.
+segmentations from ACDC and M\&Ms-2 were converted into watertight meshes by
+fitting implicit Radial Basis Function (RBF) surfaces to their SAX contours.
+These cases introduce patient-specific anatomy, acquisition variability, and
+cardiac-phase variation during fine-tuning. The clinical meshes are
+RBF-derived surrogate targets rather than independent anatomical ground truth.
 
 Both stages use a common cache schema, which keeps the model interface and loss
 formulation unchanged as training moves from synthetic to clinical data. The
@@ -106,6 +107,16 @@ surfaces before they can supervise the implicit decoder. Synthetic pre-training
 and clinical fine-tuning are used in that order so that the model first learns a
 regularised geometric prior and then encounters the conditions present in the
 evaluation data.
+
+Fitting the SSM directly to the clinical contours was considered for this
+conversion. When the data-preparation pipeline was developed, however, the
+available UK Digital Heart Project model represented ED but not ES. Using it for
+both phases would have constrained systolic cases to a diastolic shape space,
+whereas using it only for ED would have introduced a phase-dependent difference
+in how the clinical targets were constructed. RBF fitting was therefore adopted
+for both phases. This preserves one reconstruction procedure across ACDC and
+M\&Ms-2 while leaving the SSM in its intended role as the source of synthetic ED
+pre-training geometry.
 
 \subsection{Statistical Shape Model of the left ventricle}
 \label{subsec:ssm-background}
@@ -257,7 +268,7 @@ SSM.
 
 Operationally, the fine-tuning stage keeps the same model architecture and
 the same multi-term loss from \cref{sec:training-inference}, but replaces the
-synthetic-only stream with real-derived cache samples from ED and ES frames.
+synthetic-only stream with RBF-derived cache samples from ED and ES frames.
 Because the real caches follow the same schema (contours, tissue labels, phase
 label, mesh supervision, and query points), the training loop can continue from
 the pre-trained checkpoint without changing model interfaces. The phase label
@@ -287,140 +298,103 @@ number of parallel SAX slices separated by several millimetres, so the observed
 geometry is a set of sparse contour rings rather than a continuous surface.
 
 
-The reconstruction pipeline closes this gap by converting each sparse label
-stack into a derived, watertight three-dimensional mesh. These meshes are
-\emph{segmentation-derived surrogate targets}, not manually annotated or
-independently acquired 3D reference geometry: their geometry is determined by
-the observed labels and by the explicitly stated resampling, smoothing, and
-capping operations. This distinction is important when interpreting the later
-reconstruction-consistency results. An earlier ES pipeline
-attempted to fit the SSM to systolic contours; this was abandoned
-because forcing a diastolic statistical prior onto systolic geometry produced
-anatomically unrealistic surfaces with collapsed walls. The direct
-reconstruction approach instead retains the patient-specific geometry present
-in the ED or ES labels. The two parallel endocardial and epicardial paths are
-shown in \cref{fig:real-mesh-steps}, and the four stages of the conversion are
-described below. \Cref{tab:real-pipeline} of \cref{app:supplementary-methods}
-lists the individual operations in order.
+The reconstruction pipeline closes this gap by fitting a continuous implicit
+surface directly to the sparse contours of each clinical label stack. The
+resulting meshes are \emph{RBF-derived surrogate targets}, not manually
+annotated or independently acquired 3D reference geometry. Their shape is
+determined by the observed contour points and by the RBF kernel, off-surface
+constraints, field-domain regularisation, and extraction resolution described
+below. This
+distinction is important when interpreting the reconstruction-consistency
+results.
 
-\paragraph{From label volume to clean binary masks.}
-Each segmentation volume is read from NIfTI format and reoriented to the RAS+
-convention using its affine, which places the voxel axes in a consistent
-patient frame while preserving the physical spacing. This step does not define
-the cardiac long axis. The acquired SAX stack supplies the through-plane
-direction, and base and apex are identified later from the cross-sectional areas
-at the two ends of the stack. The ACDC and M\&Ms-2 datasets use
-compatible but not identical label encodings for the LV cavity, the myocardium,
-and the right ventricle, so each source is first mapped to a common convention.
-Two binary masks are then formed. The endocardial mask is the LV cavity label,
-and the epicardial mask is the union of the cavity and the myocardium:
+\paragraph{Contour extraction and harmonisation.}
+Each NIfTI segmentation is reoriented to the RAS+ convention while preserving
+its physical voxel spacing. Dataset-specific labels are mapped to a common
+definition of the LV cavity and myocardium. On every acquired SAX slice, the
+largest endocardial and epicardial rings are retained, where the endocardium is
+the boundary of the LV cavity and the epicardium is the outer boundary of the
+union of cavity and myocardium. Each ring is resampled to 60 evenly spaced
+points and stored at its measured through-plane position. These points are both
+the observations supplied to the encoder and the constraints from which the
+clinical surrogate surfaces are constructed.
+
+\paragraph{RBF implicit fitting.}
+The endocardial and epicardial surfaces are fitted separately. For either
+surface $s$, let $p_i$ be a contour point and $n_i$ its outward in-plane normal,
+estimated from the local contour tangent and oriented away from the ring centre.
+The implicit function is a thin-plate-spline RBF with a linear polynomial term,
 \begin{equation}
-	M_{\mathrm{endo}} = \mathbb{1}[L = L_{\mathrm{LV}}],
-	\qquad
-	M_{\mathrm{epi}} = \mathbb{1}[L \in \{L_{\mathrm{LV}}, L_{\mathrm{MYO}}\}],
-	\label{eq:endo-epi-masks}
+	f_s(x) = \sum_{j=1}^{K} w_j\phi(\lVert x-c_j\rVert_2)
+	+ a_0 + a^\top x,
+	\qquad \phi(r)=r^2\log r,
+	\label{eq:clinical-rbf-field}
 \end{equation}
-where $L$ is the label image, $L_{\mathrm{LV}}$ is the LV cavity label, and
-$L_{\mathrm{MYO}}$ is the myocardium label. The volume is then resampled to
-1.5~mm isotropic spacing with nearest-neighbour interpolation, which avoids
-blending one label into another. Within each slice, the largest connected
-component of each label is kept and any holes are filled, and the largest
-three-dimensional component is kept afterwards. This removes the small
-disconnected fragments that often appear near the first and last slices of the
-stack. The endocardial mask is finally merged into the epicardial one so that
-$M_{\mathrm{endo}} \subseteq M_{\mathrm{epi}}$ holds everywhere.
+following the implicit surface formulation of \textcite{carr2001rbf}. The
+contour points constrain the zero level set, while paired off-surface points at
+$d=2.5$~mm establish its sign:
+\begin{equation}
+	f_s(p_i)=0,
+	\qquad f_s(p_i+d n_i)=d,
+	\qquad f_s(p_i-d n_i)=-d.
+	\label{eq:clinical-rbf-constraints}
+\end{equation}
+A regularisation parameter of 0.5 reduces sensitivity to small contour
+irregularities during RBF fitting. Unlike direct lofting, the fit does not
+require a vertex on one ring to be paired with a particular vertex on the next.
+Unlike SSM fitting, it does not constrain either phase to an atlas-derived shape
+space.
 
-\paragraph{From masks to a smooth closed surface.}
-Applying marching cubes directly to voxel labels produces a visible staircase,
-so the binary mask is first smoothed with a Gaussian filter at a scale of 1.5~mm
-and the surface is taken at its 0.5 isosurface
-\parencite{lorensen1987marchingcubes}. Panels~(d) and~(d$'$) of
-\cref{fig:real-mesh-steps} show the unsmoothed voxel surface for the endocardial
-and epicardial masks, which makes this artefact explicit. Taubin
-$\lambda$/$\mu$ smoothing \parencite{taubin1995lambda} (25 iterations,
-$\lambda=0.53$, $\mu=-0.55$) then removes most of the remaining staircase while
-approximately preserving the enclosed volume. Because the labels stop at the
-valve plane, marching cubes closes the top of the ventricle with a rounded dome
-that does not exist in the anatomy. The upper 6\% of the apex-to-base extent is
-therefore cut away, the opening is closed with a flat cap perpendicular to the
-long axis, and three iterations of cotangent-Laplacian fairing smooth the join.
-Quadric-error decimation \parencite{garland1997qem} finally reduces every mesh to
-at most 4000 vertices, so that all cases reach the cache at a comparable size.
-
-\paragraph{Plausibility checks.}
-Marching cubes reproduces whatever surface the labels imply, even when that
-surface is not a plausible ventricle. A label stack can be incomplete, noisy, or
-come from a long-axis rather than a short-axis acquisition, and the resulting
-mesh is then valid geometry but poor anatomy. Seven checks are therefore applied
-before a mesh enters the cache, and a case that fails any of them is discarded,
-because training on implausible geometry would weaken the shape prior the model
-is meant to learn.
-
-Three of the checks ask whether the stack really covers the ventricle. The
-cross-sectional area of the endocardium must decrease from the mid-cavity
-towards the apex, because the ventricle narrows in that direction; when the
-apical end is the wider one, base and apex have most likely been swapped, or the
-stack stops before the true apex. The most basal slice must have an area
-consistent with the valve-plane region, since a very small basal contour means
-the acquisition ended too early and the basal cap would then close the mesh at an
-arbitrary height. The ratio between the apex-to-base length and the largest
-short-axis diameter must stay inside a fixed range, which removes globally
-distorted shapes.
-
-The remaining four checks ask whether the segmentation is internally consistent.
-The slice centroids must not jump sideways from one slice to the next, because
-that pattern points to motion or an orientation error and produces twisted
-surfaces. Within each slice, the endocardial and epicardial rings must stay
-smooth and roughly convex, since jagged or self-intersecting rings usually come
-from local segmentation failures that smoothing cannot repair. At every level the
-endocardium must lie inside the epicardium with a positive gap between them,
-because the opposite ordering is an impossible target for a decoder that models
-the wall as an outward offset. The average gap between the two rings must also
-stay within plausible limits, which removes cases where labels have merged or
-leaked into neighbouring tissue.
-
-\paragraph{Contour and query-point extraction.}
-The encoder receives contours extracted directly from the acquired clinical
-slices, not contours re-sliced from the derived mesh. For each available SAX
-slice, the largest endocardial and epicardial label contours are retained and
-resampled to 60 evenly spaced points. Their physical slice positions are kept,
-so the encoder receives the original sparse observation in its measured
-through-plane arrangement. This preserves the acquisition geometry and prevents
-the derived mesh from leaking into the encoder input.
-
-The derived endocardial and epicardial meshes are centred and normalised with the
-same translation and scale before they are used as three-dimensional supervision.
-For each mesh pair, 2048 query points are drawn near the two surfaces and across
-a padded bounding box. Near-surface points teach the decoder where the surfaces
-lie; the volume points teach whether a location is inside or outside each
-surface. Every query point receives occupancy labels for both surfaces. The
-contours are therefore the sparse input from the clinical slices, whereas the
-query points and mesh samples are training-only targets derived from the mesh.
-
-\Cref{fig:real-mesh-steps} provides a visual summary of the conversion from
-clinical labels to mesh-ready supervision. 
+\paragraph{Surface extraction and quality control.}
+Each fitted field is evaluated on a 1.0~mm isotropic grid. The grid extends
+8.0~mm beyond the contours in-plane and 1.5~mm beyond the first and last rings
+along the SAX direction, so that the extracted surface closes close to the
+observed longitudinal support. The interior defined by $f_s\leq0$ is reduced to
+its valid connected region and converted to a signed-distance volume. A Gaussian
+filter with a physical standard deviation of 1.2~mm is applied to this field
+before marching cubes extracts the zero level set
+\parencite{lorensen1987marchingcubes}. Regularising the field before extraction
+reduces voxel-scale corrugation without directly displacing mesh vertices after
+the surface has been formed. The extracted mesh is then checked for a single
+closed component, consistent face orientation, and genus-zero topology. When
+these conditions hold, the geometry is preserved unchanged. Otherwise,
+component selection, hole closure, orientation correction, and genus
+normalisation are applied conditionally. Cases with fewer than two valid rings
+per surface, failed surface extraction, unresolved topology, implausible
+dimensions, or invalid endocardial--epicardial containment are excluded before
+caching.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.9\linewidth]{fig_real_mesh_steps}
+	\includegraphics[width=0.98\linewidth]{fig_real_mesh_steps}
 	\vspace{2mm}
-\caption[Clinical-label-to-mesh pipeline for real ED data.]{Real ED clinical-label-to-mesh pipeline (ACDC): from SAX labels and
-binary masks to endocardial and epicardial surface branches used for derived
-supervision.}
+	\caption[Clinical RBF surface-construction pipeline]{Clinical RBF
+	contour-to-surface pipeline. Panel~(a) shows one acquired SAX slice with the expert
+	endocardial, epicardial, and right-ventricular contours. Panel~(b) shows the
+	corresponding basal, mid-cavity, and apical labels, while panels~(c) and
+	(c$'$) stack the extracted contour rings.
+	Panels~(d) and~(d$'$) overlay those constraints on the zero-level surfaces
+	extracted from the regularised RBF fields, and panels~(e) and~(e$'$) show the
+	final topology-validated surfaces used to construct the clinical supervision.}
 	\label{fig:real-mesh-steps}
 \end{figure}
 
-Panel~(a) shows the acquired SAX
-image with LV cavity, myocardium, and RV labels, and panel~(b) shows the
-corresponding binary endocardial and epicardial masks after label
-harmonisation. The pipeline then branches into separate endocardial and
-epicardial paths: panels~(c)--(e) and panels~(c$'$)--(e$'$), respectively. 
+\Cref{fig:real-mesh-steps} summarises the implemented clinical-data pipeline.
+The two branches show that the endocardial and epicardial constraints are fitted
+separately before their extracted surfaces undergo the same topology checks.
+Valid surfaces pass through this stage unchanged; topology correction is invoked
+only when a surface fails those checks.
 
-In both branches, the voxel surface view makes discretisation artefacts explicit,
-and Taubin smoothing illustrates their reduction before later post-processing.
-The figure is intentionally a process overview; the full sequence also includes
-basal capping, cap fairing, decimation, and the plausibility checks. Contours for
-the encoder remain those extracted from the original clinical slices.
+\paragraph{Mesh supervision and query points.}
+The RBF-derived endocardial and epicardial meshes are centred and normalised
+with the same translation and scale. For each pair, 2048 query points are drawn
+near the surfaces and throughout a padded bounding box. Near-surface points
+constrain the location of each boundary, while volumetric points determine the
+inside/outside relation. The contours remain the sparse model input; the mesh
+samples, query points, and their targets are available only as supervision.
+Consequently, the model is trained to reproduce a smooth geometric completion
+constructed from the clinical contours without receiving the completed RBF
+surface at inference time.
 
 \subsection{Shared cache representation and contour augmentation}
 \label{subsec:training-cache-representation}
@@ -785,21 +759,17 @@ stages the phase label is provided as input, so a single model handles ED and ES
 Contour augmentation is used for both synthetic ED and real ED/ES observations;
 their surrogate targets and cached supervision are never changed.
 
-A single phase-conditioned model is used instead of two separate models. The
-main reason is practical. When the experiments reported here were carried out,
-the public repository of the UK Digital Heart Project contained only the
-end-diastolic shape model, so a separate end-systolic model could not have
-benefited from the synthetic pre-training at all. An end-systolic shape model
-has since been added to that repository, but only after the training described
-in this chapter had been completed. Sharing one model lets the end-systolic cases reuse the shape prior learned
-from the synthetic end-diastolic corpus, and the phase label then tells the
-encoder which of the two configurations it is looking at. The cost of this
-choice is that the phase information is coarse. The model receives a binary
-label, not a continuous position in the cardiac cycle, so it can only represent
-two fixed states rather than the gradual change between them. Since the
-synthetic corpus is end-diastolic, the prior is also biased towards diastolic
-shape. Both effects make the end-systolic reconstruction the harder of the two
-cases, and this is visible in the results of \cref{ch:results}.
+A single phase-conditioned model is used instead of two separate models. When
+the experiments were designed, the available SSM provided synthetic geometry
+only for ED, so a separate ES model could not receive equivalent synthetic
+pre-training. Sharing one model allows the ES cases to benefit from the broad
+shape prior learned from the synthetic ED corpus, while the phase label tells
+the encoder which configuration it is processing. The RBF-derived clinical
+targets use the same construction procedure in both phases and therefore avoid
+introducing a second asymmetry at the fine-tuning stage. The cost is that phase
+information remains coarse: the model receives a binary label rather than a
+continuous position in the cardiac cycle. Since the synthetic corpus is ED-only,
+the prior also remains biased towards diastolic shape.
 
 The two stages are complementary. The synthetic ED cases give a large set of
 anatomically valid shapes but do not reproduce every artefact seen in real
@@ -808,12 +778,12 @@ final training data. Their role is to provide a geometric prior: they regularise
 the shape space, expose the model to a wide range of plausible LV geometries,
 and do so under controlled conditions. They do not provide realistic
 patient-specific wall thickness, because the epicardium in those samples is
- constructed by an offset rule. The real ED and ES cases then supply patient-specific anatomy
-from several datasets and let the model learn how the shape changes between the
-two phases. To avoid information leaking between the training, validation, and
-test sets, the real cases are split by patient before augmentation. Because
-augmentation perturbs only the observed contours, each real surrogate target
-remains tied to the anatomy of its own patient.
+constructed by an offset rule. The RBF-derived real ED and ES cases then supply
+patient-specific anatomy from several datasets and let the model learn how the
+shape changes between the two phases. To avoid information leaking between the
+training, validation, and test sets, the real cases are split by patient before
+augmentation. Because augmentation perturbs only the observed contours, each
+real surrogate target remains tied to the anatomy of its own patient.
 
 In practice, this means the encoder is trained to be robust to imperfect,
 noisy inputs, such as small shifts, jitter, missing slices, or dropped points,
@@ -978,7 +948,7 @@ rasterised on a 1.0~mm isotropic grid and extracted again with marching cubes so
 that its mesh density is comparable with the other evaluation meshes. It then
 passes through the same watertight repair and smoothing procedure used for the
 model output. The model and the lofting baseline are evaluated on the same
-patients against the same segmentation-derived geometry and with the same
+patients against the same RBF-derived clinical geometry and with the same
 surface, overlap, and volume metrics. This comparison tests learned geometric
 completion against direct linear interpolation between the observed contours;
 it does not isolate the contribution of individual model components.
