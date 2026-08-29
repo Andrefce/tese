@@ -54,6 +54,47 @@ distance (1.22/1.05 mm versus 1.60/1.86 mm), lower HD95 (3.30/3.47 mm versus
 paired bootstrap intervals reported in Chapter 4 were computed from 10,000
 resamples with deterministic seeds.
 
+## RBF implicit and shape-model fitting baselines
+
+Both fitting baselines were evaluated on 2026-08-29 with the same 30 ED
+patients, the same cached segmentation-derived comparator meshes, and the same
+metric code. Their input contour rings are read from the per-patient sample
+cache `test-new-model/cache/{patient}_ED.npz`, denormalised back to world
+millimetres. The RBF baseline is a thin-plate-spline implicit surface fitted to
+the rings with off-surface constraints; the shape-model baseline fits the public
+UK Digital Heart Project left-ventricular model by alternating similarity
+registration and regularised mode estimation.
+
+```powershell
+C:/Python313/python.exe scripts/evaluate_fitting_baselines.py `
+  --cohort test-new-model/cohort_full_nor_hcm10 `
+  --samples test-new-model/cache --workers 2 --bootstrap-samples 10000
+```
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `scripts/evaluate_fitting_baselines.py` | `7f31670fd70f76c37d843d8bc1e223187dd8b70b580d55a2b88920c51a5196c6` |
+| `fitting_baselines.csv` | `ea979d845a383cf28944dfbaa7ba5207899867d9d5d03af2a658c6e2c0f8ff2a` |
+| `fitting_baselines_summary.csv` | `cf80e1000a7cc1444e089f2aec7154edc328afc1a1a5a2e37c99355965f38335` |
+
+Both baselines were watertight on both surfaces in all 30 patients. Endocardial
+Chamfer distance was 1.55 mm for the RBF fit and 2.34 mm for the shape-model
+fit, against 1.22 mm for the model; myocardial Dice was 0.81 and 0.68 against
+0.85. Every paired baseline-minus-model difference excludes zero except the
+cavity volume ratio of the RBF fit.
+
+The shape-model baseline is end-diastolic only: the published model ships
+end-diastolic modes alone, so no end-systolic fit exists. This is also why the
+end-systolic shape-model panel of `fig:recon-ed-es-meshes` is empty.
+
+A defect found during this run is recorded here because it affected earlier
+output: `initial_alignment` in `scripts/fig_baseline_rbf_ssm.py` derived the
+ventricular long axis from the principal axis of the whole contour cloud, which
+points in-plane on short stacks and left the fitted shape model lying on its
+side (patient072 endocardial Dice 0.18). The axis is now taken from the line
+through the per-slice ring centroids. All reported shape-model numbers come from
+the corrected code.
+
 ## Verified cohort facts
 
 - 30 ACDC patients: HCM `patient021`--`patient030` and NOR

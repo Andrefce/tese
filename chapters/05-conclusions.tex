@@ -53,15 +53,17 @@ measurements from sparse SAX observations.
 \section{Limitations}
 \label{sec:conclusion-limitations}
 \noindent
-As detailed in \cref{sec:threats}, the comparator is derived from the same sparse
-segmentations and is not independent 3D ground truth. Mesh repair contributes to
-the final watertight surfaces, and calibrated decoder-offset figures inherit
-their absolute scale from the segmentation reference. The cohort is small,
-especially for HCM, and the group analysis is descriptive. Finally, no matched
-comparison beyond linear contour lofting or controlled architectural ablation
-was completed. The current experiments show an improvement over direct linear
-interpolation, but they do not isolate the contribution of each model component
-or establish superiority over more advanced reconstruction methods.
+As detailed in \cref{sec:threats}, no independent 3D ground truth exists for
+these scans, so the reconstruction is characterised by contour fidelity and by
+agreement with alternative reconstructions rather than by accuracy. Mesh repair
+contributes to the final watertight surfaces, and calibrated decoder-offset
+figures inherit their absolute scale from the segmentation reference. The cohort
+is small, especially for HCM, and the group analysis is descriptive. Finally,
+no controlled architectural ablation was completed. The current experiments show
+that the model produces closed surfaces that follow the observations and stay
+within about two millimetres of conventional implicit and shape-model
+reconstructions, but they do not isolate the contribution of each model
+component or establish that any method is closest to the anatomy.
 
 \section{Future Work}
 \label{sec:conclusion-future-work}
@@ -69,7 +71,8 @@ or establish superiority over more advanced reconstruction methods.
 The first priority is evaluation against independent anatomical evidence, such
 as higher-resolution volumetric imaging or expert 3D surface and wall-thickness
 annotations, followed by validation on a larger external cohort. The second is
-a matched comparison with spline-based lofting and shape-model fitting, using
+a broader matched comparison, extending the present implicit and shape-model
+comparators with spline-based lofting and learned alternatives, using
 the same patients, physical spacing, repair procedure, and metrics, together
 with point-wise error maps that localise failures at the apex, base, and highly
 curved wall regions. The third is a targeted experimental study of synthetic

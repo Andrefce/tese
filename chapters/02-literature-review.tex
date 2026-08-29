@@ -320,9 +320,11 @@ constraints, and strong regularisation can suppress genuine local variation.
 For the clinical data in this thesis, the absence of an ES shape model when the
 data pipeline was developed prevented a consistent SSM-fitting procedure across
 both phases. RBF fitting was therefore selected to construct the ACDC and
-M\&Ms-2 surrogate surfaces for both ED and ES, while linear lofting was retained
-as the matched non-learning comparator. The SSM serves a separate role by
-providing complete synthetic ED geometries for pre-training.
+M\&Ms-2 surrogate surfaces for both ED and ES. Both RBF fitting and ED
+shape-model fitting are retained as non-learning comparators for the
+reconstruction, because their priors differ from one another and from the
+learned one. The SSM serves a further role by providing complete synthetic ED
+geometries for pre-training.
 
 \subsection{Deep learning models for 3D shape reconstruction}
 \label{subsec:dl-reconstruction-review}

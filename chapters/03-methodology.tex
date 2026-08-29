@@ -938,20 +938,31 @@ the reconstructed meshes by the methods in \cref{sec:wall-thickness-protocol};
 the method judged most consistent in the comparison provides the final regional
 measurements.
 
-The reconstruction is also compared with a simple non-neural baseline built
-from exactly the same SAX contour rings. Each ring is represented by 60 points.
-The starting point of each successive ring is shifted to minimise its mean
-in-plane distance from the preceding ring, while preserving the contour
-direction. Corresponding points on adjacent rings are then joined by triangles,
-and the first and last rings are closed with planar caps. The resulting loft is
-rasterised on a 1.0~mm isotropic grid and extracted again with marching cubes so
-that its mesh density is comparable with the other evaluation meshes. It then
-passes through the same watertight repair and smoothing procedure used for the
-model output. The model and the lofting baseline are evaluated on the same
-patients against the same RBF-derived clinical geometry and with the same
-surface, overlap, and volume metrics. This comparison tests learned geometric
-completion against direct linear interpolation between the observed contours;
-it does not isolate the contribution of individual model components.
+The reconstruction is also compared with two non-neural reconstructions built
+from exactly the same SAX contour rings. The first is a radial-basis-function
+implicit fit. Each ring supplies on-surface constraints of value zero, and two
+further sets of constraints are placed $2.5$~mm inside and outside along the
+in-plane ring normals to give the field its sign. A thin-plate-spline
+interpolant with a linear polynomial tail and light regularisation is fitted to
+those constraints and evaluated on a $1.0$~mm isotropic grid spanning the
+observed rings, and its zero level set is extracted with marching cubes. The
+second is a fit of the public UK Digital Heart Project left-ventricular shape
+model. The mean shape is first aligned to the rings by long axis, scale and
+yaw, where the long axis is taken from the line through the per-slice ring
+centroids; correspondence, similarity registration and regularised estimation of
+the first $25$ mode coefficients are then alternated, with the coefficients
+constrained to three standard deviations. Because the published model provides
+end-diastolic modes only, this comparator exists at end-diastole alone.
+
+Both reconstructions pass through the same watertight repair and smoothing
+procedure used for the model output. Since no independent three-dimensional
+geometry is available, none of the three reconstructions is treated as a
+reference. They are compared in two ways: by the distance from the observed
+contour rings to each reconstructed surface, and by pairwise surface and volume
+agreement between them. The first quantifies how far each method honours the
+measured data, and the second quantifies how much the reconstruction prior
+changes the result. Neither isolates the contribution of individual model
+components.
 
 \section{Wall-Thickness Evaluation Protocol}
 \label{sec:wall-thickness-protocol}

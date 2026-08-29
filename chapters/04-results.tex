@@ -19,49 +19,56 @@ results below are computed on a cohort of $30$ ACDC patients, comprising
 $20$ normal (NOR) and $10$ hypertrophic cardiomyopathy (HCM) cases: each is reconstructed
 at end-diastole for the geometric metrics and at both phases for the
 wall-thickness and regional analyses. The HCM group is included so that the model can
-be examined on abnormal as well as on normal LV geometry. Reconstruction
-accuracy is measured against the RBF-derived comparator fitted to the input
-segmentation contours, which is the only three-dimensional reference available
-for these scans. The same thickness estimators are applied to the model and
-RBF-derived geometries. Three questions guide the evaluation: how faithfully the
-model reconstructs the LV surfaces, whether it represents the ED--ES change while
-maintaining a valid wall, and how closely the resulting thickness measurements
-agree with those from the derived geometry.
+be examined on abnormal as well as on normal LV geometry. No independent
+three-dimensional geometry exists for these scans, so the reconstruction is not
+scored against a reference. It is instead characterised by its fidelity to the
+observed contour rings and by its agreement with two conventional
+reconstructions of the same rings, an implicit fit and a shape-model fit. Three
+questions guide the evaluation: how faithfully the model follows the observed LV
+contours and how far it agrees with alternative reconstructions of them, whether
+it represents the ED--ES change while maintaining a valid wall, and how closely
+the resulting thickness measurements agree with those obtained from an
+independent estimator on the same input.
 
 \subsection{Metrics}
 \label{subsec:metrics}
 \noindent
-Reconstruction quality is measured with complementary surface and volume
+Reconstruction geometry is characterised with complementary surface and volume
 quantities, following the metric
 taxonomy of \textcite{taha2015metrics} and the conventions used for cardiac
 segmentation~\parencite{bernard2018acdc} and for implicit-surface
-learning~\parencite{occupancynetworks2019}. Together they describe typical and
-tail surface error, volumetric overlap, and systematic size bias.
+learning~\parencite{occupancynetworks2019}. Because no reference geometry
+exists, these quantities are used in two roles: between a reconstruction and the
+contour rings that produced it, and between two reconstructions of the same
+rings. In the first role they measure fidelity to the observations; in the
+second they measure disagreement between methods, and are symmetric, so they
+belong to neither method as an error.
 
-The \emph{Chamfer distance} is the average distance between the two surfaces,
-taken in both directions. It is reported for the endocardium and the epicardium
-in millimetres, and smaller is better.
+The \emph{Chamfer distance} is the average distance between two surfaces, taken
+in both directions. It is reported for the endocardium and the epicardium in
+millimetres. The \emph{contour distance} is the corresponding one-sided quantity
+from each observed ring point to the reconstructed surface, summarised by its
+mean and its 95th percentile.
 
 The \emph{Dice similarity coefficient} (DSC) measures the solid rather than the
 surface. After voxelisation it is twice the shared volume divided by the sum of
 the two volumes. It is computed for the endocardial cavity and for the
-myocardium, lies between zero and one, and larger is better. A shape can score
-well on overlap and still be uniformly too small, so the \emph{volume ratio} is
-reported as well. It is the reconstructed volume divided by the reference volume,
-and a value of one means there is no systematic error in size. It is the only
-reported quantity that directly measures such a bias.
+myocardium and lies between zero and one. Enclosed \emph{volumes} are reported
+in millilitres for each method separately. A volume ratio is deliberately not
+reported: it would require designating one reconstruction as correct, which the
+available data do not support.
 
 The \emph{watertight rate} is the
 fraction of reconstructions that close into a surface with no holes. It is stated
 in the text as a precondition rather than as a score, because a mesh that is not
-closed has no volume for the DSC and the volume ratio to use.
+closed has no volume for the DSC to use.
 
-The average symmetric surface distance (ASSD) provides a conventional check on
-the mean surface error, while the 95th-percentile Hausdorff distance (HD95)
-describes the tail of the error distribution. Both are reported with the
-Chamfer distance. The intersection over union is omitted because it is a direct
-transformation of the DSC; the F-score depends on one selected tolerance, and
-normal consistency measures orientation rather than positional accuracy.
+The 95th-percentile Hausdorff distance (HD95) describes the tail of the
+distribution and is reported with the Chamfer distance. The average symmetric
+surface distance is omitted because it tracked the Chamfer distance to within
+$0.06$~mm throughout. The intersection over union is omitted because it is a
+direct transformation of the DSC; the F-score depends on one selected tolerance,
+and normal consistency measures orientation rather than positional agreement.
 
 Wall thickness is summarised by its mean, its standard deviation, and its 5th and
 95th percentiles across the myocardial surface, all in millimetres. The
@@ -87,13 +94,29 @@ constant amount, which only the bias reveals.
 \label{subsec:baselines}
 \noindent
 No paired independent 3D mesh exists for the clinical scans, as discussed in
-\cref{subsec:missing-ground-truth}. The segmentation-derived geometry is
-therefore used as the common evaluation reference. It is not a competing
-reconstruction method or independent ground truth. The competing reconstruction
-is a matched linear contour-lofting baseline. It uses the same input contour
-rings as the model and the same mesh repair and metric pipeline, as described in
-\cref{subsec:inference-offset-extraction}. This baseline is used only for the
-reconstruction-quality comparison. Wall thickness is compared between the model
+\cref{subsec:missing-ground-truth}, and none of the geometries used in this
+chapter is treated as a reference. The reconstruction is compared with two
+alternative reconstructions of the same input contour rings: a
+radial-basis-function implicit fit, which interpolates the rings through a
+smooth field, and a fit of the public statistical shape model, which regularises
+them towards a population prior. The two were chosen because they impose
+different and well-understood priors, so the spread between the three results
+indicates how much the reconstruction prior itself determines the geometry. Both
+consume the same rings as the model and pass through the same mesh repair and
+metric pipeline, as described in
+\cref{subsec:inference-offset-extraction}, so their numbers are directly
+comparable. They are used only for the reconstruction comparison, and
+only at end-diastole: the public shape model is distributed with
+end-diastolic modes only.
+
+Neither comparator is independent of the model in the same way. The implicit
+fit belongs to the same family as the RBF-derived surrogate targets on which the
+model was fine-tuned, described in \cref{ch:methodology}, so close agreement
+between the model and that fit is partly expected and cannot be read as mutual
+corroboration. The shape-model fit is independent of the training targets, but
+it carries a population prior that the cohort partly falls outside. Wall
+thickness is compared between
+the model
 and the segmentation-derived geometry with the four algorithms selected in
 \cref{subsec:thickness-methods}: the Laplace field method, the Yezzi--Prince
 method, the SDF cone-ray method, and the Euclidean Distance Transform (EDT)
@@ -156,53 +179,19 @@ This section reports first the geometric quality of the reconstruction, then the
 wall-thickness measurements obtained from the reconstructed geometry, and finally
 the regional analysis over the AHA 17-segment model.
 
-\subsection{Reconstruction Quality}
+\subsection{Reconstruction Consistency}
 \label{subsec:reconstruction-quality}
 \noindent
-\Cref{tab:reconstruction-quality} summarises reconstruction accuracy over the
-evaluation cohort. Each case is reconstructed at end-diastole from its SAX
-contours and compared with the reference geometry. The reported metrics describe
-typical and tail surface error, volumetric overlap, and systematic volume bias.
-
-The Chamfer distance gives the error at a typical point. It is
-$1.22 \pm 0.21$~mm on the endocardium and $1.05 \pm 0.18$~mm on the epicardium,
-so an average point of the reconstructed surface lies about one millimetre from
-the reference. This is finer than the in-plane pixel size of the source images,
-which is between $1.37$ and $1.88$~mm.
-
-The ASSD is similar, at $1.21 \pm 0.23$~mm and $1.09 \pm 0.20$~mm for the two
-surfaces. The HD95 is larger, at $3.30 \pm 0.91$~mm on the endocardium and
-$3.47 \pm 1.41$~mm on the epicardium. Most of each surface is therefore close
-to the comparator, while a smaller set of locations carries errors of several
-millimetres.
-
-The Dice score gives the share of the enclosed volume that is recovered. It is
-$0.93 \pm 0.02$ for the cavity and $0.85 \pm 0.02$ for the myocardium. The
-myocardial value is lower because the myocardium is a thin shell. A boundary
-shift of one millimetre removes a much larger fraction of a wall a few
-millimetres thick than of a compact cavity, so the two numbers are not directly
-comparable and the gap between them is expected.
-
-The volume ratio shows whether the reconstruction is systematically the wrong
-size. It is $0.92 \pm 0.03$ for the cavity and $1.00 \pm 0.03$ for the epicardial
-solid. The epicardium is therefore the right size on average, while the cavity is
-consistently about $8\%$ too small. The Chamfer distance cannot show this,
-because it would report the same sub-millimetre error for a uniform inward shift
-as for random noise of the same size.
-
-Every endocardial and epicardial reconstruction in the cohort also closes into a
-manifold, a watertight rate of $100\%$ on both surfaces after the repair stage.
-This makes the enclosed volumes well defined and therefore makes the volume
-ratios meaningful.
-
-Splitting the cohort by group shows that the reconstruction degrades only mildly
-on the abnormal ventricles. The endocardial Chamfer distance is $1.12$~mm on the
-normal cases and $1.43$~mm on the hypertrophic ones, and the endocardial Dice
-falls from $0.94$ to $0.91$.
-The myocardial Dice is slightly higher on the HCM group ($0.87$ against $0.84$),
-because a thicker wall is easier to overlap. The remaining differences are
-consistent with the more
-irregular wall geometry of the hypertrophic cases.
+No independent three-dimensional geometry exists for these scans, so no
+reconstruction can be scored against a target and no accuracy claim is made in
+this section. What can be measured is reported instead. The first quantity is
+fidelity to the observations: how closely each reconstructed surface passes
+through the SAX contour rings it was built from, which are the only measured
+data available. The second is mutual agreement: how far the three
+reconstructions of the same rings differ from one another, which bounds how much
+the choice of reconstruction prior changes the resulting geometry. All values
+below are end-diastolic and cover the $30$-patient cohort, and every surface of
+every method is watertight after the shared repair stage.
 
 \begin{figure}[H]
   \centering
@@ -225,101 +214,140 @@ irregular wall geometry of the hypertrophic cases.
   \label{fig:recon-ed-es-meshes}
 \end{figure}
 
-\Cref{fig:recon-ed-es-meshes} places the reconstruction beside two conventional
-fitting baselines driven by the same observations. The three methods recover the
-same overall ventricular shape, and the reconstruction follows the input rings as
-closely as the implicit fit does, which indicates that the learned completion
-reproduces the observed geometry rather than reverting to an average ventricle.
-The end-systolic cavity is visibly smaller than the end-diastolic one and the
-surrounding wall correspondingly thicker, so the pipeline represents the expected
-phase-dependent change. Both reconstructed surfaces are zero-level sets of the
-same continuous field rather than stacks of per-slice contours. The empty
+\Cref{fig:recon-ed-es-meshes} places the three reconstructions of the same
+observations side by side. They recover the same overall ventricular shape, and
+the end-systolic cavity is visibly smaller than the end-diastolic one with a
+correspondingly thicker wall, so the pipeline represents the expected
+phase-dependent change. The reconstructed surfaces are zero-level sets of a
+single continuous field rather than stacks of per-slice contours. The empty
 end-systolic panel records a practical constraint rather than a failure: the
-public shape model is distributed with end-diastolic modes only, which is why
-shape-model fitting could not serve as a comparator across both phases and
-motivated the segmentation-derived reference used throughout this chapter.
+public shape model is distributed with end-diastolic modes only, so it can act
+as a comparator at end-diastole alone.
+
+\subsubsection{Fidelity to the observed contours}
+\label{subsubsec:contour-fidelity}
+\noindent
+\Cref{tab:contour-fidelity} reports the distance from each input contour ring to
+the surface reconstructed from it, together with the enclosed volumes. The
+implicit fit reproduces the rings almost exactly, at $0.13$ and $0.11$~mm on the
+two surfaces. That figure must not be read as an order-of-magnitude advantage.
+The fit is an interpolant whose defining constraint is that the field vanish at
+exactly those contour points, so reproducing them is a boundary condition of the
+method and the measured residual is the solver's, not the reconstruction's. Any
+interpolating method scores near zero here and any regularising method does not,
+whatever their relative merits between the slices. The quantity is reported
+because it verifies that each method honours its input and because it separates
+interpolating from regularising behaviour, not because it ranks the methods.
+
+Two further limits apply. The rings are separated by $10$~mm in $29$ of the
+$30$ cases, so a metric anchored on them says nothing about the intervening
+volume, which is where the reconstruction problem actually lies. And exact
+fidelity to the rings is not unambiguously desirable, because the contours carry
+annotation noise and in-plane discretisation: a surface that follows them to
+$0.13$~mm follows their errors as well.
+
+The model deviates from the rings by $1.50$~mm on the endocardium and $1.96$~mm
+on the epicardium, which is of the order of the in-plane pixel size of $1.37$ to
+$1.88$~mm, and is therefore consistent with a surface that smooths annotation
+noise rather than one that misses the observations. The shape-model fit deviates
+by a similar amount on average, at
+$1.82$ and $1.91$~mm, but far less predictably: its per-patient endocardial
+figure spans $0.92$ to $3.44$~mm against $1.20$ to $2.14$~mm for the model.
+
+The pathology split explains that spread. The shape-model fit is close to the
+observations on the normal cases, at $1.42$~mm, and drifts on the hypertrophic
+ones, at $2.63$~mm, which is the expected behaviour of a population prior asked
+to represent anatomy outside its training variation. The model is comparatively
+stable across the two groups, at $1.45$ and $1.60$~mm, and the implicit fit is
+insensitive to pathology by construction.
+
+Enclosed volumes tell a complementary story. The three methods agree closely on
+the cavity, at $119$, $119$ and $127$~ml, but diverge on the myocardium, at
+$136$, $115$ and $88$~ml. The wall, not the cavity, is where the reconstruction
+priors disagree, which matters directly for the thickness measurements reported
+in \cref{subsec:wall-thickness-results}.
 
 \begin{table}[H]
   \centering
-  \caption[Model versus matched contour lofting]{Reconstruction quality of the model and the matched linear
-    contour-lofting baseline at end-diastole. Both are compared with the same
-    segmentation-derived reference; that reference is not an independent ground
-    truth or a baseline row. Values are mean $\pm$ standard deviation across the
-    $30$ patients. The final column is the paired lofting-minus-model difference
-    with a 95\% percentile-bootstrap confidence interval from 10\,000
-    patient-level resamples. Distances are in millimetres; Dice and volume ratio
-    are dimensionless.}
-  \label{tab:reconstruction-quality}
+  \caption[Fidelity of each reconstruction to its input contours]{Distance from the input SAX contour rings to the surface
+    reconstructed from them, and the enclosed volumes, at end-diastole over the
+    $30$-patient cohort. Values are mean $\pm$ standard deviation of the
+    per-patient statistic; $p_{95}$ is the cohort mean of the per-patient
+    95th percentile. The implicit fit interpolates the rings by construction, so
+    its near-zero distance is a property of the method and not a measure of
+    accuracy. All three methods were watertight on both surfaces in all
+    $30$ patients.}
+  \label{tab:contour-fidelity}
   \footnotesize
-  \setlength{\tabcolsep}{4pt}
+  \setlength{\tabcolsep}{5pt}
   \begin{tabular}{l l c c c}
     \toprule
-    Metric & Structure & Model & Lofting & Difference (95\% CI) \\
+    Method & Surface & Contour distance (mm) & $p_{95}$ (mm) & Volume (ml) \\
     \midrule
-    Chamfer distance & Endocardium & $1.22 \pm 0.21$ & $1.60 \pm 0.20$ & $+0.38\ [0.28,\ 0.47]$ \\
-                     & Epicardium  & $1.05 \pm 0.18$ & $1.86 \pm 0.22$ & $+0.81\ [0.73,\ 0.89]$ \\
-    ASSD             & Endocardium & $1.21 \pm 0.23$ & $1.55 \pm 0.20$ & $+0.34\ [0.23,\ 0.44]$ \\
-                     & Epicardium  & $1.09 \pm 0.20$ & $1.85 \pm 0.24$ & $+0.77\ [0.68,\ 0.85]$ \\
-    HD95             & Endocardium & $3.30 \pm 0.91$ & $6.88 \pm 1.91$ & $+3.59\ [3.03,\ 4.17]$ \\
-                     & Epicardium  & $3.47 \pm 1.41$ & $8.35 \pm 2.50$ & $+4.88\ [4.18,\ 5.56]$ \\
-    Dice             & Cavity      & $0.93 \pm 0.02$ & $0.92 \pm 0.01$ & $-0.010\ [-0.016,\ -0.004]$ \\
-                     & Myocardium  & $0.85 \pm 0.02$ & $0.81 \pm 0.04$ & $-0.043\ [-0.054,\ -0.032]$ \\
-    Volume ratio     & Cavity      & $0.92 \pm 0.03$ & $0.89 \pm 0.02$ & $-0.034\ [-0.044,\ -0.024]$ \\
-                     & Epicardial solid & $1.00 \pm 0.03$ & $0.89 \pm 0.02$ & $-0.115\ [-0.126,\ -0.105]$ \\
+    Proposed model  & Endocardium & $1.50 \pm 0.23$ & $3.56$ & $119.3 \pm 31.3$ \\
+                    & Epicardium  & $1.96 \pm 0.28$ & $5.23$ & $255.3 \pm 76.7$ \\
+    \addlinespace
+    RBF fit         & Endocardium & $0.13 \pm 0.01$ & $0.30$ & $118.6 \pm 30.2$ \\
+                    & Epicardium  & $0.11 \pm 0.01$ & $0.26$ & $233.5 \pm 71.4$ \\
+    \addlinespace
+    Shape-model fit & Endocardium & $1.82 \pm 0.67$ & $5.51$ & $126.9 \pm 32.2$ \\
+                    & Epicardium  & $1.91 \pm 0.76$ & $6.23$ & $215.2 \pm 56.3$ \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-\subsubsection{Matched contour-lofting baseline}
-\label{subsubsec:contour-lofting-baseline}
+\subsubsection{Agreement between reconstructions}
+\label{subsubsec:reconstruction-agreement}
 \noindent
-\Cref{tab:reconstruction-quality} compares the model with direct linear
-lofting between the same input contours. Both methods are evaluated on all
-$30$ patients against the same segmentation-derived geometry. Both also produce
-watertight endocardial and epicardial surfaces in every case after the shared
-repair stage.
+\Cref{tab:reconstruction-agreement} compares the three reconstructions with one
+another. Because none of them is a reference, each entry is a symmetric
+disagreement between two methods rather than an error of either. The average
+symmetric surface distance is omitted because it differed from the Chamfer
+distance by less than $0.06$~mm for every pair.
 
-The model has lower mean and tail surface error for both surfaces. The largest
-difference is in HD95: contour lofting reaches $6.88$~mm on the endocardium and
-$8.35$~mm on the epicardium, compared with $3.30$ and $3.47$~mm for the model.
-The paired confidence intervals exclude zero for every reported difference.
-The cavity Dice advantage is small, at $0.01$, but the myocardial Dice improves
-from $0.81$ to $0.85$. Linear lofting also produces a volume ratio of about
-$0.89$ for both solids, whereas the model reaches $1.00$ for the epicardial
-solid. These results show that the learned reconstruction does more than direct
-linear interpolation and smoothing under this matched evaluation. In
-particular, it better controls between-slice surface excursions and epicardial
-volume. The comparison does not show which architectural component causes the
-improvement, and it does not establish superiority over more advanced
-reconstruction methods.
+The model and the implicit fit are the closest pair, differing by $1.57$~mm on
+the endocardium and $1.90$~mm on the epicardium, with a myocardial Dice of
+$0.77$. The two pairs involving the shape model are further apart, at $2.08$ and
+$2.01$~mm on the endocardium. The ordering is the same for every surface metric,
+which places the learned reconstruction nearer to a smooth interpolant of the
+observations than to a population prior.
 
-\subsubsection{Patient-level error analysis}
-\label{subsubsec:reconstruction-error-analysis}
-\noindent
-The patient-level distribution clarifies where the averages are reliable and
-where they hide difficult cases. Endocardial Chamfer distance ranges from
-$0.88$ to $1.77$~mm and epicardial Chamfer distance from $0.76$ to $1.43$~mm.
-The corresponding maximum HD95 values are $6.22$ and $6.95$~mm, whereas
-myocardial Dice remains between $0.80$ and $0.89$. In particular, the case with
-the largest endocardial HD95 still reaches a myocardial Dice of $0.89$, showing
-that a local surface excursion can coexist with good overall overlap. All
-$30$ cavity volume ratios are below one, so the cavity shrinkage is systematic
-rather than being caused by a few outliers. The cached metrics do not identify
-the anatomical location of each surface error; attributing these tails
-specifically to the apex or base would require point-wise anatomical error maps.
+Two features of these numbers deserve emphasis. The disagreement between any two
+methods, between $1.6$ and $2.1$~mm on the endocardium, is comparable to the
+in-plane pixel size and far smaller than the $10$~mm slice spacing, so all three
+priors agree about the ventricle to within roughly one pixel where the data
+constrain them. Cavity agreement is uniformly high, at Dice $0.88$ to $0.91$,
+while myocardial agreement is markedly lower, at $0.69$ to $0.77$, and its
+patient-level range is wide: myocardial Dice falls to $0.58$ for the worst
+shape-model comparison. The reconstructions therefore concur about the cavity
+and disagree about the wall, which is the quantity this thesis ultimately
+measures. That spread is a floor on the uncertainty of any wall-thickness value
+reported later in this chapter, and it cannot be reduced by choosing one of
+these methods as though it were correct.
 
-\Cref{fig:reconstruction-distributions} shows the patient-level distributions
-behind these summaries and separates the normal and HCM groups without treating
-group membership as a reconstruction comparator.
-
-\begin{figure}[H]
+\begin{table}[H]
   \centering
-  \includegraphics[width=0.96\textwidth]{results_reconstruction_distributions}
-  \caption[Patient-level reconstruction-metric distributions]{Patient-level end-diastolic reconstruction metrics for the normal and
-    HCM groups. Points represent patients; diamonds and bars show group means
-    with 95\% bootstrap confidence intervals.}
-  \label{fig:reconstruction-distributions}
-\end{figure}
+  \caption[Pairwise agreement between the three reconstructions]{Pairwise agreement between the three reconstructions of the same
+    end-diastolic contour rings, over the $30$-patient cohort. Values are
+    mean $\pm$ standard deviation of the per-patient statistic. Every entry is a
+    symmetric disagreement between two methods, not an error, because no method
+    is a reference. Distances are in millimetres; Dice is dimensionless.}
+  \label{tab:reconstruction-agreement}
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{l c c c c c c}
+    \toprule
+    & \multicolumn{2}{c}{Chamfer (mm)} & \multicolumn{2}{c}{HD95 (mm)}
+      & \multicolumn{2}{c}{Dice} \\
+    \cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+    Pair & Endo. & Epi. & Endo. & Epi. & Cavity & Myoc. \\
+    \midrule
+    Model vs.\ RBF fit         & $1.57 \pm 0.18$ & $1.90 \pm 0.24$ & $4.24 \pm 0.86$ & $6.07 \pm 0.94$ & $0.91 \pm 0.02$ & $0.77 \pm 0.05$ \\
+    Model vs.\ shape model     & $2.08 \pm 0.51$ & $2.59 \pm 0.73$ & $5.88 \pm 1.91$ & $6.72 \pm 2.32$ & $0.88 \pm 0.03$ & $0.69 \pm 0.04$ \\
+    RBF fit vs.\ shape model   & $2.01 \pm 0.67$ & $2.05 \pm 0.64$ & $5.88 \pm 2.95$ & $6.62 \pm 2.67$ & $0.89 \pm 0.04$ & $0.76 \pm 0.06$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 \FloatBarrier
 
 \subsection{Wall-Thickness Measurement}
@@ -763,19 +791,18 @@ The results provide a direct answer to each research question stated in
 \cref{sec:research-questions}.
 
 For \textbf{RQ1}, the model can reconstruct continuous, closed 3D LV surfaces
-from sparse SAX contours within the evaluated cohort. The surface errors are
-close to the in-plane resolution of the source images, and every extracted
+from sparse SAX contours within the evaluated cohort. It follows the observed
+contour rings to within about the in-plane pixel size, and every extracted
 endocardial and epicardial surface is watertight after repair
-(\cref{tab:reconstruction-quality}). \Cref{fig:recon-ed-es-meshes} shows that
-the reconstruction and two conventional fitting baselines recover the same
-overall phase-dependent geometry from identical contour input.
-Compared with matched linear contour lofting,
-the model reduces the Chamfer distance, ASSD, and HD95 on both surfaces and
-improves myocardial overlap (\cref{tab:reconstruction-quality}). This provides
-evidence that the learned completion improves on direct interpolation between
-the observed contours. However, closure still depends on the repair
-stage described in \cref{ch:methodology}; it is not guaranteed by surface
-extraction alone.
+(\cref{tab:contour-fidelity}). \Cref{fig:recon-ed-es-meshes} shows that
+the three reconstructions recover the same overall phase-dependent geometry from
+identical contour input, and \cref{tab:reconstruction-agreement} puts that
+impression on a scale: the model sits within $1.6$~mm of a smooth interpolant of
+the observations and within $2.1$~mm of a population shape prior. Because no
+reference geometry exists, this answers RQ1 in terms of contour fidelity,
+closure and inter-method consistency, and not in terms of accuracy. Closure
+additionally depends on the repair stage described in \cref{ch:methodology}; it
+is not guaranteed by surface extraction alone.
 
 For \textbf{RQ2}, the model represents separate endocardial and epicardial
 surfaces at both ED and ES while maintaining a positive wall offset at every
@@ -799,9 +826,11 @@ comparator is derived from the same segmentations and is not independent
 anatomical ground truth.
 
 Taken together, the demonstrated result is geometric and computational: the
-model completes sparse contours into paired surfaces, preserves relative
-between-patient thickness variation, supports regional summaries, and performs
-better than a matched linear contour-lofting baseline. The
+model completes sparse contours into paired watertight surfaces that follow the
+observations, preserves relative between-patient thickness variation, supports
+regional summaries, and stays within about two millimetres of two conventional
+reconstructions of the same data. No claim of superior accuracy is made,
+because no reference exists against which accuracy could be established. The
 observed ES shortfall may be explained by ED-only synthetic pre-training and
 binary phase conditioning, but their individual effects were not isolated by
 an ablation experiment. Likewise, the NOR--HCM separation in
@@ -855,12 +884,20 @@ data is designed to correct but cannot fully rule out as a residual prior. A
 larger cohort, and ideally a dataset with genuine 3D ground truth, would be
 needed to confirm the results reported here.
 
-The baseline comparison is deliberately narrow. Linear contour lofting tests
-whether the complete neural pipeline improves on direct between-slice
-interpolation under matched evaluation conditions. It does not cover spline
-lofting, shape-model fitting, Poisson reconstruction, or other learned models.
-No controlled ablation removes synthetic pre-training, local conditioning,
-phase conditioning, or positive surface coupling. The experiment therefore
-supports an advantage over one simple conventional baseline, but it cannot
-attribute that advantage to a specific component or establish that the full
-architecture is necessary.
+The comparison between reconstructions is bounded in the same way. The implicit
+fit and the shape-model fit were chosen because their priors differ from each
+other and from the learned one, so the spread between the three bounds the
+influence of the prior; it does not identify which is closest to the anatomy.
+The implicit fit is moreover of the same family as the surrogate targets used to
+fine-tune the model, so its agreement with the model is not an independent
+check. Contour fidelity cannot settle the question either, because an
+interpolating method reproduces its input rings by construction while a
+regularising method does not, and because the rings constrain nothing between
+slices.
+The comparison does not cover spline lofting, Poisson reconstruction, or other
+learned models, and the shape-model comparison is limited to end-diastole
+because the public model provides no end-systolic modes. No controlled
+ablation removes synthetic pre-training, local conditioning, phase conditioning,
+or positive surface coupling. The experiment therefore characterises the model
+against two conventional alternatives, but it cannot attribute its behaviour to
+a specific component or establish that the full architecture is necessary.
