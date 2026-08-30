@@ -16,26 +16,26 @@ present evidence remains limited.
 \section{Answers to the Research Questions}
 \label{sec:conclusion-research-questions}
 \noindent
-For \textbf{RQ1}, the answer is positive within the evaluated cohort. The model
-reconstructs continuous endocardial and epicardial surfaces with mean errors
-close to the in-plane image resolution, and every evaluated surface is
-watertight after repair. The remaining systematic cavity underestimation shows
-that closed and visually smooth surfaces are not necessarily unbiased in
-volume.
+For \textbf{RQ1}, the answer is positive within the held-out ACDC and M\&Ms-2
+test cohort. The model reconstructs continuous endocardial and epicardial
+surfaces whose contour distances are close to the in-plane image resolution,
+and every evaluated surface is watertight after repair. Pairwise differences in
+surface position and myocardial volume nevertheless show that closed and
+visually smooth reconstructions remain sensitive to the chosen prior.
 
 For \textbf{RQ2}, the model represents both surfaces at ED and ES while
 maintaining a positive separation between their implicit fields. It reproduces
 the expected smaller cavity and thicker wall at ES. However, systolic thickening
-is lower than in the RBF-derived comparator, so the result supports
-phase-conditioned representation more strongly than equal accuracy at both
-phases.
+cannot be compared with the shape-model fit because the public model provides
+no ES modes, so the result supports phase-conditioned representation but does
+not establish phase-specific reconstruction accuracy.
 
 For \textbf{RQ3}, the reconstructed and RBF-derived geometries preserve
 similar between-patient thickness variation for the field-based estimators, but
-their absolute values differ. The larger and phase-dependent disagreement of
-the cone-ray estimator also shows that wall thickness depends on the chosen
-measurement path. The answer is therefore one of computational agreement, not
-validation against true anatomy.
+their absolute values differ. The larger disagreement of the cone-ray estimator
+across the ED reconstructions also shows that wall thickness depends on the
+chosen measurement path. The answer is therefore one of computational
+agreement, not validation against true anatomy.
 
 \section{Contributions}
 \label{sec:conclusion-contributions}
@@ -58,8 +58,9 @@ these scans, so the reconstruction is characterised by contour fidelity and by
 agreement with alternative reconstructions rather than by accuracy. Mesh repair
 contributes to the final watertight surfaces, and calibrated decoder-offset
 figures inherit their absolute scale from the segmentation reference. The cohort
-is small, especially for HCM, and the group analysis is descriptive. Finally,
-no controlled architectural ablation was completed. The current experiments show
+used for the pathology analysis is limited to $20$ NOR and $10$ HCM cases from
+the ACDC test set, and the group analysis is descriptive. Finally, no controlled
+architectural ablation was completed. The current experiments show
 that the model produces closed surfaces that follow the observations and stay
 within about two millimetres of conventional implicit and shape-model
 reconstructions, but they do not isolate the contribution of each model
