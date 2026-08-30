@@ -105,8 +105,7 @@ indicates how much the reconstruction prior itself determines the geometry. Both
 consume the same rings as the model and pass through the same mesh repair and
 metric pipeline, as described in
 \cref{subsec:inference-offset-extraction}, so their numbers are directly
-comparable. They are used only for the reconstruction comparison, and
-only at end-diastole: the public shape model is distributed with
+comparable. They are evaluated only at end-diastole: the public shape model is distributed with
 end-diastolic modes only.
 
 Neither comparator is independent of the model in the same way. The implicit
@@ -116,8 +115,7 @@ between the model and that fit is partly expected and cannot be read as mutual
 corroboration. The shape-model fit is independent of the training targets, but
 it carries a population prior that the cohort partly falls outside. Wall
 thickness is compared between
-the model
-and the segmentation-derived geometry with the four algorithms selected in
+the model, the RBF fit, and the shape-model fit with the four algorithms selected in
 \cref{subsec:thickness-methods}: the Laplace field method, the Yezzi--Prince
 method, the SDF cone-ray method, and the Euclidean Distance Transform (EDT)
 boundary sum. The thickness computed directly on the input label mask is reported
@@ -353,64 +351,71 @@ these methods as though it were correct.
 \subsection{Wall-Thickness Measurement}
 \label{subsec:wall-thickness-results}
 \noindent
-The four selected methods are applied to both the reconstructed geometry and the
-voxel-based geometry derived from the same input segmentation of every patient at
-end-diastole. \Cref{tab:wall-thickness-results} reports, for each method and
-geometry, the cohort average of the per-patient mean, standard deviation, and
-5th and 95th percentiles. The voxel measurements are a segmentation-derived
-comparator, not independent anatomical ground truth.
+The four selected methods are applied to the proposed reconstruction, the RBF
+fit, and the shape-model fit of every patient at end-diastole.
+\Cref{tab:wall-thickness-results} reports, for each estimator and reconstruction,
+the cohort average of the per-patient mean, standard deviation, and 5th and 95th
+percentiles. All three geometries are reconstructed from the same contour rings;
+none is independent anatomical ground truth.
 
-The three non-ray methods agree on the magnitude of the wall on both
-geometries. On the reconstructed geometry, the Laplace field reads $9.18$~mm,
-the EDT boundary sum $9.55$~mm, and Yezzi--Prince $10.01$~mm. The corresponding
-voxel-based values are $8.60$, $8.63$, and $9.14$~mm. The SDF cone-ray method
-stands apart on both geometries, reading $12.47$~mm on the reconstruction and
-$9.83$~mm on the voxel-based geometry.
+The three non-ray methods agree on the magnitude of the wall within each
+reconstruction. Their means range from $9.18$ to $10.01$~mm on the proposed
+reconstruction, from $8.36$ to $8.86$~mm on the RBF fit, and from $6.48$ to
+$7.10$~mm on the shape-model fit. The reconstruction prior therefore changes
+the absolute thickness scale even when the estimator is held fixed. The SDF
+cone-ray method gives the largest value on the proposed reconstruction and the
+RBF fit, at $12.47$ and $9.38$~mm, respectively, but not on the shape-model fit.
 
 Dispersion separates the methods the same way. The per-patient standard deviation
 is $1.64$~mm for Yezzi--Prince, $1.66$~mm for the EDT boundary sum and $2.14$~mm
-for the Laplace field, but $4.87$~mm for the cone-ray estimator. Its
+for the Laplace field on the proposed reconstruction, but $4.87$~mm for the
+cone-ray estimator. Its
 5th-to-95th-percentile span, $8.01$ to $20.68$~mm, is about twice as wide as that
-of any other method. The ray-based estimator is therefore both the highest and
-the noisiest of the four.
+of any other estimator on that geometry. The ray-based estimator is therefore
+both the highest and the noisiest of the four on the model output.
 
 \begin{table}[H]
   \centering
   \caption[End-diastolic wall-thickness statistics]{Wall-thickness statistics at end-diastole over the $30$-patient
       evaluation cohort. Each entry is the cohort average of the corresponding
-      per-patient statistic, in millimetres, before any calibration. ``Voxel''
-      denotes measurements on geometry derived from the input segmentation; it is
-      included as a comparator, not as independent anatomical ground truth.}
+      per-patient statistic, in millimetres, before any calibration. The three
+      geometries are reconstructed from the same input contour rings and are
+      compared as alternative reconstructions, not against anatomical ground truth.}
   \label{tab:wall-thickness-results}
     \begin{tabular}{l l cccc}
     \toprule
       Method & Geometry & Mean & Std. & $p_{5}$ & $p_{95}$ \\
     \midrule
       Laplace field    & Model &  9.18 & 2.14 & 4.75 & 12.20 \\
-                       & Voxel &  8.60 & 2.18 & 5.22 & 12.42 \\
+                       & RBF fit &  8.36 & 2.21 & 5.03 & 12.29 \\
+                       & Shape-model fit &  6.48 & 1.38 & 3.87 &  8.43 \\
       \addlinespace
       Yezzi--Prince    & Model & 10.01 & 1.64 & 7.41 & 12.74 \\
-                       & Voxel &  9.14 & 2.07 & 5.98 & 12.82 \\
+                       & RBF fit &  8.86 & 2.15 & 5.57 & 12.71 \\
+                       & Shape-model fit &  7.10 & 1.23 & 4.75 &  8.88 \\
       \addlinespace
       SDF cone rays    & Model & 12.47 & 4.87 & 8.01 & 20.68 \\
-                       & Voxel &  9.83 & 2.43 & 6.44 & 13.92 \\
-    \addlinespace
+                       & RBF fit &  9.38 & 2.49 & 5.63 & 13.80 \\
+                       & Shape-model fit &  7.11 & 1.50 & 4.12 &  9.13 \\
+      \addlinespace
       EDT boundary sum & Model &  9.55 & 1.66 & 6.62 & 12.17 \\
-                       & Voxel &  8.63 & 2.01 & 5.33 & 12.08 \\
+                       & RBF fit &  8.51 & 2.00 & 5.42 & 12.05 \\
+                       & Shape-model fit &  7.02 & 1.22 & 4.65 &  8.77 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-  Applying the same estimator to the two geometries gives a direct measure of
-  reconstruction consistency. The reconstructed geometry has a higher mean
-  thickness for every method: $+0.58$~mm for the Laplace field, $+0.87$~mm for
-  Yezzi--Prince, $+2.65$~mm for SDF cone rays, and $+0.91$~mm for the EDT boundary
-  sum. Despite these positive offsets, the per-patient mean values are strongly
-  correlated between the model and voxel-based geometries ($r=0.99$, $0.99$,
-  $0.95$, and $0.99$, respectively). Thus, the reconstruction broadly preserves
-  between-patient variation while shifting the absolute thickness scale; this is
-  agreement with a segmentation-derived comparator, not validation against true
-  anatomy.
+Applying the same estimator to all three geometries isolates the effect of the
+reconstruction prior. Relative to the model, the RBF fit is thinner by
+$0.82$~mm for the Laplace field, $1.16$~mm for Yezzi--Prince, $3.09$~mm for
+SDF cone rays, and $1.03$~mm for the EDT boundary sum. The shape-model fit is
+thinner by $2.70$, $2.91$, $5.36$, and $2.53$~mm, respectively. Per-patient
+means remain strongly correlated between the model and RBF fit ($r=0.99$,
+$0.99$, $0.95$, and $0.99$), whereas agreement with the shape-model fit is
+more moderate ($r=0.72$, $0.77$, $0.67$, and $0.77$). The RBF fit therefore
+largely preserves between-patient variation while shifting the absolute scale;
+the stronger shape-model prior changes both the scale and, to a lesser extent,
+the patient ordering.
 
 \Cref{tab:wall-thickness-agreement} compares the three other methods with the
 Laplace field point by point over the myocardial surface of all $30$ patients.
@@ -814,16 +819,15 @@ RBF-derived geometry (\cref{tab:aha17-model-voxel}). This is consistent
 with the use of ED-only synthetic pre-training and a binary phase condition.
 
 For \textbf{RQ3}, measurements on the reconstructed surfaces track those from
-the derived geometry across patients, although their absolute values differ.
-The three non-ray methods show correlations of $r=0.99$ between the two
-geometries and mean offsets of
-$0.58$--$0.91$~mm, whereas the cone-ray method has a larger offset of
-$2.65$~mm (\cref{tab:wall-thickness-results}). The reconstruction therefore
-preserves relative differences. At ED the absolute scale shifts upward for all
-four estimators; at ES the direction and magnitude of the shift depend on the
-method. This answers RQ3 in terms of computational agreement only, because the
-comparator is derived from the same segmentations and is not independent
-anatomical ground truth.
+the RBF fit across patients, although their absolute values differ. The four
+estimators show correlations of $r=0.95$ to $0.99$ between those two
+reconstructions, while correlations with the shape-model fit range from
+$r=0.67$ to $0.77$ (\cref{tab:wall-thickness-results}). The reconstruction
+therefore preserves relative differences most strongly against the smooth
+interpolating fit. The absolute scale remains dependent on both the
+reconstruction prior and the estimator. This answers RQ3 in terms of
+computational agreement only, because all three geometries are derived from the
+same contour rings and none is independent anatomical ground truth.
 
 Taken together, the demonstrated result is geometric and computational: the
 model completes sparse contours into paired watertight surfaces that follow the

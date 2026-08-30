@@ -68,20 +68,29 @@ registration and regularised mode estimation.
 ```powershell
 C:/Python313/python.exe scripts/evaluate_fitting_baselines.py `
   --cohort test-new-model/cohort_full_nor_hcm10 `
-  --samples test-new-model/cache --workers 2 --bootstrap-samples 10000
+  --samples test-new-model/cache --workers 4 --bootstrap-samples 10000
 ```
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `scripts/evaluate_fitting_baselines.py` | `7f31670fd70f76c37d843d8bc1e223187dd8b70b580d55a2b88920c51a5196c6` |
+| `scripts/evaluate_fitting_baselines.py` | `28ea27de0cb695e2a0c1419ea3958d6bcb56a4f5d534fce541711ee849750245` |
 | `fitting_baselines.csv` | `ea979d845a383cf28944dfbaa7ba5207899867d9d5d03af2a658c6e2c0f8ff2a` |
 | `fitting_baselines_summary.csv` | `cf80e1000a7cc1444e089f2aec7154edc328afc1a1a5a2e37c99355965f38335` |
+| `fitting_baseline_wall_methods.csv` | `29868ef375e6625ab54b1a89beb5ba7d0250af0fa4cc5f9fe720eca17ca0ff5a` |
+| `fitting_baseline_wall_summary.csv` | `5a4332bf74d5bdaab9de9305ae873d8282e3d636f3ce80021fd4a385f9d2aa87` |
 
 Both baselines were watertight on both surfaces in all 30 patients. Endocardial
 Chamfer distance was 1.55 mm for the RBF fit and 2.34 mm for the shape-model
 fit, against 1.22 mm for the model; myocardial Dice was 0.81 and 0.68 against
 0.85. Every paired baseline-minus-model difference excludes zero except the
 cavity volume ratio of the RBF fit.
+
+The same four wall-thickness estimators were applied to both fitted mesh pairs
+at 1.0 mm isotropic pitch. The RBF fit remained close to the model, with
+per-patient mean-thickness correlations from 0.95 to 0.99, while the shape-model
+fit correlations ranged from 0.67 to 0.77. Per-patient JSON checkpoints in
+`fit_cache/` allow interrupted runs to resume without repeating completed PDE
+measurements.
 
 The shape-model baseline is end-diastolic only: the published model ships
 end-diastolic modes alone, so no end-systolic fit exists. This is also why the
@@ -103,6 +112,8 @@ the corrected code.
 - Reconstruction-quality CSV: ED only.
 - Wall-thickness and AHA-17 CSVs: ED and ES.
 - All four selected thickness methods are present on model and voxel geometry.
+- All four selected thickness methods are present on the ED RBF and shape-model
+  fits.
 - Cached patient payloads contain mesh-repair reports and per-patient metrics,
   but no checkpoint hash or command line.
 
