@@ -14,17 +14,15 @@ described in \cref{ch:methodology}.
 The evaluation uses the final model, obtained by pre-training on the synthetic
 SSM meshes and then fine-tuning on the real end-diastolic (ED) and end-systolic
 (ES) data, as described in \cref{ch:methodology}. The datasets
-and patient-level splits are reported in \cref{subsec:dataset-composition}. The
+and patient-level splits are reported in \cref{subsec:shared-dataset-assembly}. The
 general reconstruction and wall-thickness evaluations use the held-out test
 patients from both ACDC and M\&Ms-2. The pathology-stratified regional analysis
 uses a separate ACDC subset of $30$ test patients, comprising $20$ normal (NOR)
 and $10$ hypertrophic cardiomyopathy (HCM) cases. The HCM group is included so
 that the model can be examined on abnormal as well as normal LV geometry. No
-independent three-dimensional geometry exists for these scans, so the
-reconstruction is not scored against a reference. It is instead characterised
-by its fidelity to the observed contour rings and by its agreement with two
-conventional reconstructions of the same rings, an implicit fit and a
-shape-model fit. Three questions guide the evaluation: how faithfully the model
+independent 3D ground truth is available, so the following results characterise
+contour fidelity and inter-method consistency rather than reconstruction
+accuracy. Three questions guide the evaluation: how faithfully the model
 follows the observed LV contours and how far it agrees with alternative
 reconstructions of them, whether it represents the ED--ES change while
 maintaining a valid wall, and how closely the resulting thickness measurements
@@ -37,8 +35,8 @@ Reconstruction geometry is characterised with complementary surface and volume
 quantities, following the metric
 taxonomy of \textcite{taha2015metrics} and the conventions used for cardiac
 segmentation~\parencite{bernard2018acdc} and for implicit-surface
-learning~\parencite{occupancynetworks2019}. Because no reference geometry
-exists, these quantities are used in two roles: between a reconstruction and the
+learning~\parencite{occupancynetworks2019}. These quantities are used in two
+roles: between a reconstruction and the
 contour rings that produced it, and between two reconstructions of the same
 rings. In the first role they measure fidelity to the observations; in the
 second they measure disagreement between methods, and are symmetric, so they
@@ -93,29 +91,27 @@ constant amount, which only the bias reveals.
 \subsection{Comparators}
 \label{subsec:baselines}
 \noindent
-No paired independent 3D mesh exists for the clinical scans, as discussed in
-\cref{subsec:missing-ground-truth}, and none of the geometries used in this
-chapter is treated as a reference. The reconstruction is compared with two
+The reconstruction is compared with two
 alternative reconstructions of the same input contour rings: a
 radial-basis-function implicit fit, which interpolates the rings through a
-smooth field, and a fit of the public statistical shape model, which regularises
-them towards a population prior. The two were chosen because they impose
-different and well-understood priors, so the spread between the three results
-indicates how much the reconstruction prior itself determines the geometry. Both
+smooth field, and a fit of the public statistical shape model (SSM), which
+regularises them towards a population prior. The two were chosen because they
+impose different and well-understood priors, so the spread between the three
+results indicates how much the reconstruction prior itself determines the
+geometry. Both
 consume the same rings as the model and pass through the same mesh repair and
 metric pipeline, as described in
 \cref{subsec:inference-offset-extraction}, so their numbers are directly
-comparable. They are evaluated only at end-diastole: the public shape model is distributed with
+comparable. They are evaluated only at end-diastole: the public SSM is distributed with
 end-diastolic modes only.
 
-Neither comparator is independent of the model in the same way. The implicit
-fit belongs to the same family as the RBF-derived surrogate targets on which the
-model was fine-tuned, described in \cref{ch:methodology}, so close agreement
-between the model and that fit is partly expected and cannot be read as mutual
-corroboration. The shape-model fit is independent of the training targets, but
+The RBF fit is a reconstruction comparator rather than ground truth. It belongs
+to the same family as the surrogate targets used for fine-tuning, so close
+agreement with the model is partly expected and is not independent
+corroboration. The SSM fit is independent of the training targets, but
 it carries a population prior that the cohort partly falls outside. Wall
 thickness is compared between
-the model, the RBF fit, and the shape-model fit with the four algorithms selected in
+the model, the RBF fit, and the SSM fit with the four algorithms selected in
 \cref{subsec:thickness-methods}: the Laplace field method, the Yezzi--Prince
 method, the SDF cone-ray method, and the Euclidean Distance Transform (EDT)
 boundary sum. Because the SAX stacks are sparse relative to their in-plane
@@ -152,7 +148,7 @@ by the Eikonal term.
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{training_curves}
-  \caption[Fine-tuning history]{Fine-tuning history. Panels (a)--(d) show the total loss
+  \caption[Training history]{Training history. Panels (a)--(d) show the total loss
     and its surface, Eikonal, and off-surface components for the training and
     validation splits; the dashed vertical line marks the best epoch. Panels
     (e)--(f) show the mean field gradient norm, whose target is one, and the
@@ -171,50 +167,52 @@ the regional analysis over the AHA 17-segment model.
 \subsection{Reconstruction Consistency}
 \label{subsec:reconstruction-quality}
 \noindent
-No independent three-dimensional geometry exists for these scans, so no
-reconstruction can be scored against a target and no accuracy claim is made in
-this section. What can be measured is reported instead. The first quantity is
-fidelity to the observations: how closely each reconstructed surface passes
-through the SAX contour rings it was built from, which are the only measured
-data available. The second is mutual agreement: how far the three
-reconstructions of the same rings differ from one another, which bounds how much
-the choice of reconstruction prior changes the resulting geometry. All values
-below are end-diastolic and cover the held-out ACDC and M\&Ms-2 test cohort, and
-every surface of every method is watertight after the shared repair stage.
+The following results characterise contour fidelity and inter-method consistency
+rather than reconstruction accuracy. Contour fidelity measures how closely each
+surface follows its input rings, while pairwise agreement measures how strongly
+the reconstruction prior changes the completed geometry. All values below are
+end-diastolic and cover the held-out ACDC and M\&Ms-2 test cohort, and every
+surface of every method is watertight after the shared repair stage.
+
+\subsubsection{Reconstruction Methods}
+\label{subsubsec:reconstruction-methods}
+\noindent
+This comparison covers how each method follows the observed contours, the
+volumes it encloses, and how its complete reconstruction agrees with the other
+two methods.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\textwidth]{results_recon_ed_es}
-  \caption[Reconstructed LV surfaces and matched fitting baselines]{Left-ventricular surfaces recovered from one set of SAX
-    contour rings by three methods, at both cardiac phases. Panels~(a)
-    and~(d) show the proposed model, panels~(b) and~(e) a radial-basis-function
-    implicit fit, and panel~(c) a fit of the public statistical shape model;
-    panel~(f) is empty because that shape model distributes end-diastolic modes
-    only, so only the end-systolic input contours are drawn there. The opaque
-    red surface is the endocardium, the translucent grey shell the epicardium,
-    and the thin dark rings the input contours. All six panels share one
-    camera, a parallel projection and one scale, with the apex downwards. Every
-    surface is shown over the observed slice range and carries the same
-    display-only smoothing pass, while the quantitative results are computed on
-    the untrimmed and unsmoothed meshes. The end-systolic cavity is smaller and
-    the wall thicker, consistent with contraction. The case shown is an
-    illustrative ACDC patient with dilated cardiomyopathy.}
-  \label{fig:recon-ed-es-meshes}
+  \includegraphics[width=0.80\textwidth]{results_slice_ablation}
+  \caption[LV surfaces recovered from progressively sparser SAX stacks]{Left-ventricular surfaces recovered by the three methods from the same
+    end-diastolic SAX stack after it is progressively decimated. Columns are the
+    proposed model, the RBF implicit fit and the SSM fit; rows are the number of
+    retained slices, from the complete ten-slice stack down to three. The most
+    basal and the most apical slice are always kept, so every panel spans the
+    same axial range. The opaque red surface is the endocardium, the translucent
+    grey shell the epicardium, and the thin dark rings the retained input
+    contours. All twelve panels share one camera, a parallel projection and one
+    scale, with the apex downwards. Each panel reports the mean endocardial
+    contour distance $d$ and the enclosed endocardial volume $V$, measured on
+    the untrimmed and unsmoothed mesh. The case shown is an illustrative ACDC
+    patient with dilated cardiomyopathy; this is a single-case demonstration and
+    not a cohort result.}
+  \label{fig:slice-ablation}
 \end{figure}
 
-\Cref{fig:recon-ed-es-meshes} places the three reconstructions of the same
-observations side by side. They recover the same overall ventricular shape, and
-the end-systolic cavity is visibly smaller than the end-diastolic one with a
-correspondingly thicker wall, so the pipeline represents the expected
-phase-dependent change. The reconstructed surfaces are zero-level sets of a
-single continuous field rather than stacks of per-slice contours. The empty
-end-systolic panel records a practical constraint rather than a failure: the
-public shape model is distributed with end-diastolic modes only, so it can act
-as a comparator at end-diastole alone.
+\Cref{fig:slice-ablation} first supports a direct comparison between methods
+through its complete ten-slice row. All three recover the same overall
+ventricular shape from identical observations, but they encode different
+priors. The RBF fit interpolates the retained contours, the SSM fit regularises
+the surface towards a population shape, and the proposed model combines a
+learned prior with conditioning on the observed rings. The cohort-level
+differences between these reconstructions are examined first through contour
+fidelity and pairwise geometric agreement. The remaining rows of the figure
+are then analysed separately as a sensitivity test of inference under reduced
+slice density.
 
-\subsubsection{Fidelity to the observed contours}
-\label{subsubsec:contour-fidelity}
-\noindent
+The first part of the comparison considers fidelity to the observed contours
+and the enclosed volumes.
 \Cref{tab:contour-fidelity} reports the distance from each input contour ring to
 the surface reconstructed from it, together with the enclosed volumes. The
 implicit fit reproduces the rings almost exactly, at $0.13$ and $0.11$~mm on the
@@ -237,13 +235,13 @@ errors as well.
 The model deviates from the rings by $1.50$~mm on the endocardium and $1.96$~mm
 on the epicardium, which is of the order of the in-plane pixel size of $1.37$ to
 $1.88$~mm, and is therefore consistent with a surface that smooths annotation
-noise rather than one that misses the observations. The shape-model fit deviates
+noise rather than one that misses the observations. The SSM fit deviates
 by a similar amount on average, at
 $1.82$ and $1.91$~mm, but far less predictably: its per-patient endocardial
 figure spans $0.92$ to $3.44$~mm against $1.20$ to $2.14$~mm for the model.
 
 Within the $30$-patient ACDC pathology subset, the diagnostic split explains
-that spread. The shape-model fit is close to the observations on the normal
+that spread. The SSM fit is close to the observations on the normal
 cases, at $1.42$~mm, and drifts on the hypertrophic ones, at $2.63$~mm, which is
 the expected behaviour of a population prior asked to represent anatomy outside
 its training variation. The model is comparatively stable across the two
@@ -262,9 +260,7 @@ in \cref{subsec:wall-thickness-results}.
     reconstructed from them, and the enclosed volumes, at end-diastole over the
     held-out ACDC and M\&Ms-2 test cohort. Values are mean $\pm$ standard deviation of the
     per-patient statistic; $p_{95}$ is the cohort mean of the per-patient
-    95th percentile. The implicit fit interpolates the rings by construction, so
-    its near-zero distance is a property of the method and not a measure of
-    accuracy.}
+    95th percentile. The RBF fit interpolates the contour points by construction.}
   \label{tab:contour-fidelity}
   \footnotesize
   \setlength{\tabcolsep}{5pt}
@@ -278,15 +274,14 @@ in \cref{subsec:wall-thickness-results}.
     RBF fit         & Endocardium & $0.13 \pm 0.01$ & $0.30$ & $118.6 \pm 30.2$ \\
                     & Epicardium  & $0.11 \pm 0.01$ & $0.26$ & $233.5 \pm 71.4$ \\
     \addlinespace
-    Shape-model fit & Endocardium & $1.82 \pm 0.67$ & $5.51$ & $126.9 \pm 32.2$ \\
+    SSM fit         & Endocardium & $1.82 \pm 0.67$ & $5.51$ & $126.9 \pm 32.2$ \\
                     & Epicardium  & $1.91 \pm 0.76$ & $6.23$ & $215.2 \pm 56.3$ \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-\subsubsection{Agreement between reconstructions}
-\label{subsubsec:reconstruction-agreement}
-\noindent
+The second part considers agreement between the complete reconstructed
+surfaces and volumes.
 \Cref{tab:reconstruction-agreement} compares the three reconstructions with one
 another. Because none of them is a reference, each entry is a symmetric
 disagreement between two methods rather than an error of either. The average
@@ -295,7 +290,7 @@ distance by less than $0.06$~mm for every pair.
 
 The model and the implicit fit are the closest pair, differing by $1.57$~mm on
 the endocardium and $1.90$~mm on the epicardium, with a myocardial Dice of
-$0.77$. The two pairs involving the shape model are further apart, at $2.08$ and
+$0.77$. The two pairs involving the SSM are further apart, at $2.08$ and
 $2.01$~mm on the endocardium. The ordering is the same for every surface metric,
 which places the learned reconstruction nearer to a smooth interpolant of the
 observations than to a population prior.
@@ -307,7 +302,7 @@ priors agree about the ventricle to within roughly one pixel where the data
 constrain them. Cavity agreement is uniformly high, at Dice $0.88$ to $0.91$,
 while myocardial agreement is markedly lower, at $0.69$ to $0.77$, and its
 patient-level range is wide: myocardial Dice falls to $0.58$ for the worst
-shape-model comparison. The reconstructions therefore concur about the cavity
+SSM comparison. The reconstructions therefore concur about the cavity
 and disagree about the wall, which is the quantity this thesis ultimately
 measures. That spread is a floor on the uncertainty of any wall-thickness value
 reported later in this chapter, and it cannot be reduced by choosing one of
@@ -331,30 +326,95 @@ these methods as though it were correct.
     Pair & Endo. & Epi. & Endo. & Epi. & Cavity & Myoc. \\
     \midrule
     Model vs.\ RBF fit         & $1.57 \pm 0.18$ & $1.90 \pm 0.24$ & $4.24 \pm 0.86$ & $6.07 \pm 0.94$ & $0.91 \pm 0.02$ & $0.77 \pm 0.05$ \\
-    Model vs.\ shape model     & $2.08 \pm 0.51$ & $2.59 \pm 0.73$ & $5.88 \pm 1.91$ & $6.72 \pm 2.32$ & $0.88 \pm 0.03$ & $0.69 \pm 0.04$ \\
-    RBF fit vs.\ shape model   & $2.01 \pm 0.67$ & $2.05 \pm 0.64$ & $5.88 \pm 2.95$ & $6.62 \pm 2.67$ & $0.89 \pm 0.04$ & $0.76 \pm 0.06$ \\
+    Model vs.\ SSM fit         & $2.08 \pm 0.51$ & $2.59 \pm 0.73$ & $5.88 \pm 1.91$ & $6.72 \pm 2.32$ & $0.88 \pm 0.03$ & $0.69 \pm 0.04$ \\
+    RBF fit vs.\ SSM fit       & $2.01 \pm 0.67$ & $2.05 \pm 0.64$ & $5.88 \pm 2.95$ & $6.62 \pm 2.67$ & $0.89 \pm 0.04$ & $0.76 \pm 0.06$ \\
     \bottomrule
   \end{tabular}
 \end{table}
+
+\subsubsection{Slice Sensitivity}
+\label{subsubsec:slice-sensitivity}
+\noindent
+Having established the differences between reconstruction methods on the
+complete stacks, the remaining rows of \cref{fig:slice-ablation} examine how
+their inference changes when through-plane information is removed. The
+ten-slice end-diastolic stack is reduced to six, four and three slices while
+always retaining the most basal and most apical slice. The axial support is
+therefore fixed, while the largest through-plane gap increases from $10$ to
+$45$~mm. All three methods continue to produce closed, plausible surfaces with
+only three slices, so none fails outright under this reduction.
+
+\Cref{tab:slice-degradation} quantifies the change by comparing each decimated
+reconstruction with the surface produced by the same method from all ten
+slices. These within-method deviations measure self-consistency rather than
+anatomical error and isolate sensitivity to missing slices from the
+between-method differences reported above.
+
+\begin{table}[H]
+  \centering
+  \caption[Effect of slice decimation on each reconstruction]{Deviation from each method's complete ten-slice reconstruction for one
+    illustrative end-diastolic ACDC case. Distances are in millimetres and Dice
+    is dimensionless; $\Delta V_{\text{myo}}$ is the change in myocardial
+    volume relative to the ten-slice reconstruction. All meshes are watertight,
+    and metrics use the untrimmed and unsmoothed surfaces.}
+  \label{tab:slice-degradation}
+  \footnotesize
+  \setlength{\tabcolsep}{5pt}
+  \begin{tabular}{l c c c c c c}
+    \toprule
+    & & \multicolumn{2}{c}{Chamfer (mm)} & \multicolumn{2}{c}{Dice} & \\
+    \cmidrule(lr){3-4} \cmidrule(lr){5-6}
+    Method & Slices & Endo. & Epi. & Cavity & Myoc.
+      & $\Delta V_{\text{myo}}$ (\%) \\
+    \midrule
+    Proposed model & 6 & $0.84$ & $0.92$ & $0.972$ & $0.892$ & $-7.2$ \\
+                   & 4 & $1.45$ & $1.76$ & $0.945$ & $0.772$ & $-16.3$ \\
+                   & 3 & $2.01$ & $2.58$ & $0.921$ & $0.655$ & $-22.7$ \\
+    \addlinespace
+    RBF fit        & 6 & $0.83$ & $0.83$ & $0.968$ & $0.887$ & $0.0$ \\
+                   & 4 & $1.15$ & $0.88$ & $0.959$ & $0.858$ & $-1.8$ \\
+                   & 3 & $1.45$ & $1.32$ & $0.947$ & $0.805$ & $-6.2$ \\
+    \addlinespace
+    SSM fit        & 6 & $0.89$ & $0.95$ & $0.968$ & $0.883$ & $-1.8$ \\
+                   & 4 & $1.46$ & $1.39$ & $0.942$ & $0.812$ & $-3.8$ \\
+                   & 3 & $1.94$ & $1.92$ & $0.921$ & $0.775$ & $+2.6$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Surface displacement increases progressively as slices are removed. At three
+slices, endocardial Chamfer distance relative to the complete-stack result is
+$2.01$~mm for the model, $1.45$~mm for the RBF fit and $1.94$~mm for the SSM
+fit. Cavity Dice remains at least $0.921$, but myocardial Dice falls to $0.655$,
+$0.805$ and $0.775$, respectively. The cavity is therefore more stable than the
+wall under slice decimation, consistent with the cohort comparison in
+\cref{tab:reconstruction-agreement}.
+
+The model is the most slice-dependent in this case: its myocardial volume falls
+by $22.7\%$ from ten to three slices, compared with $6.2\%$ for the RBF fit,
+while the SSM fit changes by $+2.6\%$. The apparent stability of the SSM fit
+does not establish greater anatomical accuracy, because its population prior
+can remain stable by responding less strongly to the retained contours. The
+experiment instead shows that slice density is a material source of uncertainty
+for absolute wall geometry, especially for the proposed model.
 \FloatBarrier
 
 \subsection{Wall-Thickness Measurement}
 \label{subsec:wall-thickness-results}
 \noindent
 The four selected methods are applied to the proposed reconstruction, the RBF
-fit, and the shape-model fit of every patient at end-diastole.
+fit, and the SSM fit of every patient at end-diastole.
 \Cref{tab:wall-thickness-results} reports, for each estimator and reconstruction,
 the cohort average of the per-patient mean, standard deviation, and 5th and 95th
-percentiles. All three geometries are reconstructed from the same contour rings;
-none is independent anatomical ground truth.
+percentiles.
 
 The three non-ray methods agree on the magnitude of the wall within each
 reconstruction. Their means range from $9.18$ to $10.01$~mm on the proposed
 reconstruction, from $8.36$ to $8.86$~mm on the RBF fit, and from $6.48$ to
-$7.10$~mm on the shape-model fit. The reconstruction prior therefore changes
+$7.10$~mm on the SSM fit. The reconstruction prior therefore changes
 the absolute thickness scale even when the estimator is held fixed. The SDF
 cone-ray method gives the largest value on the proposed reconstruction and the
-RBF fit, at $12.47$ and $9.38$~mm, respectively, but not on the shape-model fit.
+RBF fit, at $12.47$ and $9.38$~mm, respectively, but not on the SSM fit.
 
 Dispersion separates the methods the same way. The per-patient standard deviation
 is $1.64$~mm for Yezzi--Prince, $1.66$~mm for the EDT boundary sum and $2.14$~mm
@@ -368,9 +428,7 @@ both the highest and the noisiest of the four on the model output.
   \centering
     \caption[End-diastolic wall-thickness statistics]{Wall-thickness statistics at end-diastole over the held-out ACDC and
       M\&Ms-2 test cohort. Each entry is the cohort average of the corresponding
-      per-patient statistic, in millimetres, before any calibration. The three
-      geometries are reconstructed from the same input contour rings and are
-      compared as alternative reconstructions, not against anatomical ground truth.}
+      per-patient statistic, in millimetres, before any calibration.}
   \label{tab:wall-thickness-results}
     \begin{tabular}{l l cccc}
     \toprule
@@ -378,19 +436,19 @@ both the highest and the noisiest of the four on the model output.
     \midrule
       Laplace field    & Model &  9.18 & 2.14 & 4.75 & 12.20 \\
                        & RBF fit &  8.36 & 2.21 & 5.03 & 12.29 \\
-                       & Shape-model fit &  6.48 & 1.38 & 3.87 &  8.43 \\
+                       & SSM fit &  6.48 & 1.38 & 3.87 &  8.43 \\
       \addlinespace
       Yezzi--Prince    & Model & 10.01 & 1.64 & 7.41 & 12.74 \\
                        & RBF fit &  8.86 & 2.15 & 5.57 & 12.71 \\
-                       & Shape-model fit &  7.10 & 1.23 & 4.75 &  8.88 \\
+                       & SSM fit &  7.10 & 1.23 & 4.75 &  8.88 \\
       \addlinespace
       SDF cone rays    & Model & 12.47 & 4.87 & 8.01 & 20.68 \\
                        & RBF fit &  9.38 & 2.49 & 5.63 & 13.80 \\
-                       & Shape-model fit &  7.11 & 1.50 & 4.12 &  9.13 \\
+                       & SSM fit &  7.11 & 1.50 & 4.12 &  9.13 \\
       \addlinespace
       EDT boundary sum & Model &  9.55 & 1.66 & 6.62 & 12.17 \\
                        & RBF fit &  8.51 & 2.00 & 5.42 & 12.05 \\
-                       & Shape-model fit &  7.02 & 1.22 & 4.65 &  8.77 \\
+                       & SSM fit &  7.02 & 1.22 & 4.65 &  8.77 \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -398,13 +456,13 @@ both the highest and the noisiest of the four on the model output.
 Applying the same estimator to all three geometries isolates the effect of the
 reconstruction prior. Relative to the model, the RBF fit is thinner by
 $0.82$~mm for the Laplace field, $1.16$~mm for Yezzi--Prince, $3.09$~mm for
-SDF cone rays, and $1.03$~mm for the EDT boundary sum. The shape-model fit is
+SDF cone rays, and $1.03$~mm for the EDT boundary sum. The SSM fit is
 thinner by $2.70$, $2.91$, $5.36$, and $2.53$~mm, respectively. Per-patient
 means remain strongly correlated between the model and RBF fit ($r=0.99$,
-$0.99$, $0.95$, and $0.99$), whereas agreement with the shape-model fit is
+$0.99$, $0.95$, and $0.99$), whereas agreement with the SSM fit is
 more moderate ($r=0.72$, $0.77$, $0.67$, and $0.77$). The RBF fit therefore
 largely preserves between-patient variation while shifting the absolute scale;
-the stronger shape-model prior changes both the scale and, to a lesser extent,
+the stronger SSM prior changes both the scale and, to a lesser extent,
 the patient ordering.
 
 \Cref{tab:wall-thickness-agreement} compares the three other methods with the
@@ -429,14 +487,12 @@ inside the wall wherever the wall curves. A straight ray does not: it leaves the
 myocardium early or late in curved regions, which is what the cone-ray numbers
 above show. The results here are consistent with that choice, since the Laplace
 field sits with the two non-ray methods rather than with the outlier.
-No claim is made that it is closer to true anatomy, because no independent
-measurement of the anatomy exists for these patients.
 
 The decoder returns a continuous wall-offset field rather than a geometric
 thickness measurement. \Cref{fig:recon-thickness-3d} visualises this field for
 the representative case at both cardiac phases, in the same form as the
 methodology illustration of \cref{fig:lv-wall-thickness-3d} but computed on the
-model output instead of on the statistical-shape-model mean mesh. The decoder
+model output instead of on the SSM mean mesh. The decoder
 offset is defined only up to the normalisation applied to the input contours, so
 its absolute level is calibrated per phase to the mean of the distance-transform
 reference measured on the input segmentation, exactly as the cohort pipeline
@@ -493,7 +549,7 @@ visualisation; it does not provide the values used for the AHA-17 analysis.
 agreement behind the cohort means. The RBF fit remains close to the model for
 the three non-ray methods, with biases of $+0.82$ to $+1.16$~mm and
 correlations of $r=0.99$. The cone-ray bias is larger at $+3.10$~mm. The
-shape-model fit differs more strongly for every estimator, with biases of
+SSM fit differs more strongly for every estimator, with biases of
 $+2.53$ to $+5.36$~mm and correlations from $r=0.67$ to $0.77$. These results
 confirm that both the reconstruction prior and the thickness estimator affect
 the reported scale.
@@ -510,7 +566,7 @@ the reported scale.
   \begin{tabular}{l ccc ccc}
     \toprule
     & \multicolumn{3}{c}{Model vs. RBF fit}
-      & \multicolumn{3}{c}{Model vs. shape-model fit} \\
+      & \multicolumn{3}{c}{Model vs. SSM fit} \\
     \cmidrule(lr){2-4} \cmidrule(lr){5-7}
     Method & Bias & RMSE & $r$ & Bias & RMSE & $r$ \\
     \midrule
@@ -522,7 +578,7 @@ the reported scale.
   \end{tabular}
 \end{table}
 
-The fitting-baseline comparison is limited to ED because the public shape model
+The fitting-baseline comparison is limited to ED because the public SSM
 provides no ES modes. Phase-dependent wall thickening is therefore reported on
 the reconstructed geometry in the regional analysis below.
 \FloatBarrier
@@ -738,7 +794,7 @@ relative systolic thickening, for which the distributions overlap.
   \includegraphics[width=\textwidth]{results_group_thickness_distributions}
   \caption[Patient-level NOR--HCM wall-thickness outcomes]{Patient-level AHA-17 wall-thickness outcomes for the normal and HCM
     groups. The dashed line marks the 15~mm threshold for the maximum ED
-    segment; the analysis is descriptive and not a diagnostic validation.}
+    segment.}
   \label{fig:group-thickness-distributions}
 \end{figure}
 \FloatBarrier
@@ -762,15 +818,18 @@ For \textbf{RQ1}, the model can reconstruct continuous, closed 3D LV surfaces
 from sparse SAX contours within the held-out ACDC and M\&Ms-2 test cohort. It
 follows the observed contour rings to within about the in-plane pixel size, and
 every extracted endocardial and epicardial surface is watertight after repair
-(\cref{tab:contour-fidelity}). \Cref{fig:recon-ed-es-meshes} shows that
-the three reconstructions recover the same overall phase-dependent geometry from
-identical contour input, and \cref{tab:reconstruction-agreement} puts that
-impression on a scale: the model sits within $1.6$~mm of a smooth interpolant of
+(\cref{tab:contour-fidelity}). The complete-stack row of
+\cref{fig:slice-ablation} shows that the three reconstructions recover the same
+overall geometry from identical contour input, and
+\cref{tab:reconstruction-agreement} puts that impression on a scale: the model
+sits within $1.6$~mm of a smooth interpolant of
 the observations and within $2.1$~mm of a population shape prior. Because no
-reference geometry exists, this answers RQ1 in terms of contour fidelity,
-closure and inter-method consistency, and not in terms of accuracy. Closure
-additionally depends on the repair stage described in \cref{ch:methodology}; it
-is not guaranteed by surface extraction alone.
+reference geometry exists, RQ1 is answered through contour fidelity, closure,
+and inter-method consistency. Closure additionally depends on the repair stage
+described in \cref{ch:methodology}; it is not guaranteed by surface extraction
+alone. The subsequent slice-density analysis shows that all three methods still
+return closed surfaces from three slices, although the model's wall geometry
+changes most strongly (\cref{tab:slice-degradation}).
 
 For \textbf{RQ2}, the model represents separate endocardial and epicardial
 surfaces at both ED and ES while maintaining a positive wall offset at every
@@ -778,33 +837,24 @@ evaluated point. The paired surfaces do not collapse, and they reproduce the
 expected smaller cavity and thicker wall at ES. The answer is therefore positive
 at the level of geometric representation. The regional measurements increase
 from ED to ES in every segment (\cref{tab:aha17-cohort}), but no matched ES
-shape-model comparator is available, so phase-specific reconstruction accuracy
+SSM comparator is available, so phase-specific reconstruction accuracy
 cannot be established.
 
 For \textbf{RQ3}, measurements on the reconstructed surfaces track those from
 the RBF fit across patients, although their absolute values differ. The four
 estimators show correlations of $r=0.95$ to $0.99$ between those two
-reconstructions, while correlations with the shape-model fit range from
+reconstructions, while correlations with the SSM fit range from
 $r=0.67$ to $0.77$ (\cref{tab:wall-thickness-results}). The reconstruction
 therefore preserves relative differences most strongly against the smooth
 interpolating fit. The absolute scale remains dependent on both the
 reconstruction prior and the estimator. This answers RQ3 in terms of
-computational agreement only, because all three geometries are derived from the
-same contour rings and none is independent anatomical ground truth.
+computational agreement.
 
 Taken together, the demonstrated result is geometric and computational: the
 model completes sparse contours into paired watertight surfaces that follow the
 observations, preserves relative between-patient thickness variation, supports
 regional summaries, and stays within about two millimetres of two conventional
-reconstructions of the same data. No claim of superior accuracy is made,
-because no reference exists against which accuracy could be established. The
-effects of ED-only synthetic pre-training and binary phase conditioning were
-not isolated by an ablation experiment. Likewise, the NOR--HCM separation in
-\cref{tab:aha17-group-effects} shows biological plausibility, not diagnostic
-performance. The cone-ray discrepancy across the ED reconstructions is
-consistent with the different measurement paths reviewed in
-\cref{subsec:thickness-review}; it does not establish that any estimator is
-anatomically correct.
+reconstructions of the same data.
 
 \section{Threats to Validity}
 \label{sec:threats}
@@ -853,17 +903,21 @@ larger cohort, and ideally a dataset with genuine 3D ground truth, would be
 needed to confirm the results reported here.
 
 The comparison between reconstructions is bounded in the same way. The implicit
-fit and the shape-model fit were chosen because their priors differ from each
+fit and the SSM fit were chosen because their priors differ from each
 other and from the learned one, so the spread between the three bounds the
 influence of the prior; it does not identify which is closest to the anatomy.
 The implicit fit is moreover of the same family as the surrogate targets used to
 fine-tune the model, so its agreement with the model is not an independent
-check. Contour fidelity cannot settle the question either, because an
-interpolating method reproduces its input rings by construction while a
-regularising method does not, and because the rings constrain nothing between
-slices.
+check. Contour fidelity cannot settle the question either, because it evaluates
+only the observed rings and not the geometry between them.
+The slice-decimation analysis of \cref{tab:slice-degradation} is bounded more
+tightly still: it is a single end-diastolic case, so it indicates the direction
+and rough magnitude of the dependence on slice density but does not estimate it
+for the cohort. It also measures self-consistency within a method, which rewards
+a method whose prior ignores the data as much as one that generalises well from
+it.
 The comparison does not cover spline lofting, Poisson reconstruction, or other
-learned models, and the shape-model comparison is limited to end-diastole
+learned models, and the SSM comparison is limited to end-diastole
 because the public model provides no end-systolic modes. No controlled
 ablation removes synthetic pre-training, local conditioning, phase conditioning,
 or positive surface coupling. The experiment therefore characterises the model

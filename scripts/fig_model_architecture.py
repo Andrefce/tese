@@ -1,12 +1,13 @@
-"""Schematic of the proposed model architecture.
+"""Architecture figure for the proposed model.
 
-Monochrome plate read from top to bottom: sparse SAX contour input, two-path
-contour encoder, implicit decoder, coupled output heads and marching-cubes
-surfaces.
+Four stages read from top to bottom: the sparse SAX contour input, the two
+encoder paths, the implicit decoder, and the coupled output fields with the
+extracted surfaces.
 
-Layer widths, feature dimensions and injection points follow the reference
-implementation in test-new-model/cardiosdf2/model.py and
-scripts/eval_demo/cardiosdf_model.py.
+The input point cloud and the output surfaces are rendered from the cached
+inference of a real case (scripts/eval_demo/outputs/demo_patient002_ED.npz)
+rather than drawn by hand. Layer widths, grid sizes and feature dimensions
+follow test-new-model/cardiosdf2/model.py.
 """
 
 from pathlib import Path
@@ -16,344 +17,340 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.lines import Line2D
-from matplotlib.patches import (Circle, Ellipse, FancyArrowPatch, Polygon,
-                                Rectangle)
+import trimesh
+from matplotlib.colors import to_rgb
+from matplotlib.patches import FancyArrowPatch, Rectangle
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = ROOT / "images"
+DEMO = ROOT / "scripts" / "eval_demo" / "outputs" / "demo_patient002_ED.npz"
 
 plt.rcParams.update({
     "font.family": "serif",
     "font.serif": ["DejaVu Serif"],
-    "font.size": 7.0,
+    "font.size": 7.5,
     "mathtext.fontset": "dejavuserif",
     "figure.dpi": 160,
-    "savefig.dpi": 400,
+    "savefig.dpi": 450,
 })
 
-INK = "#000000"
+INK = "#111111"
 GREY = "#555555"
-FILL = "#EDEDED"
+FAINT = "#9AA0A6"
+FILL = "#F0F1F3"
 WHITE = "#FFFFFF"
-DASH = (0, (3, 2))
+C_ENDO = "#0072B2"
+C_EPI = "#D55E00"
 
-# per-stage (panel fill, panel edge, title colour)
-STAGE = {
-    "input": ("#EEF3FA", "#9DB5D6", "#23486F"),
-    "encode": ("#EDF5F0", "#9CC4AE", "#215B3F"),
-    "query": ("#F2EFF8", "#B4A8D2", "#453270"),
-    "decode": ("#FDF4E7", "#DFBF8C", "#8A5A15"),
-    "surface": ("#FBEFEF", "#D6A6A6", "#7E2E2E"),
-}
-
-W, H = 100.0, 104.0
-
-# centres of the two encoder paths, reused by every vertical connector
-CX_L, CX_R = 26.0, 74.0
+W, H = 100.0, 150.0
+SPINE = 50.0          # every inter-stage connector runs down this column
+LIGHT = np.array([-0.30, -0.45, 0.84])
+LIGHT = LIGHT / np.linalg.norm(LIGHT)
 
 
-# ---------------------------------------------------------------- primitives
+# ------------------------------------------------------------------ 2D basics
 
-def panel(ax, y0, y1, title, key):
-    face, edge, ink = STAGE[key]
-    ax.add_patch(Rectangle((3.0, y0), 94.0, y1 - y0, facecolor=face,
-                           edgecolor=edge, linewidth=0.7, zorder=0))
-    ax.text(5.5, y1 - 2.6, title, ha="left", va="center", fontsize=7.6,
-            fontweight="bold", color=ink, zorder=6)
+def rule(ax, x0, x1, y, color=INK, lw=0.9):
+    ax.plot([x0, x1], [y, y], color=color, lw=lw, zorder=4,
+            solid_capstyle="butt")
 
 
-def slabs(ax, x0, x1, y0, y1, n, highlight=None, ratio=0.5, scale=None):
-    """Row of layer slabs, optionally scaled by relative layer width."""
-    span = (x1 - x0) / n
-    centres = [x0 + span * (i + 0.5) for i in range(n)]
-    cy, half = 0.5 * (y0 + y1), 0.5 * (y1 - y0)
-    for i, cx in enumerate(centres):
-        f = 1.0 if scale is None else scale[i]
-        ax.add_patch(Rectangle((cx - 0.5 * span * ratio, cy - f * half),
-                               span * ratio, 2.0 * f * half,
-                               facecolor=FILL if i == highlight else WHITE,
-                               edgecolor=INK, linewidth=0.5, zorder=3))
-    return centres
+def vrule(ax, x, y0, y1, color=INK, lw=0.9):
+    ax.plot([x, x], [y0, y1], color=color, lw=lw, zorder=4,
+            solid_capstyle="butt")
 
 
-def strip(ax, x0, x1, y0, y1, n=12):
-    """Feature-vector glyph."""
-    ax.add_patch(Rectangle((x0, y0), x1 - x0, y1 - y0, facecolor=WHITE,
-                           edgecolor=INK, linewidth=0.6, zorder=3))
+def divider(ax, y):
+    """Stage separator, broken so the central connector passes through."""
+    rule(ax, 3.0, SPINE - 3.0, y, color=FAINT, lw=0.6)
+    rule(ax, SPINE + 3.0, 97.0, y, color=FAINT, lw=0.6)
+
+
+def arrow(ax, p, q, color=INK, lw=0.9):
+    ax.add_patch(FancyArrowPatch(p, q, arrowstyle="-|>", mutation_scale=7,
+                                 linewidth=lw, color=color, shrinkA=0,
+                                 shrinkB=0, zorder=5))
+
+
+def stage_label(ax, y, tag, title):
+    ax.text(3.0, y, tag, ha="left", va="center", fontsize=8.2,
+            fontweight="bold", color=INK, zorder=6)
+    ax.text(8.5, y, title, ha="left", va="center", fontsize=8.2,
+            color=INK, zorder=6)
+
+
+def caption(ax, x, y, text, fs=6.8, ha="center", color=GREY):
+    ax.text(x, y, text, ha=ha, va="center", fontsize=fs, color=color,
+            zorder=6, linespacing=1.45)
+
+
+# ------------------------------------------------------------ schematic parts
+
+def layer_block(ax, x0, x1, cy, widths, tallest=13.0, gap=0.30):
+    """Row of layer bars, height following the log of the layer width."""
+    step = (x1 - x0) / len(widths)
+    ref = np.log2(max(widths))
+    for i, width in enumerate(widths):
+        cx = x0 + step * (i + 0.5)
+        h = tallest * (0.34 + 0.66 * np.log2(width) / ref)
+        ax.add_patch(Rectangle((cx - 0.5 * step * (1 - gap), cy - 0.5 * h),
+                               step * (1 - gap), h, facecolor=FILL,
+                               edgecolor=INK, linewidth=0.6, zorder=3))
+
+
+def latent_bar(ax, cx, cy, w, h, n=8):
+    ax.add_patch(Rectangle((cx - 0.5 * w, cy - 0.5 * h), w, h,
+                           facecolor=WHITE, edgecolor=INK, linewidth=0.8,
+                           zorder=3))
     for i in range(1, n):
-        x = x0 + (x1 - x0) * i / n
-        ax.add_line(Line2D([x, x], [y0, y1], color=GREY, lw=0.3, zorder=4))
+        y = cy - 0.5 * h + h * i / n
+        ax.plot([cx - 0.5 * w, cx + 0.5 * w], [y, y], color=FAINT, lw=0.4,
+                zorder=4)
 
 
-def grid_glyph(ax, x0, x1, y0, y1, ncols, nrows):
-    ax.add_patch(Rectangle((x0, y0), x1 - x0, y1 - y0, facecolor=WHITE,
-                           edgecolor=INK, linewidth=0.6, zorder=3))
-    for i in range(1, ncols):
-        x = x0 + (x1 - x0) * i / ncols
-        ax.add_line(Line2D([x, x], [y0, y1], color=GREY, lw=0.35, zorder=4))
-    for j in range(1, nrows):
-        y = y0 + (y1 - y0) * j / nrows
-        ax.add_line(Line2D([x0, x1], [y, y], color=GREY, lw=0.35, zorder=4))
+def voxel_grid(ax, x0, y0, size, n=4, skew=(0.34, 0.24)):
+    """Isometric feature grid: front face plus top and right faces."""
+    dx, dy = skew[0] * size, skew[1] * size
+    x1, y1 = x0 + size, y0 + size
+    ax.add_patch(Rectangle((x0, y0), size, size, facecolor=WHITE,
+                           edgecolor=INK, linewidth=0.8, zorder=3))
+    top = np.array([[x0, y1], [x1, y1], [x1 + dx, y1 + dy], [x0 + dx, y1 + dy]])
+    right = np.array([[x1, y0], [x1 + dx, y0 + dy], [x1 + dx, y1 + dy],
+                      [x1, y1]])
+    for face in (top, right):
+        ax.fill(face[:, 0], face[:, 1], facecolor=FILL, edgecolor=INK,
+                linewidth=0.8, zorder=3)
+    for i in range(1, n):
+        t = size * i / n
+        ax.plot([x0 + t, x0 + t], [y0, y1], color=FAINT, lw=0.4, zorder=4)
+        ax.plot([x0, x1], [y0 + t, y0 + t], color=FAINT, lw=0.4, zorder=4)
+        ax.plot([x0 + t, x0 + t + dx], [y1, y1 + dy], color=FAINT, lw=0.4,
+                zorder=4)
+        ax.plot([x1, x1 + dx], [y0 + t, y0 + t + dy], color=FAINT, lw=0.4,
+                zorder=4)
 
 
-def cube(ax, x0, y0, size, depth=0.34):
-    """Oblique feature volume with a gridded front face."""
-    dx, dy = depth * size, depth * size * 0.55
-    faces = (
-        ([(x0, y0 + size), (x0 + dx, y0 + size + dy),
-          (x0 + size + dx, y0 + size + dy), (x0 + size, y0 + size)], "#F1F1F1"),
-        ([(x0 + size, y0), (x0 + size + dx, y0 + dy),
-          (x0 + size + dx, y0 + size + dy), (x0 + size, y0 + size)], "#E1E1E1"),
-        ([(x0, y0), (x0 + size, y0), (x0 + size, y0 + size),
-          (x0, y0 + size)], WHITE),
-    )
-    for poly, face in faces:
-        ax.add_patch(Polygon(poly, closed=True, facecolor=face, edgecolor=INK,
-                             linewidth=0.55, zorder=3))
-    for i in range(1, 4):
-        t = i / 4.0
-        ax.add_line(Line2D([x0 + t * size] * 2, [y0, y0 + size], color=GREY,
-                           lw=0.3, zorder=4))
-        ax.add_line(Line2D([x0, x0 + size], [y0 + t * size] * 2, color=GREY,
-                           lw=0.3, zorder=4))
+def field_box(ax, cx, cy, w, h, text, fs=8.2):
+    ax.add_patch(Rectangle((cx - 0.5 * w, cy - 0.5 * h), w, h,
+                           facecolor=WHITE, edgecolor=INK, linewidth=0.8,
+                           zorder=3))
+    ax.text(cx, cy, text, ha="center", va="center", fontsize=fs, color=INK,
+            zorder=4)
 
 
-def node(ax, cx, cy, symbol, r=1.6):
-    ax.add_patch(Circle((cx, cy), r, facecolor=WHITE, edgecolor=INK,
-                        linewidth=0.6, zorder=4))
-    ax.text(cx, cy, symbol, ha="center", va="center", fontsize=7.0,
-            color=INK, zorder=5)
+def skip_arc(ax, x0, x1, y_base, rise=5.0):
+    xs = np.linspace(x0, x1, 90)
+    ys = y_base + rise * np.sin(np.pi * (xs - x0) / (x1 - x0))
+    ax.plot(xs, ys, color=INK, lw=0.7, zorder=4)
+    arrow(ax, (xs[-4], ys[-4]), (xs[-1], ys[-1]), lw=0.7)
 
 
-def box(ax, x0, y0, x1, y1, text, fs=6.2, fill=WHITE):
-    ax.add_patch(Rectangle((x0, y0), x1 - x0, y1 - y0, facecolor=fill,
-                           edgecolor=INK, linewidth=0.6, zorder=3))
-    ax.text(0.5 * (x0 + x1), 0.5 * (y0 + y1), text, ha="center", va="center",
-            fontsize=fs, color=INK, linespacing=1.45, zorder=4)
+# ------------------------------------------------------------- 3D renderings
+
+def upright(points):
+    """Cached geometry stores the apex at high z; flip so the apex points down."""
+    flipped = points.copy()
+    flipped[:, 2] = -flipped[:, 2]
+    return flipped
 
 
-def arr(ax, p0, p1, rad=0.0, dashed=False, lw=0.7):
-    ax.add_patch(FancyArrowPatch(
-        p0, p1, arrowstyle="-|>", mutation_scale=6.5,
-        connectionstyle=f"arc3,rad={rad}", linewidth=lw,
-        linestyle=DASH if dashed else "-", color=INK,
-        shrinkA=0.6, shrinkB=0.6, zorder=5))
+def smooth_mesh(vertices, faces, iterations=12):
+    mesh = trimesh.Trimesh(vertices=vertices.astype(np.float64),
+                           faces=faces, process=False)
+    trimesh.smoothing.filter_taubin(mesh, lamb=0.55, nu=-0.58,
+                                    iterations=iterations)
+    return np.asarray(mesh.vertices, dtype=np.float64), np.asarray(mesh.faces)
 
 
-def line(ax, pts, dashed=False, lw=0.7):
-    xs, ys = zip(*pts)
-    ax.add_line(Line2D(xs, ys, color=INK, lw=lw,
-                       linestyle=DASH if dashed else "-", zorder=5))
+def cut_away(vertices, faces, azim):
+    """Drop the faces nearest the camera so the cavity stays visible."""
+    angle = np.radians(azim)
+    towards_camera = np.array([np.cos(angle), np.sin(angle), 0.0])
+    offset = vertices[faces].mean(axis=1) - vertices.mean(axis=0)
+    return faces[offset @ towards_camera < 0.0]
 
 
-def txt(ax, x, y, s, fs=6.0, ha="center", va="center", color=INK,
-        style="normal"):
-    ax.text(x, y, s, ha=ha, va=va, fontsize=fs, color=color, style=style,
-            linespacing=1.4, zorder=6)
+def shade(vertices, faces, base_colour):
+    """Per-face colour from averaged vertex normals, so faceting stays hidden."""
+    tri = vertices[faces]
+    face_n = np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0])
+    vert_n = np.zeros_like(vertices)
+    for k in range(3):
+        np.add.at(vert_n, faces[:, k], face_n)
+    vert_n /= np.clip(np.linalg.norm(vert_n, axis=1, keepdims=True), 1e-9, None)
+    normals = vert_n[faces].mean(axis=1)
+    normals /= np.clip(np.linalg.norm(normals, axis=1, keepdims=True), 1e-9,
+                       None)
+    lit = np.clip(np.abs(normals @ LIGHT), 0.0, 1.0)
+    rgb = np.array(to_rgb(base_colour))
+    return np.clip(rgb[None, :] * (0.52 + 0.48 * lit[:, None]), 0.0, 1.0)
 
 
-# -------------------------------------------------------------- stage: input
-
-def draw_input(ax):
-    panel(ax, 85.0, 103.0, "Sparse contour input", "input")
-
-    for k in range(5):
-        t = k / 4.0
-        cy = 87.8 + 2.4 * k
-        we, he = 5.2 + 5.6 * t, 1.0 + 0.9 * t
-        ax.add_patch(Ellipse((17.0, cy), we + 2.4, he + 0.7, fill=False,
-                             edgecolor=INK, lw=0.5, ls=DASH, zorder=3))
-        ax.add_patch(Ellipse((17.0, cy), we, he, fill=False, edgecolor=INK,
-                             lw=0.5, zorder=4))
-    txt(ax, 17.0, 85.9, "endocardium and epicardium", fs=5.6, color=GREY)
-
-    arr(ax, (26.5, 92.2), (32.5, 92.2))
-
-    grid_glyph(ax, 34.0, 49.0, 88.0, 96.5, 5, 6)
-    for i, s in enumerate([r"$x$", r"$y$", r"$z$", "tissue", "phase"]):
-        ax.text(34.0 + 3.0 * (i + 0.5), 96.9, s, ha="center", va="bottom",
-                fontsize=5.0, rotation=90, color=INK, zorder=6)
-    txt(ax, 41.5, 85.9, r"contour tensor $P \in \mathbb{R}^{N \times 5}$",
-        fs=6.0)
-
-    for i, s in enumerate([r"$N \leq 1200$ points per case",
-                           "one row per contour point",
-                           "ED and ES phases"]):
-        txt(ax, 55.0, 95.0 - 3.4 * i, s, fs=6.1, ha="left")
-
-    arr(ax, (50.0, 85.0), (50.0, 83.0))
+def new_3d(fig, rect, azim=-64.0):
+    ax = fig.add_axes(rect, projection="3d")
+    ax.set_axis_off()
+    ax.patch.set_alpha(0.0)
+    ax.view_init(elev=14.0, azim=azim)
+    return ax
 
 
-# ------------------------------------------------------------ stage: encoder
+def fit_axes(ax, points, zoom=1.0):
+    centre = points.mean(axis=0)
+    reach = 0.5 * np.ptp(points, axis=0).max() / zoom
+    ax.set_xlim(centre[0] - reach, centre[0] + reach)
+    ax.set_ylim(centre[1] - reach, centre[1] + reach)
+    ax.set_zlim(centre[2] - reach, centre[2] + reach)
+    ax.set_box_aspect((1.0, 1.0, 1.0))
+
+
+def draw_contours_3d(fig, rect, xyz, tissue):
+    ax = new_3d(fig, rect)
+    pts = upright(xyz)
+    endo = tissue < 0.5
+    ax.scatter(pts[endo, 0], pts[endo, 1], pts[endo, 2], s=1.0, c=C_ENDO,
+               depthshade=False, linewidths=0.0)
+    ax.scatter(pts[~endo, 0], pts[~endo, 1], pts[~endo, 2], s=1.0, c=C_EPI,
+               depthshade=False, linewidths=0.0)
+    fit_axes(ax, pts, zoom=1.15)
+
+
+def draw_surfaces_3d(fig, rect, endo_v, endo_f, epi_v, epi_f):
+    """Endocardium inside a cut epicardial shell, so the wall stays visible."""
+    azim = -58.0
+    ax = new_3d(fig, rect, azim=azim)
+    endo_v, endo_f = smooth_mesh(upright(endo_v), endo_f)
+    epi_v, epi_f = smooth_mesh(upright(epi_v), epi_f)
+    cut_f = cut_away(epi_v, epi_f, azim)
+    ax.add_collection3d(Poly3DCollection(
+        endo_v[endo_f], facecolors=shade(endo_v, endo_f, C_ENDO),
+        edgecolors="none", linewidths=0.0, rasterized=True))
+    ax.add_collection3d(Poly3DCollection(
+        epi_v[cut_f], facecolors=shade(epi_v, cut_f, C_EPI),
+        edgecolors="none", linewidths=0.0, rasterized=True))
+    fit_axes(ax, epi_v, zoom=1.06)
+
+
+# ------------------------------------------------------------------- assembly
+
+def draw_input(ax, fig, data):
+    stage_label(ax, 146.0, "(a)", "Sparse contour input")
+    draw_contours_3d(fig, [4.0 / W, 111.0 / H, 42.0 / W, 31.0 / H],
+                     data["contours_xyz_mm"], data["contours_tissue"])
+    ax.text(50.0, 137.0, "endocardial and epicardial rings",
+            ha="left", va="center", fontsize=7.8, color=INK)
+    ax.text(50.0, 132.5, "on the acquired SAX planes",
+            ha="left", va="center", fontsize=7.8, color=INK)
+    caption(ax, 50.0, 126.0,
+            "each point carries $(x,y,z)$, a tissue\n"
+            "label and the phase (ED or ES)", ha="left")
+    rule(ax, 50.0, 53.5, 118.0, color=C_ENDO, lw=1.4)
+    caption(ax, 55.0, 118.0, "endocardium", ha="left")
+    rule(ax, 74.0, 77.5, 118.0, color=C_EPI, lw=1.4)
+    caption(ax, 79.0, 118.0, "epicardium", ha="left")
+    arrow(ax, (SPINE, 112.0), (SPINE, 108.5))
+
 
 def draw_encoder(ax):
-    panel(ax, 56.0, 83.0, "Contour encoding", "encode")
+    stage_label(ax, 106.0, "(b)", "Contour encoder")
+    # the shared observation splits into the two paths
+    vrule(ax, SPINE, 108.5, 102.0)
+    rule(ax, 22.0, 66.0, 102.0)
+    arrow(ax, (22.0, 102.0), (22.0, 99.5))
+    arrow(ax, (66.0, 102.0), (66.0, 101.5))
+    # global path
+    layer_block(ax, 8.0, 36.0, 92.0, [5, 64, 128, 256])
+    arrow(ax, (37.0, 92.0), (40.0, 92.0))
+    latent_bar(ax, 42.0, 92.0, 3.2, 12.0)
+    caption(ax, 24.0, 80.0, "shared point network\n$5-64-128-256$")
+    caption(ax, 44.0, 80.0, "max-pool\n$z \\in \\mathbb{R}^{256}$")
+    # local path
+    voxel_grid(ax, 58.0, 85.0, 13.0)
+    arrow(ax, (77.0, 92.0), (81.0, 92.0))
+    ax.text(86.5, 92.0, "$v(x)$", ha="center", va="center", fontsize=8.0,
+            color=INK, zorder=6)
+    caption(ax, 70.0, 80.0, "point features on a $16^{3}$ grid,\n"
+                            "3D convolutions $\\rightarrow V$")
+    # both descriptors join the connector lane, clear of the captions
+    vrule(ax, 42.0, 86.0, 83.0)
+    vrule(ax, 86.5, 89.5, 83.0)
+    rule(ax, 42.0, 86.5, 83.0)
+    arrow(ax, (SPINE, 83.0), (SPINE, 70.0))
 
-    txt(ax, CX_L, 77.8, "global path", fs=6.0, color=GREY, style="italic")
-    txt(ax, CX_R, 77.8, "local path", fs=6.0, color=GREY, style="italic")
-
-    centres = slabs(ax, 15.0, 37.0, 70.5, 76.0, 3, ratio=0.34,
-                    scale=(0.62, 0.80, 1.0))
-    for cx, dim in zip(centres, ("64", "128", "256")):
-        txt(ax, cx, 69.5, dim, fs=5.6, color=GREY)
-    arr(ax, (CX_L, 68.6), (CX_L, 67.9))
-    box(ax, 9.0, 63.4, 43.0, 67.9,
-        "tissue-wise max-pool\nconcatenate and project", fs=6.0)
-    arr(ax, (CX_L, 63.4), (CX_L, 62.1))
-    strip(ax, 14.0, 38.0, 59.1, 62.1)
-    txt(ax, CX_L, 56.9, r"global code $z \in \mathbb{R}^{256}$", fs=6.1)
-
-    centres = slabs(ax, 63.0, 85.0, 70.5, 76.0, 3, ratio=0.34,
-                    scale=(0.62, 0.62, 0.44))
-    for cx, dim in zip(centres, ("64", "64", "32")):
-        txt(ax, cx, 69.5, dim, fs=5.6, color=GREY)
-    arr(ax, (CX_R, 68.6), (CX_R, 68.0))
-    txt(ax, CX_R, 67.2, r"scatter to a $16^{3}$ grid, 3D CNN", fs=6.0)
-    arr(ax, (CX_R, 66.4), (CX_R, 65.3))
-
-    cube(ax, 70.5, 57.8, 6.0)
-    txt(ax, CX_R, 56.9, r"feature volume $V \in \mathbb{R}^{32 \times 16^{3}}$",
-        fs=6.1)
-
-    arr(ax, (50.0, 56.0), (50.0, 54.0))
-
-
-# -------------------------------------------------------------- stage: query
-
-def draw_query(ax):
-    panel(ax, 42.0, 54.0, "Query points and conditioning", "query")
-
-    box(ax, 8.0, 44.5, 26.0, 49.5,
-        "query points\n" r"$X \in \mathbb{R}^{Q \times 3}$", fs=6.0)
-    arr(ax, (26.0, 47.0), (30.0, 47.0))
-    box(ax, 30.0, 44.5, 52.0, 49.5,
-        "Fourier encoding\n" r"$L = 3$", fs=6.0)
-    txt(ax, 41.0, 43.2, r"$\gamma(x) \in \mathbb{R}^{21}$", fs=6.0,
-        color=GREY)
-    arr(ax, (52.0, 47.0), (56.0, 47.0))
-    box(ax, 56.0, 44.5, 78.0, 49.5,
-        "trilinear sampling\n" r"of $V$", fs=6.0)
-    txt(ax, 67.0, 43.2, r"$v(x) \in \mathbb{R}^{32}$", fs=6.0, color=GREY)
-
-    arr(ax, (50.0, 42.0), (50.0, 40.0))
-
-
-# ------------------------------------------------------------ stage: decoder
 
 def draw_decoder(ax):
-    panel(ax, 18.0, 40.0, "Implicit decoding", "decode")
-
-    box(ax, 5.0, 31.5, 17.0, 35.0, r"$z \in \mathbb{R}^{256}$", fs=6.0)
-    box(ax, 5.0, 26.5, 17.0, 30.0, r"$\gamma(x) \in \mathbb{R}^{21}$",
-        fs=6.0)
-    box(ax, 5.0, 21.5, 17.0, 25.0, r"$v(x) \in \mathbb{R}^{32}$", fs=6.0)
-
-    box(ax, 21.0, 26.5, 30.0, 35.0, "concat\n277", fs=6.0, fill=FILL)
-    arr(ax, (17.0, 33.25), (21.0, 33.25))
-    arr(ax, (17.0, 28.25), (21.0, 28.25))
-
-    box(ax, 34.0, 26.0, 62.0, 35.0,
-        "MLP trunk\n" r"8 layers $\times$ 512, skip at layer 4", fs=6.0)
-    arr(ax, (30.0, 30.75), (34.0, 30.75))
-
-    line(ax, [(17.0, 23.25), (48.0, 23.25)], dashed=True)
-    arr(ax, (48.0, 23.25), (48.0, 26.0), dashed=True)
-    txt(ax, 30.0, 22.1, "local conditioning", fs=5.7, color=GREY,
-        style="italic")
-
-    box(ax, 66.0, 31.0, 93.0, 35.0,
-        r"endocardial head $f_{\mathrm{endo}}(x)$", fs=6.0)
-    box(ax, 66.0, 26.0, 93.0, 30.0,
-        r"positive-offset head $\delta(x) > 0$", fs=6.0)
-    arr(ax, (62.0, 30.5), (66.0, 33.0))
-    arr(ax, (62.0, 30.5), (66.0, 28.0))
-
-    txt(ax, 79.5, 21.5,
-        r"$f_{\mathrm{epi}}(x) = f_{\mathrm{endo}}(x) - \delta(x)$", fs=6.6)
-
-    arr(ax, (50.0, 18.0), (50.0, 16.0))
+    stage_label(ax, 68.5, "(c)", "Implicit decoder")
+    # conditioning enters at the decoder input
+    vrule(ax, SPINE, 70.0, 65.5)
+    rule(ax, 16.0, SPINE, 65.5)
+    arrow(ax, (16.0, 65.5), (16.0, 56.8))
+    field_box(ax, 16.0, 52.0, 26.0, 9.0,
+              "$[\\,z,\\ \\gamma(x),\\ v(x)\\,]$", fs=7.6)
+    caption(ax, 16.0, 45.0, "decoder input")
+    arrow(ax, (29.5, 52.0), (33.0, 52.0))
+    layer_block(ax, 34.0, 78.0, 52.0, [512] * 8, tallest=11.0, gap=0.34)
+    skip_arc(ax, 36.0, 58.0, 57.5)
+    caption(ax, 60.0, 61.5, "skip connection at layer 4", fs=6.4, ha="left")
+    caption(ax, 56.0, 44.0, "8 hidden layers, width 512")
+    # trunk splits into the two coupled heads
+    vrule(ax, 72.0, 46.5, 40.0)
+    rule(ax, 38.0, 72.0, 40.0)
+    arrow(ax, (38.0, 40.0), (38.0, 37.5))
+    arrow(ax, (62.0, 40.0), (62.0, 37.5))
+    field_box(ax, 38.0, 34.0, 22.0, 7.0, "$f_{\\mathrm{endo}}(x)$")
+    field_box(ax, 62.0, 34.0, 22.0, 7.0, "$\\delta(x) > 0$")
+    vrule(ax, 38.0, 30.5, 28.0)
+    vrule(ax, 62.0, 30.5, 28.0)
+    rule(ax, 38.0, 62.0, 28.0)
 
 
-# ------------------------------------------------------------------ stage (d)
-
-A_EPI, C_EPI = 0.58, 1.00
-A_ENDO, C_ENDO = 0.40, 0.85
-Z_BASE = 0.30
-
-
-def _half_width(z, a, c):
-    return a * np.sqrt(np.clip(1.0 - (z / c) ** 2, 0.0, None))
-
-
-def draw_lv_section(ax, cx, y_apex, height):
-    """Long-axis cut through the two extracted surfaces, myocardium shaded."""
-    s = height / (Z_BASE + C_EPI)
-
-    def curve(z, a, c, side):
-        return (cx + side * s * _half_width(z, a, c),
-                y_apex + s * (z + C_EPI))
-
-    z_out = np.linspace(Z_BASE, -C_EPI, 200)
-    z_in = np.linspace(Z_BASE, -C_ENDO, 200)
-    wall = np.vstack([
-        np.column_stack(curve(z_out, A_EPI, C_EPI, -1.0)),
-        np.column_stack(curve(z_out[::-1], A_EPI, C_EPI, 1.0)),
-        np.column_stack(curve(z_in, A_ENDO, C_ENDO, 1.0)),
-        np.column_stack(curve(z_in[::-1], A_ENDO, C_ENDO, -1.0)),
-    ])
-    ax.add_patch(Polygon(wall, closed=True, facecolor=FILL, edgecolor=INK,
-                         linewidth=0.6, zorder=3))
-
-    px, py = curve(0.20, A_EPI, C_EPI, 1.0)
-    line(ax, [(px, py), (px + 2.6, py + 1.0)], lw=0.5)
-    txt(ax, px + 3.0, py + 1.2, "epicardium", fs=5.8, ha="left")
-
-    qx, qy = curve(-0.10, A_ENDO, C_ENDO, 1.0)
-    line(ax, [(qx, qy), (qx + 4.2, qy - 1.0)], lw=0.5)
-    txt(ax, qx + 4.6, qy - 1.2, "endocardium", fs=5.8, ha="left")
-
-
-def draw_output(ax):
-    panel(ax, 1.0, 16.0, "Surface extraction", "surface")
-
-    box(ax, 8.0, 5.5, 30.0, 10.5,
-        r"dense grid $96^{3}$" "\n"
-        r"evaluate $f_{\mathrm{endo}}, f_{\mathrm{epi}}$", fs=6.0)
-    arr(ax, (30.0, 8.0), (35.0, 8.0))
-    box(ax, 35.0, 5.5, 55.0, 10.5,
-        "marching cubes\nzero level set", fs=6.0)
-    arr(ax, (55.0, 8.0), (60.0, 8.0))
-
-    draw_lv_section(ax, 68.0, 2.4, 9.6)
+def draw_output(ax, fig, data):
+    stage_label(ax, 22.5, "(d)", "Coupled fields and surfaces")
+    vrule(ax, SPINE, 28.0, 19.0)
+    rule(ax, 30.0, SPINE, 19.0)
+    arrow(ax, (30.0, 19.0), (30.0, 17.0))
+    ax.text(30.0, 13.5,
+            "$f_{\\mathrm{epi}}(x) = f_{\\mathrm{endo}}(x) - \\delta(x)$",
+            ha="center", va="center", fontsize=9.2, color=INK, zorder=6)
+    caption(ax, 30.0, 7.5,
+            "the strictly positive offset keeps the\n"
+            "epicardium outside the endocardium")
+    caption(ax, 30.0, 2.0, "zero level sets meshed on a $96^{3}$ grid",
+            color=INK, fs=7.0)
+    draw_surfaces_3d(fig, [52.0 / W, 0.5 / H, 46.0 / W, 24.0 / H],
+                     data["model_endo_v"], data["model_endo_f"],
+                     data["model_epi_v"], data["model_epi_f"])
 
 
 # ----------------------------------------------------------------------- main
 
 def main():
     OUT_DIR.mkdir(exist_ok=True)
-    fig, ax = plt.subplots(figsize=(7.0, 7.0 * H / W))
+    with np.load(DEMO) as npz:
+        data = {k: npz[k] for k in (
+            "contours_xyz_mm", "contours_tissue", "model_endo_v",
+            "model_endo_f", "model_epi_v", "model_epi_f")}
+
+    fig = plt.figure(figsize=(5.4, 5.4 * H / W))
     fig.patch.set_facecolor(WHITE)
+    ax = fig.add_axes([0.0, 0.0, 1.0, 1.0])
     ax.set_xlim(0, W)
     ax.set_ylim(0, H)
-    ax.set_aspect("equal")
     ax.axis("off")
 
-    draw_input(ax)
-    draw_encoder(ax)
-    draw_query(ax)
-    draw_decoder(ax)
-    draw_output(ax)
+    for y in (148.5, 110.0, 71.5, 24.5):
+        divider(ax, y)
 
-    out_png = OUT_DIR / "fig_model_architecture.png"
-    out_pdf = OUT_DIR / "fig_model_architecture.pdf"
-    fig.savefig(out_png, bbox_inches="tight", pad_inches=0.02,
-                facecolor=WHITE)
-    fig.savefig(out_pdf, bbox_inches="tight", pad_inches=0.02,
-                facecolor=WHITE)
+    draw_input(ax, fig, data)
+    draw_encoder(ax)
+    draw_decoder(ax)
+    draw_output(ax, fig, data)
+
+    for suffix in ("png", "pdf"):
+        out = OUT_DIR / f"fig_model_architecture.{suffix}"
+        fig.savefig(out, facecolor=WHITE)
+        print(f"wrote {out}")
     plt.close(fig)
-    print(f"wrote {out_png}")
-    print(f"wrote {out_pdf}")
 
 
 if __name__ == "__main__":

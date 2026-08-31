@@ -21,10 +21,6 @@ three-dimensional shape reconstruction, geometric learning, and myocardial
 wall-thickness measurement, rather than to provide an exhaustive systematic
 review.
 
-\subsection{Search strategy}
-\label{subsec:search-strategy}
-
-\noindent
 Scopus, PubMed, and IEEE Xplore were searched, with Google Scholar used for
 backward and forward citation chaining. The search included foundational work
 published from 2000 onwards and selected studies available up to 2026. Although
@@ -47,10 +43,6 @@ The refined query applied consistently across databases was:
 function'' OR ``graph neural network'' OR ``implicit representation'') AND
 (``wall thickness'' OR ``mesh'' OR ``deep learning'')}
 
-\subsection{Inclusion and exclusion criteria}
-\label{subsec:criteria}
-
-\noindent
 Studies were included when they addressed LV three-dimensional reconstruction
 or shape modelling, proposed or evaluated myocardial wall-thickness methods,
 developed geometric learning methods applicable to anatomical meshes, or
@@ -60,10 +52,6 @@ or lacking peer review or sufficient methodological detail were excluded.
 Publications before 2000 were considered only when they provided foundational
 methods directly relevant to the reviewed approaches.
 
-\subsection{Results}
-\label{subsec:review-results}
-
-\noindent
 The search returned 142 records. After duplicate removal and screening, 28
 studies met the selection criteria; backward citation searching added 7, giving
 a final corpus of 35 publications. \Cref{fig:prisma-flow} summarises this
@@ -89,14 +77,10 @@ surfaces from sparse contours.
 
 \noindent
 The central distinction in this review is between anatomy observed on acquired
-MRI slices and geometry that must be inferred between them. The following
-subsections define that distinction and compare the representations available
-for modelling the resulting three-dimensional anatomy.
+MRI slices and geometry that must be inferred between them. This distinction
+connects the constraints of paired LV surface reconstruction to the available
+representations of three-dimensional anatomy.
 
-\subsection{From SAX slices to paired LV surfaces}
-\label{subsec:sax-paired-surfaces}
-
-\noindent
 Cine cardiac MRI captures the LV at several points in the cardiac cycle. Of
 these, end-diastole (ED), when the cavity is largest, and end-systole (ES),
 when it is smallest, provide a useful description of ventricular contraction
@@ -134,10 +118,6 @@ so geometric distance, volumetric agreement, topology, and the stability of
 wall-derived measurements must be considered together
 \parencite{heimann2009ssmreview,bras2026anisotropy}.
 
-\subsection{Representations of three-dimensional anatomy}
-\label{subsec:geometry-representations}
-
-\noindent
 The representation chosen for three-dimensional anatomy determines both what
 can be measured and how missing geometry is inferred. Voxel volumes are well
 suited to image-based segmentation and overlap analysis, but retain the spatial
@@ -180,8 +160,8 @@ This section compares how the reviewed methods address the evidence available
 on acquired slices, the geometry missing between them, and the measurements
 derived from the reconstructed wall.
 
-\subsection{Cardiac MRI segmentation and datasets}
-\label{subsec:cardiac-segmentation}
+\subsection{Clinical observations and conventional geometric priors}
+\label{subsec:conventional-reconstruction}
 
 \noindent
 Short-axis (SAX) cine MRI is the standard protocol for left-ventricle (LV)
@@ -228,10 +208,6 @@ reflects the cohort and processing choices from which it was built. Combining
 them can reduce the weakness of either source alone, provided that the atlas is
 used as a prior rather than treated as patient-specific ground truth.
 
-\subsection{Statistical shape models}
-\label{subsec:ssm-review}
-
-\noindent
 Statistical Shape Models (SSMs) encode anatomical variability by aligning a
 training population to point-to-point correspondence and applying PCA to extract
 the dominant modes of variation \parencite{cootes1995asm,heimann2009ssmreview}.
@@ -271,10 +247,6 @@ continuity learned from complete meshes. Combining SSM-derived and clinical data
 therefore assigns complementary roles to population-level priors and observed
 anatomical variation.
 
-\subsection{Surface fitting from sparse contours}
-\label{subsec:surface-fitting-review}
-
-\noindent
 Before a learned model can be supervised with clinical data, the segmented SAX
 contours must be related to a three-dimensional surface. Linear contour
 interpolation, SSM fitting, and Radial Basis Function (RBF) fitting offer three
@@ -322,7 +294,7 @@ constraints, and strong regularisation can suppress genuine local variation.
 \noindent
 Classical reconstruction methods depend on the sampled contours and on the
 assumptions imposed between slices, particularly near the apex and base, as
-discussed in \cref{subsec:surface-fitting-review}. Learned reconstruction methods
+discussed in \cref{subsec:conventional-reconstruction}. Learned reconstruction methods
 address the same trade-off between observation fidelity and geometric prior
 through two main families: template deformation and implicit field prediction.
 

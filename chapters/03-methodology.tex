@@ -62,10 +62,7 @@ The chapter follows this dependency. \Cref{sec:data-preparation} establishes the
 synthetic and clinical supervision, \cref{sec:architecture} defines the contour
 encoder and coupled decoder, and \cref{sec:training-inference} describes model
 optimisation and surface extraction. \Cref{sec:wall-thickness-protocol} then
-evaluates the local thickness estimators and regional aggregation. Since the
-clinical meshes are derived from segmentations rather than acquired
-independently, the evaluation assesses geometric completion and computational
-measurement consistency rather than anatomical ground truth.
+evaluates the local thickness estimators and regional aggregation.
 
 \section{Data Preparation}
 \label{sec:data-preparation}
@@ -85,15 +82,14 @@ with the shape distribution represented by the SSM. Second, ED and ES
 segmentations from ACDC and M\&Ms-2 were converted into watertight meshes by
 fitting implicit Radial Basis Function (RBF) surfaces to their SAX contours.
 These cases introduce patient-specific anatomy, acquisition variability, and
-cardiac-phase variation during fine-tuning. The clinical meshes are
-RBF-derived surrogate targets rather than independent anatomical ground truth.
+cardiac-phase variation during fine-tuning.
 
 Both stages use a common cache schema, which keeps the model interface and loss
 formulation unchanged as training moves from synthetic to clinical data. The
 schema also separates the sparse contours supplied to the encoder from the
 mesh-derived supervision used only during training.
 
-\subsection{Absence of independent 3D targets and motivation for SSM}
+\subsection{Synthetic supervision and SSM pre-training}
 \label{subsec:missing-ground-truth}
 \noindent
 The synthetic and clinical streams address different parts of the supervision
@@ -118,9 +114,6 @@ for both phases. This preserves one reconstruction procedure across ACDC and
 M\&Ms-2 while leaving the SSM in its intended role as the source of synthetic ED
 pre-training geometry.
 
-\subsection{Statistical Shape Model of the left ventricle}
-\label{subsec:ssm-background}
-\noindent
 The synthetic pre-training data were generated from the UK Digital Heart
 Project LV SSM reported by
 \textcite{bai2015biventricularatlas}, built from more than 1,000 high-resolution
@@ -155,14 +148,12 @@ along the long axis, and higher modes represent progressively more localised
 deformations, as shown in \cref{fig:ssm-mean-modes}.
 
 
-\subsection{Synthetic end-diastolic dataset (SSM pre-training)}
-\label{subsec:synthetic-ed-dataset}
-\noindent
 The synthetic ED dataset was built by sampling 1300 meshes from the SSM and
 converting each mesh into a training-compatible sample. The generation
-pipeline proceeds in five steps, illustrated in \cref{fig:ssm-sampling-pipeline}.
+pipeline combines latent sampling, mesh generation, quality filtering,
+epicardial construction, and supervision extraction, as illustrated in
+\cref{fig:ssm-sampling-pipeline}.
 
-\paragraph{Step 1: Latent coefficient sampling.}
 Each candidate coefficient vector $b$ was drawn by sampling each component
 as $b_i \sim \mathcal{N}(0, \sigma_i^2)$ and then applying two acceptance
 criteria:
@@ -180,13 +171,11 @@ the combined deformation from falling outside the plausible population
 distribution. Accepted samples are scattered within a bounded ellipsoid in
 latent space, as shown in panel~(c) of \cref{fig:ssm-sampling-pipeline}.
 
-\paragraph{Step 2: Mesh generation.}
 Each accepted coefficient vector $b$ is substituted into \cref{eq:ssm-generation}
 to produce a deformed endocardial vertex array, which is then triangulated using
 the face connectivity of the mean-shape mesh. The resulting triangular surface
 is watertight and oriented by construction.
 
-\paragraph{Step 3: Quality filtering.}
 Before a generated mesh is accepted into the training set, it is evaluated
 against four proxy metrics: enclosed volume (mL), surface area (cm\textsuperscript{2}),
 sphericity index, and plausibility of the apical and basal normal directions.
@@ -194,7 +183,6 @@ Samples that fall outside calibrated bounds for any of these metrics are
 discarded. Periodic exact audits using VTK mass-properties computation were
 also performed every 40 samples to verify the proxy metric calibration.
 
-\paragraph{Step 4: Synthetic epicardium.}
 The SSM provides only the endocardial surface. The epicardial surface was
 synthesised by offsetting each endocardial vertex $p_i$ along its outward normal
 $n_i$ by a spatially varying distance $d_i$,
@@ -211,7 +199,6 @@ Its purpose is to give the decoder a consistent outer surface during
 pre-training, so that the model learns the general shape relation between an
 inner and an outer LV surface before it sees real data.
 
-\paragraph{Step 5: SAX contour extraction and volumetric supervision points.}
 Each pair of endocardial and epicardial surfaces was sliced at 10 evenly spaced
 axial levels to produce sparse SAX contour rings, matching the acquisition
 pattern of real cine MRI. For each case, 2048 query points were sampled near the
@@ -245,7 +232,7 @@ These fixed SSM-sampling and supervision settings were kept constant across all
 synthetic ED cases to ensure reproducible pre-training before fine-tuning on
 real ED and ES data.
 
-\subsection{Real ED and ES labels: from SAX segmentation to 3D supervision}
+\subsection{Clinical ED and ES supervision from SAX labels}
 \label{subsec:real-ed-es-datasets}
 \noindent
 SSM-derived meshes alone cannot capture the full diversity of clinical
@@ -308,7 +295,6 @@ below. This
 distinction is important when interpreting the reconstruction-consistency
 results.
 
-\paragraph{Contour extraction and harmonisation.}
 Each NIfTI segmentation is reoriented to the RAS+ convention while preserving
 its physical voxel spacing. Dataset-specific labels are mapped to a common
 definition of the LV cavity and myocardium. On every acquired SAX slice, the
@@ -319,7 +305,6 @@ points and stored at its measured through-plane position. These points are both
 the observations supplied to the encoder and the constraints from which the
 clinical surrogate surfaces are constructed.
 
-\paragraph{RBF implicit fitting.}
 The endocardial and epicardial surfaces are fitted separately. For either
 surface $s$, let $p_i$ be a contour point and $n_i$ its outward in-plane normal,
 estimated from the local contour tangent and oriented away from the ring centre.
@@ -345,7 +330,6 @@ require a vertex on one ring to be paired with a particular vertex on the next.
 Unlike SSM fitting, it does not constrain either phase to an atlas-derived shape
 space.
 
-\paragraph{Surface extraction and quality control.}
 Each fitted field is evaluated on a 1.0~mm isotropic grid. The grid extends
 8.0~mm beyond the contours in-plane and 1.5~mm beyond the first and last rings
 along the SAX direction, so that the extracted surface closes close to the
@@ -385,20 +369,20 @@ separately before their extracted surfaces undergo the same topology checks.
 Valid surfaces pass through this stage unchanged; topology correction is invoked
 only when a surface fails those checks.
 
-\paragraph{Mesh supervision and query points.}
 The RBF-derived endocardial and epicardial meshes are centred and normalised
 with the same translation and scale. For each pair, 2048 query points are drawn
 near the surfaces and throughout a padded bounding box. Near-surface points
 constrain the location of each boundary, while volumetric points determine the
 inside/outside relation. The contours remain the sparse model input; the mesh
 samples, query points, and their targets are available only as supervision.
-Consequently, the model is trained to reproduce a smooth geometric completion
-constructed from the clinical contours without receiving the completed RBF
-surface at inference time.
 
-\subsection{Shared cache representation and contour augmentation}
-\label{subsec:training-cache-representation}
+\subsection{Shared dataset assembly and partitioning}
+\label{subsec:shared-dataset-assembly}
 \noindent
+The synthetic and clinical streams are assembled through one cache contract,
+one augmentation protocol, and patient-level partitions that define their roles
+in training and evaluation.
+
 All cases are stored in a common cache representation so that the model receives
 the same interface regardless of whether a sample originates from the SSM or
 from a clinical segmentation. 
@@ -483,9 +467,6 @@ examples, whereas the derived mesh and all decoder-supervision targets remain
 fixed; the figure illustrates robustness of the encoder input rather than
 transformation of the anatomical ground-truth geometry.
 
-\subsection{Dataset composition and splits}
-\label{subsec:dataset-composition}
-\noindent
 This subsection reports how many samples each data stream finally
 contributes and how the real streams are divided for training and
 evaluation. The real data come from two public collections: the Automated
@@ -566,13 +547,16 @@ influence individual field queries. Together, the two pathways support geometric
 completion between slices without restricting the output to the topology,
 resolution, or vertex count of a template mesh.
 
-\begin{figure}[p]
+\begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{fig_model_architecture}
+	\includegraphics[width=0.78\linewidth]{fig_model_architecture}
 	\vspace{2mm}
-	\caption[Proposed model architecture.]{Phase-conditioned model architecture. Tissue-specific global and
-	local contour features condition an implicit decoder, which predicts the
-	endocardial field and a positive wall offset before mesh extraction.}
+	\caption[Proposed model architecture.]{Phase-conditioned model architecture,
+	from the sparse contour observation~(a) through the global and local encoder
+	paths~(b) and the implicit decoder~(c) to the coupled fields and extracted
+	surfaces~(d). The point cloud in~(a) and the cut surfaces in~(d) are the
+	observed contours and the corresponding reconstruction of one ACDC case,
+	with the epicardium opened to expose the endocardial cavity.}
 	\label{fig:model-architecture}
 \end{figure}
 
@@ -741,7 +725,7 @@ SSM cases and then fine-tuned on the real ED and ES cases. In both stages it mus
 learn two things together: a valid distance field for the endocardium, and a
 sensible relationship between the endocardium and the epicardium.
 
-\subsection{Training data mix and augmentation}
+\subsection{Model training and optimisation}
 \label{subsec:training-data-mix}
 \noindent
 Training follows the two-stage strategy introduced in
@@ -776,22 +760,18 @@ anatomically valid shapes but do not reproduce every artefact seen in real
 segmentations, which is why they are used for pre-training rather than as the
 final training data. Their role is to provide a geometric prior: they regularise
 the shape space, expose the model to a wide range of plausible LV geometries,
-and do so under controlled conditions. They do not provide realistic
-patient-specific wall thickness, because the epicardium in those samples is
-constructed by an offset rule. The RBF-derived real ED and ES cases then supply
-patient-specific anatomy from several datasets and let the model learn how the
-shape changes between the two phases. To avoid information leaking between the
-training, validation, and test sets, the real cases are split by patient before
-augmentation. Because augmentation perturbs only the observed contours, each
-real surrogate target remains tied to the anatomy of its own patient.
+and do so under controlled conditions. The RBF-derived real ED and ES cases then
+supply patient-specific anatomy from several datasets and let the model learn
+how the shape changes between the two phases. To avoid information leaking
+between the training, validation, and test sets, the real cases are split by
+patient before augmentation. Because augmentation perturbs only the observed
+contours, each real surrogate target remains tied to the anatomy of its own
+patient.
 
 In practice, this means the encoder is trained to be robust to imperfect,
 noisy inputs, such as small shifts, jitter, missing slices, or dropped points,
 while the decoder is always supervised against a fixed, consistent 3D geometry.
 
-\subsection{Loss function}
-\label{subsec:training-loss}
-\noindent
 The training objective contains five terms. Let $\mathcal{E}$ and $\mathcal{P}$
 denote sampled endocardial and epicardial surface points, $\mathcal{Q}$ the
 cached SDF query points, $\mathcal{R}$ the union of near-surface and free-space
@@ -864,9 +844,6 @@ keep its gradient calculation numerically stable.
 	\end{tabular}
 \end{table}
 
-\subsection{Optimisation and hardware}
-\label{subsec:optimisation-hardware}
-\noindent
 The retained training run uses AdamW with a learning rate of
 $2\times10^{-5}$ and weight decay $5\times10^{-4}$. Its learning rate follows
 cosine annealing with warm restarts, with an initial restart period of 100
@@ -1159,14 +1136,8 @@ the apical cap the central disc.
 	\centering
 	\includegraphics[width=\linewidth]{fig_aha17_cut}
 	\vspace{2mm}
-	\caption[AHA-17 surface partition.]{Cutting the reconstructed LV surface into the AHA-17 segments.
-	Panel~(a) shows the endocardial surface partitioned along the long axis into
-	basal, mid, apical, and apical-cap levels and angularly into sectors, with
-	each of the 17 regions drawn in a distinct colour. Panel~(b) unrolls the same
-	colour-coded regions onto the standard AHA-17 bullseye, where the basal ring
-	(segments 1--6) forms the outer annulus, the mid ring (7--12) the middle
-	annulus, the apical ring (13--16) the inner annulus, and the apical cap (17)
-	the central disc; the anatomical wall regions are labelled around the disc.}
+	\caption[AHA-17 surface partition]{AHA-17 partitioning of the reconstructed LV
+	surface and corresponding bullseye representation.}
 	\label{fig:aha17-cut}
 \end{figure}
 
@@ -1175,10 +1146,3 @@ clinically familiar regional summary of the same local measurements. For each
 method, the thickness values of the vertices falling in a segment are combined
 using robust summaries such as the mean and percentiles, so that local outliers
 do not dominate the regional interpretation.
-
-This evaluation should be interpreted as an algorithmic comparison and
-reproducibility study rather than as clinical validation. Unless expert manual
-wall-thickness measurements and independent 3D targets are added, the thesis can
-conclude only that the model provides a locally resolved computational framework
-for reconstruction consistency; it should not claim anatomical truth, diagnostic
-utility, or replacement of clinical measurement protocols.
