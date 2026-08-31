@@ -8,7 +8,9 @@
 
 % --- Encoding & language -------------------------------------
 \usepackage{fontspec}
-\setmainfont{Arial}
+% ISCTE requires Arial; Liberation Sans is metric-compatible and keeps the
+% build working on machines where Arial is not installed.
+\IfFontExistsTF{Arial}{\setmainfont{Arial}}{\setmainfont{Liberation Sans}}
 \usepackage[english,portuguese]{babel}
 
 % --- Math ----------------------------------------------------
@@ -41,6 +43,11 @@
 \usepackage{longtable}
 \usepackage{caption}
 \captionsetup{font={footnotesize,singlespacing}, labelfont=bf}
+\captionsetup[table]{font={small,singlespacing}, justification=centering}
+\newcommand{\thesistablestyle}{%
+  \small\singlespacing
+  \renewcommand{\arraystretch}{1.15}%
+}
 \usepackage[expansion=false]{microtype}
 \usepackage{csquotes}
 \usepackage{xcolor}

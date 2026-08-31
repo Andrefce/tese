@@ -262,11 +262,11 @@ in \cref{subsec:wall-thickness-results}.
     per-patient statistic; $p_{95}$ is the cohort mean of the per-patient
     95th percentile. The RBF fit interpolates the contour points by construction.}
   \label{tab:contour-fidelity}
-  \footnotesize
-  \setlength{\tabcolsep}{5pt}
-  \begin{tabular}{l l c c c}
+  \thesistablestyle
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l l c c c@{}}
     \toprule
-    Method & Surface & Contour distance (mm) & $p_{95}$ (mm) & Volume (ml) \\
+    \textbf{Method} & \textbf{Surface} & \textbf{Contour distance (mm)}
+      & \textbf{$p_{95}$ (mm)} & \textbf{Volume (ml)} \\
     \midrule
     Proposed model  & Endocardium & $1.50 \pm 0.23$ & $3.56$ & $119.3 \pm 31.3$ \\
                     & Epicardium  & $1.96 \pm 0.28$ & $5.23$ & $255.3 \pm 76.7$ \\
@@ -277,7 +277,7 @@ in \cref{subsec:wall-thickness-results}.
     SSM fit         & Endocardium & $1.82 \pm 0.67$ & $5.51$ & $126.9 \pm 32.2$ \\
                     & Epicardium  & $1.91 \pm 0.76$ & $6.23$ & $215.2 \pm 56.3$ \\
     \bottomrule
-  \end{tabular}
+  \end{tabular*}
 \end{table}
 
 The second part considers agreement between the complete reconstructed
@@ -316,20 +316,25 @@ these methods as though it were correct.
     symmetric disagreement between two methods, not an error, because no method
     is a reference. Distances are in millimetres; Dice is dimensionless.}
   \label{tab:reconstruction-agreement}
-  \footnotesize
-  \setlength{\tabcolsep}{4pt}
-  \begin{tabular}{l c c c c c c}
+  \thesistablestyle
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l l c c@{}}
     \toprule
-    & \multicolumn{2}{c}{Chamfer (mm)} & \multicolumn{2}{c}{HD95 (mm)}
-      & \multicolumn{2}{c}{Dice} \\
-    \cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
-    Pair & Endo. & Epi. & Endo. & Epi. & Cavity & Myoc. \\
+    \textbf{Pair} & \textbf{Metric} & \textbf{Endocardium/cavity}
+      & \textbf{Epicardium/myocardium} \\
     \midrule
-    Model vs.\ RBF fit         & $1.57 \pm 0.18$ & $1.90 \pm 0.24$ & $4.24 \pm 0.86$ & $6.07 \pm 0.94$ & $0.91 \pm 0.02$ & $0.77 \pm 0.05$ \\
-    Model vs.\ SSM fit         & $2.08 \pm 0.51$ & $2.59 \pm 0.73$ & $5.88 \pm 1.91$ & $6.72 \pm 2.32$ & $0.88 \pm 0.03$ & $0.69 \pm 0.04$ \\
-    RBF fit vs.\ SSM fit       & $2.01 \pm 0.67$ & $2.05 \pm 0.64$ & $5.88 \pm 2.95$ & $6.62 \pm 2.67$ & $0.89 \pm 0.04$ & $0.76 \pm 0.06$ \\
+    Model vs.\ RBF fit   & Chamfer (mm) & $1.57 \pm 0.18$ & $1.90 \pm 0.24$ \\
+                          & HD95 (mm)     & $4.24 \pm 0.86$ & $6.07 \pm 0.94$ \\
+                          & Dice          & $0.91 \pm 0.02$ & $0.77 \pm 0.05$ \\
+    \addlinespace
+    Model vs.\ SSM fit   & Chamfer (mm) & $2.08 \pm 0.51$ & $2.59 \pm 0.73$ \\
+                          & HD95 (mm)     & $5.88 \pm 1.91$ & $6.72 \pm 2.32$ \\
+                          & Dice          & $0.88 \pm 0.03$ & $0.69 \pm 0.04$ \\
+    \addlinespace
+    RBF fit vs.\ SSM fit & Chamfer (mm) & $2.01 \pm 0.67$ & $2.05 \pm 0.64$ \\
+                          & HD95 (mm)     & $5.88 \pm 2.95$ & $6.62 \pm 2.67$ \\
+                          & Dice          & $0.89 \pm 0.04$ & $0.76 \pm 0.06$ \\
     \bottomrule
-  \end{tabular}
+  \end{tabular*}
 \end{table}
 
 \subsubsection{Slice Sensitivity}
@@ -358,14 +363,15 @@ between-method differences reported above.
     volume relative to the ten-slice reconstruction. All meshes are watertight,
     and metrics use the untrimmed and unsmoothed surfaces.}
   \label{tab:slice-degradation}
-  \footnotesize
-  \setlength{\tabcolsep}{5pt}
-  \begin{tabular}{l c c c c c c}
+  \thesistablestyle
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l c c c c c c@{}}
     \toprule
-    & & \multicolumn{2}{c}{Chamfer (mm)} & \multicolumn{2}{c}{Dice} & \\
+    & & \multicolumn{2}{c}{\textbf{Chamfer (mm)}}
+      & \multicolumn{2}{c}{\textbf{Dice}} & \\
     \cmidrule(lr){3-4} \cmidrule(lr){5-6}
-    Method & Slices & Endo. & Epi. & Cavity & Myoc.
-      & $\Delta V_{\text{myo}}$ (\%) \\
+    \textbf{Method} & \textbf{Slices} & \textbf{Endo.} & \textbf{Epi.}
+      & \textbf{Cavity} & \textbf{Myoc.}
+      & \textbf{$\Delta V_{\text{myo}}$ (\%)} \\
     \midrule
     Proposed model & 6 & $0.84$ & $0.92$ & $0.972$ & $0.892$ & $-7.2$ \\
                    & 4 & $1.45$ & $1.76$ & $0.945$ & $0.772$ & $-16.3$ \\
@@ -379,7 +385,7 @@ between-method differences reported above.
                    & 4 & $1.46$ & $1.39$ & $0.942$ & $0.812$ & $-3.8$ \\
                    & 3 & $1.94$ & $1.92$ & $0.921$ & $0.775$ & $+2.6$ \\
     \bottomrule
-  \end{tabular}
+  \end{tabular*}
 \end{table}
 
 Surface displacement increases progressively as slices are removed. At three
@@ -426,13 +432,15 @@ both the highest and the noisiest of the four on the model output.
 
 \begin{table}[H]
   \centering
-    \caption[End-diastolic wall-thickness statistics]{Wall-thickness statistics at end-diastole over the held-out ACDC and
-      M\&Ms-2 test cohort. Each entry is the cohort average of the corresponding
-      per-patient statistic, in millimetres, before any calibration.}
+  \caption[End-diastolic wall-thickness statistics]{Wall-thickness statistics at end-diastole over the held-out ACDC and
+    M\&Ms-2 test cohort. Each entry is the cohort average of the corresponding
+    per-patient statistic, in millimetres, before any calibration.}
   \label{tab:wall-thickness-results}
-    \begin{tabular}{l l cccc}
+  \thesistablestyle
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l l c c c c@{}}
     \toprule
-      Method & Geometry & Mean & Std. & $p_{5}$ & $p_{95}$ \\
+    \textbf{Method} & \textbf{Geometry} & \textbf{Mean (mm)}
+      & \textbf{SD (mm)} & \textbf{$p_{5}$ (mm)} & \textbf{$p_{95}$ (mm)} \\
     \midrule
       Laplace field    & Model &  9.18 & 2.14 & 4.75 & 12.20 \\
                        & RBF fit &  8.36 & 2.21 & 5.03 & 12.29 \\
@@ -450,7 +458,7 @@ both the highest and the noisiest of the four on the model output.
                        & RBF fit &  8.51 & 2.00 & 5.42 & 12.05 \\
                        & SSM fit &  7.02 & 1.22 & 4.65 &  8.77 \\
     \bottomrule
-  \end{tabular}
+  \end{tabular*}
 \end{table}
 
 Applying the same estimator to all three geometries isolates the effect of the
@@ -480,13 +488,14 @@ than three millimetres.
 
 The Laplace field is the method used for the regional analysis of
 \cref{subsec:aha17-results}. The reason is methodological rather than numerical.
-It is the established reference for transmural thickness in cardiac
-imaging~\parencite{jones2000laplace}, and it measures thickness along the
-streamlines of a harmonic field spanning the two surfaces, so the path stays
-inside the wall wherever the wall curves. A straight ray does not: it leaves the
-myocardium early or late in curved regions, which is what the cone-ray numbers
-above show. The results here are consistent with that choice, since the Laplace
-field sits with the two non-ray methods rather than with the outlier.
+Although introduced for cortical thickness rather than cardiac imaging
+\parencite{jones2000laplace}, it provides a transferable construction for paired
+tissue boundaries. It measures thickness along the streamlines of a harmonic
+field spanning the two surfaces, so the path stays inside the wall wherever the
+wall curves. A straight ray does not: it leaves the myocardium early or late in
+curved regions, which is what the cone-ray numbers above show. The results here
+are consistent with that choice, since the Laplace field sits with the two
+non-ray methods rather than with the outlier.
 
 The decoder returns a continuous wall-offset field rather than a geometric
 thickness measurement. \Cref{fig:recon-thickness-3d} visualises this field for
@@ -533,16 +542,18 @@ visualisation; it does not provide the values used for the AHA-17 analysis.
     correlation coefficient (ICC) are dimensionless. The Laplace field is the
     common comparator, not a ground truth.}
   \label{tab:wall-thickness-agreement}
-  \begin{tabular}{l c c c c c}
+  \thesistablestyle
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l c c c c c@{}}
     \toprule
-    Method & $r$ & MAE & RMSE & Bias (95\% LoA) & ICC \\
+    \textbf{Method} & \textbf{$r$} & \textbf{MAE (mm)}
+      & \textbf{RMSE (mm)} & \textbf{Bias (95\% LoA) (mm)} & \textbf{ICC} \\
     \midrule
     Yezzi--Prince    & 0.80 & 0.89 & 2.14 & $+0.83\ (\pm 3.86)$ & 0.77 \\
     SDF cone rays    & 0.44 & 3.38 & 7.29 & $+3.31\ (\pm 12.74)$ & 0.28 \\
     \addlinespace
     EDT boundary sum & 0.78 & 0.81 & 2.07 & $+0.37\ (\pm 3.99)$ & 0.77 \\
     \bottomrule
-  \end{tabular}
+  \end{tabular*}
 \end{table}
 
 \Cref{tab:wall-thickness-geometry-agreement} quantifies the patient-level
@@ -561,21 +572,21 @@ the reported scale.
     Bias is model minus comparator; bias and RMSE are in millimetres, and the
     Pearson correlation $r$ is dimensionless.}
   \label{tab:wall-thickness-geometry-agreement}
-  \footnotesize
-  \setlength{\tabcolsep}{4.5pt}
-  \begin{tabular}{l ccc ccc}
+  \thesistablestyle
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l c c c c c c@{}}
     \toprule
-    & \multicolumn{3}{c}{Model vs. RBF fit}
-      & \multicolumn{3}{c}{Model vs. SSM fit} \\
+    & \multicolumn{3}{c}{\textbf{Model vs. RBF fit}}
+      & \multicolumn{3}{c}{\textbf{Model vs. SSM fit}} \\
     \cmidrule(lr){2-4} \cmidrule(lr){5-7}
-    Method & Bias & RMSE & $r$ & Bias & RMSE & $r$ \\
+    \textbf{Method} & \textbf{Bias (mm)} & \textbf{RMSE (mm)} & \textbf{$r$}
+      & \textbf{Bias (mm)} & \textbf{RMSE (mm)} & \textbf{$r$} \\
     \midrule
     Laplace field    & $+0.82$ & 0.86 & 0.99 & $+2.70$ & 3.13 & 0.72 \\
     Yezzi--Prince    & $+1.16$ & 1.23 & 0.99 & $+2.91$ & 3.49 & 0.77 \\
     SDF cone rays    & $+3.10$ & 3.81 & 0.95 & $+5.36$ & 6.64 & 0.67 \\
     EDT boundary sum & $+1.03$ & 1.10 & 0.99 & $+2.53$ & 3.04 & 0.77 \\
     \bottomrule
-  \end{tabular}
+  \end{tabular*}
 \end{table}
 
 The fitting-baseline comparison is limited to ED because the public SSM
@@ -625,44 +636,41 @@ given in \cref{subsec:wall-thickness-results}.
     17-segment wall thickness on the reconstructed geometry over the
     $30$-patient ACDC pathology subset.}
   \label{tab:aha17-cohort}
-  \normalsize
-  \singlespacing
-  \renewcommand{\arraystretch}{1.20}
-  \setlength{\tabcolsep}{7pt}
-  \begin{tabular}{@{}r l rrr@{}}
+  \thesistablestyle
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}r l r r r@{}}
     \toprule
-    \multicolumn{1}{c}{\#} & Segment
-      & \multicolumn{1}{c}{ED (mm)} & \multicolumn{1}{c}{ES (mm)}
-      & \multicolumn{1}{c}{$\Delta$ (\%)} \\
+    \multicolumn{1}{c}{\textbf{\#}} & \textbf{Segment}
+      & \multicolumn{1}{c}{\textbf{ED (mm)}} & \multicolumn{1}{c}{\textbf{ES (mm)}}
+      & \multicolumn{1}{c}{\textbf{$\Delta$ (\%)}} \\
     \midrule
-    1  & Basal Anterior       &  9.99 & 13.71 & $+37.1$ \\
-    2  & Basal Anteroseptal   & 10.15 & 13.40 & $+32.1$ \\
-    3  & Basal Inferoseptal   &  9.89 & 13.43 & $+35.7$ \\
-    4  & Basal Inferior       &  9.09 & 13.81 & $+51.9$ \\
-    5  & Basal Inferolateral  &  8.93 & 14.27 & $+59.8$ \\
-    6  & Basal Anterolateral  &  9.53 & 13.87 & $+45.5$ \\
+    1  & Basal anterior       &  9.99 & 13.71 & $+37.1$ \\
+    2  & Basal anteroseptal   & 10.15 & 13.40 & $+32.1$ \\
+    3  & Basal inferoseptal   &  9.89 & 13.43 & $+35.7$ \\
+    4  & Basal inferior       &  9.09 & 13.81 & $+51.9$ \\
+    5  & Basal inferolateral  &  8.93 & 14.27 & $+59.8$ \\
+    6  & Basal anterolateral  &  9.53 & 13.87 & $+45.5$ \\
     \addlinespace
-    7  & Mid Anterior         &  9.19 & 13.79 & $+50.0$ \\
-    8  & Mid Anteroseptal     & 10.37 & 14.68 & $+41.6$ \\
-    9  & Mid Inferoseptal     & 10.19 & 15.05 & $+47.6$ \\
-    10 & Mid Inferior         &  9.25 & 14.41 & $+55.8$ \\
-    11 & Mid Inferolateral    &  9.09 & 14.96 & $+64.6$ \\
-    12 & Mid Anterolateral    &  8.99 & 14.17 & $+57.6$ \\
+    7  & Mid anterior         &  9.19 & 13.79 & $+50.0$ \\
+    8  & Mid anteroseptal     & 10.37 & 14.68 & $+41.6$ \\
+    9  & Mid inferoseptal     & 10.19 & 15.05 & $+47.6$ \\
+    10 & Mid inferior         &  9.25 & 14.41 & $+55.8$ \\
+    11 & Mid inferolateral    &  9.09 & 14.96 & $+64.6$ \\
+    12 & Mid anterolateral    &  8.99 & 14.17 & $+57.6$ \\
     \addlinespace
-    13 & Apical Anterior      &  8.50 & 13.63 & $+60.3$ \\
-    14 & Apical Septal        &  8.77 & 13.86 & $+58.1$ \\
-    15 & Apical Inferior      &  8.44 & 13.29 & $+57.5$ \\
-    16 & Apical Lateral       &  8.43 & 13.78 & $+63.6$ \\
+    13 & Apical anterior      &  8.50 & 13.63 & $+60.3$ \\
+    14 & Apical septal        &  8.77 & 13.86 & $+58.1$ \\
+    15 & Apical inferior      &  8.44 & 13.29 & $+57.5$ \\
+    16 & Apical lateral       &  8.43 & 13.78 & $+63.6$ \\
     \addlinespace
     17 & Apex                 &  7.76 & 11.69 & $+50.7$ \\
     \midrule
     \multicolumn{2}{@{}l}{\textbf{Overall}} & \textbf{9.21} & \textbf{13.87}
       & $\mathbf{+50.6}$ \\
     \bottomrule
-  \end{tabular}
+  \end{tabular*}
   \vspace{0.8em}
 
-  \begin{minipage}{0.78\textwidth}
+  \begin{minipage}{\textwidth}
     \footnotesize\singlespacing
     \textit{Note.} Values are means for the $30$ ACDC test patients used in the
     pathology analysis, measured with the Laplace field. ED and ES denote
@@ -682,50 +690,46 @@ baseline provides a matched regional ES evaluation.
 
 \begin{table}[H]
   \centering
-  \captionsetup{width=0.92\textwidth}
   \caption[AHA 17-segment thickness: NOR versus HCM]{Regional AHA 17-segment wall thickness on the reconstructed geometry for
     the normal and hypertrophic groups.}
   \label{tab:aha17-thickening}
-  \normalsize
-  \singlespacing
-  \renewcommand{\arraystretch}{1.20}
-  \setlength{\tabcolsep}{4.5pt}
-  \begin{tabular}{@{}r l rrr @{\hspace{1.4em}} rrr@{}}
+  \thesistablestyle
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}r l r r r r r r@{}}
     \toprule
-    & & \multicolumn{3}{c}{Normal (NOR, $n=20$)}
-      & \multicolumn{3}{c}{Hypertrophic (HCM, $n=10$)} \\
+    & & \multicolumn{3}{c}{\textbf{Normal (NOR, $n=20$)}}
+      & \multicolumn{3}{c}{\textbf{Hypertrophic (HCM, $n=10$)}} \\
     \cmidrule(lr){3-5} \cmidrule(lr){6-8}
-    \multicolumn{1}{c}{\#} & Segment
-      & \multicolumn{1}{c}{ED} & \multicolumn{1}{c}{ES} & \multicolumn{1}{c}{$\Delta$}
-      & \multicolumn{1}{c}{ED} & \multicolumn{1}{c}{ES} & \multicolumn{1}{c}{$\Delta$} \\
-    & & \multicolumn{2}{c}{(mm)} & \multicolumn{1}{c}{(\%)}
-      & \multicolumn{2}{c}{(mm)} & \multicolumn{1}{c}{(\%)} \\
+    \multicolumn{1}{c}{\textbf{\#}} & \textbf{Segment}
+      & \multicolumn{1}{c}{\textbf{ED}} & \multicolumn{1}{c}{\textbf{ES}} & \multicolumn{1}{c}{\textbf{$\Delta$}}
+      & \multicolumn{1}{c}{\textbf{ED}} & \multicolumn{1}{c}{\textbf{ES}} & \multicolumn{1}{c}{\textbf{$\Delta$}} \\
+    & & \multicolumn{2}{c}{\textbf{(mm)}} & \multicolumn{1}{c}{\textbf{(\%)}}
+      & \multicolumn{2}{c}{\textbf{(mm)}} & \multicolumn{1}{c}{\textbf{(\%)}} \\
     \midrule
-    1  & Basal Anterior       &  8.72 & 12.25 & $+40.4$ & 12.54 & 16.62 & $+32.6$ \\
-    2  & Basal Anteroseptal   &  8.81 & 12.10 & $+37.4$ & 12.83 & 16.02 & $+24.9$ \\
-    3  & Basal Inferoseptal   &  8.68 & 11.96 & $+37.8$ & 12.32 & 16.35 & $+32.8$ \\
-    4  & Basal Inferior       &  8.16 & 12.53 & $+53.6$ & 10.96 & 16.37 & $+49.4$ \\
-    5  & Basal Inferolateral  &  7.94 & 12.81 & $+61.3$ & 10.91 & 17.19 & $+57.5$ \\
-    6  & Basal Anterolateral  &  8.38 & 12.12 & $+44.6$ & 11.83 & 17.37 & $+46.9$ \\
+    1  & Basal anterior       &  8.72 & 12.25 & $+40.4$ & 12.54 & 16.62 & $+32.6$ \\
+    2  & Basal anteroseptal   &  8.81 & 12.10 & $+37.4$ & 12.83 & 16.02 & $+24.9$ \\
+    3  & Basal inferoseptal   &  8.68 & 11.96 & $+37.8$ & 12.32 & 16.35 & $+32.8$ \\
+    4  & Basal inferior       &  8.16 & 12.53 & $+53.6$ & 10.96 & 16.37 & $+49.4$ \\
+    5  & Basal inferolateral  &  7.94 & 12.81 & $+61.3$ & 10.91 & 17.19 & $+57.5$ \\
+    6  & Basal anterolateral  &  8.38 & 12.12 & $+44.6$ & 11.83 & 17.37 & $+46.9$ \\
     \addlinespace
-    7  & Mid Anterior         &  7.94 & 12.10 & $+52.5$ & 11.70 & 17.16 & $+46.6$ \\
-    8  & Mid Anteroseptal     &  8.55 & 12.98 & $+51.7$ & 13.99 & 18.10 & $+29.4$ \\
-    9  & Mid Inferoseptal     &  8.57 & 12.98 & $+51.4$ & 13.43 & 19.17 & $+42.8$ \\
-    10 & Mid Inferior         &  7.93 & 12.46 & $+57.1$ & 11.89 & 18.32 & $+54.1$ \\
-    11 & Mid Inferolateral    &  7.96 & 13.02 & $+63.5$ & 11.35 & 18.84 & $+66.0$ \\
-    12 & Mid Anterolateral    &  7.92 & 12.39 & $+56.4$ & 11.13 & 17.73 & $+59.3$ \\
+    7  & Mid anterior         &  7.94 & 12.10 & $+52.5$ & 11.70 & 17.16 & $+46.6$ \\
+    8  & Mid anteroseptal     &  8.55 & 12.98 & $+51.7$ & 13.99 & 18.10 & $+29.4$ \\
+    9  & Mid inferoseptal     &  8.57 & 12.98 & $+51.4$ & 13.43 & 19.17 & $+42.8$ \\
+    10 & Mid inferior         &  7.93 & 12.46 & $+57.1$ & 11.89 & 18.32 & $+54.1$ \\
+    11 & Mid inferolateral    &  7.96 & 13.02 & $+63.5$ & 11.35 & 18.84 & $+66.0$ \\
+    12 & Mid anterolateral    &  7.92 & 12.39 & $+56.4$ & 11.13 & 17.73 & $+59.3$ \\
     \addlinespace
-    13 & Apical Anterior      &  7.28 & 11.75 & $+61.4$ & 10.96 & 17.40 & $+58.7$ \\
-    14 & Apical Septal        &  7.49 & 12.00 & $+60.2$ & 11.33 & 17.59 & $+55.3$ \\
-    15 & Apical Inferior      &  7.28 & 11.72 & $+61.1$ & 10.76 & 16.43 & $+52.6$ \\
-    16 & Apical Lateral       &  7.33 & 12.03 & $+64.0$ & 10.61 & 17.28 & $+62.9$ \\
+    13 & Apical anterior      &  7.28 & 11.75 & $+61.4$ & 10.96 & 17.40 & $+58.7$ \\
+    14 & Apical septal        &  7.49 & 12.00 & $+60.2$ & 11.33 & 17.59 & $+55.3$ \\
+    15 & Apical inferior      &  7.28 & 11.72 & $+61.1$ & 10.76 & 16.43 & $+52.6$ \\
+    16 & Apical lateral       &  7.33 & 12.03 & $+64.0$ & 10.61 & 17.28 & $+62.9$ \\
     \addlinespace
     17 & Apex                 &  6.80 & 10.32 & $+51.8$ &  9.67 & 14.71 & $+52.1$ \\
     \midrule
     \multicolumn{2}{@{}l}{\textbf{Overall}} & \textbf{7.99} & \textbf{12.21} & $\mathbf{+52.9}$
       & \textbf{11.68} & \textbf{17.23} & $\mathbf{+47.5}$ \\
     \bottomrule
-  \end{tabular}
+  \end{tabular*}
   \vspace{0.8em}
 
   \begin{minipage}{0.92\textwidth}
@@ -761,11 +765,11 @@ level rather than treating the 17 segments as independent observations.
     percentile-bootstrap confidence interval from 10\,000 patient-level
     resamples. Positive Hedges' $g$ indicates a larger value in HCM.}
   \label{tab:aha17-group-effects}
-  \footnotesize
-  \setlength{\tabcolsep}{4pt}
-  \begin{tabular}{l c c c c}
+  \thesistablestyle
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l c c c c@{}}
     \toprule
-    Endpoint & NOR & HCM & Difference (95\% CI) & Hedges' $g$ \\
+    \textbf{Endpoint} & \textbf{NOR} & \textbf{HCM}
+      & \textbf{Difference (95\% CI)} & \textbf{Hedges' $g$} \\
     \midrule
     Mean ED AHA-17 thickness (mm)
       & $7.99 \pm 0.88$ & $11.66 \pm 1.66$ & $+3.67\ [2.54,\ 4.67]$ & $3.01$ \\
@@ -774,7 +778,7 @@ level rather than treating the 17 segments as independent observations.
     Systolic thickening (percentage points)
       & $53.2 \pm 11.6$ & $47.9 \pm 11.5$ & $-5.3\ [-13.9,\ 3.0]$ & $-0.45$ \\
     \bottomrule
-  \end{tabular}
+  \end{tabular*}
 \end{table}
 
 The two end-diastolic confidence intervals exclude zero and their effect sizes

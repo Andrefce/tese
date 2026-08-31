@@ -77,7 +77,8 @@ starting point for the entire data-preparation strategy.
 
 The training data were therefore constructed in two stages. First, 1300
 synthetic ED geometries were generated from the UK Digital Heart Project LV
-SSM for pre-training. These samples provide controlled variation consistent
+SSM\footnote{\url{https://github.com/UK-Digital-Heart-Project/Statistical-Shape-Model}}
+for pre-training. These samples provide controlled variation consistent
 with the shape distribution represented by the SSM. Second, ED and ES
 segmentations from ACDC and M\&Ms-2 were converted into watertight meshes by
 fitting implicit Radial Basis Function (RBF) surfaces to their SAX contours.
@@ -476,17 +477,15 @@ Together they provide 460 patients (100 from ACDC and 360 from M\&Ms-2). For
 each patient we reconstruct one ED mesh and one ES mesh, giving two
 real streams. Both collections are openly available for research at no cost;
 each requires a free registration and the acceptance of a data-use agreement.
-The original M\&Ms challenge paper \parencite{campello2021mnms}, discussed in
-\cref{ch:literature-review}, describes a separate 375-study dataset and is not
-used as a citation for the M\&Ms-2 release. The synthetic stream is
+The M\&Ms-2 dataset is documented by \textcite{martinisla2023mnms2} and contains
+the 360 patients used here. The synthetic stream is
 generated from the UK Digital Heart Project SSM: of its 100 modes, the first 32
 already capture 99\% of the shape variance, so we sample within that sub-space.
 Drawing shape coefficients under the Mahalanobis bound of
 \cref{eq:ssm-latent-constraint} and rejecting implausible shapes yields 1300
 accepted meshes out of 2048 candidates (63\%). The shape model is likewise open
 and free: it is distributed as a public repository by the UK Digital Heart
-Project,\footnote{\url{https://github.com/UK-Digital-Heart-Project/Statistical-Shape-Model}}
-needs no access application, and the authors ask only that the atlas papers be
+Project, needs no access application, and the authors ask only that the atlas papers be
 cited. None of the three sources used in this work therefore required a licence
 fee.
 

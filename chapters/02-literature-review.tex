@@ -188,12 +188,13 @@ is available rather than remaining local to one slice.
 ACDC provides expert ED and ES labels across five diagnostic groups, including
 normal and hypertrophic ventricles \parencite{bernard2018acdc}. Its phase and
 diagnostic variation make it useful for testing whether a reconstruction retains
-contraction-related and abnormal shape differences. The M\&Ms challenge extends
-evaluation across centres, scanner vendors, and diseases, showing that
-performance on one acquisition source does not guarantee transfer to another
-\parencite{campello2021mnms}. For reconstruction, this means that a plausible
-surface on one cohort is insufficient evidence of generalisation: acquisition
-variation affects the contours from which the entire surface is inferred.
+contraction-related and abnormal shape differences. The M\&Ms-2 challenge
+focuses on right-ventricular segmentation and extends evaluation across centres,
+scanner vendors, and diseases \parencite{martinisla2023mnms2}. For
+reconstruction, its multi-source design shows that performance on one acquisition
+source does not guarantee transfer to another. A plausible surface on one cohort
+is insufficient evidence of generalisation because acquisition variation affects
+the contours from which the entire surface is inferred.
 
 At population scale, the UK Biobank provides a large and standardised cardiac
 MRI resource \parencite{sudlow2015ukbiobank}. Automated segmentation of this
@@ -277,11 +278,12 @@ cardiac phase under study. An ED-only SSM cannot provide equivalent supervision
 for ES without imposing a diastolic shape space on systolic observations.
 
 RBF reconstruction represents the surface as the zero level set of a smooth
-function fitted to scattered points. Surface samples are assigned zero values,
-while additional samples displaced to either side of the contour provide the
-sign needed to distinguish interior from exterior. The resulting implicit field
-can be evaluated on a regular grid and converted to a mesh with marching cubes
-\parencite{carr2001rbf,lorensen1987marchingcubes}. Unlike SSM fitting, this
+function fitted to scattered points \parencite{carr2001rbf}. Surface samples are
+assigned zero values, while additional samples displaced to either side of the
+contour provide the sign needed to distinguish interior from exterior. The
+resulting implicit field can be evaluated on a regular grid. Marching Cubes then
+extracts a mesh from the sampled field \parencite{lorensen1987marchingcubes}.
+Unlike SSM fitting, this
 procedure does not require a phase-specific template or fixed mesh
 correspondence. Unlike linear lofting, it defines the intervening geometry as a
 smooth field rather than as strips between paired vertices. Its limitations are
@@ -403,10 +405,12 @@ common transmural path. The method is computationally efficient ($O(V)$ via the
 Saito--Toriwaki algorithm) but limited by voxel resolution.
 
 Partial differential equation (PDE)-based methods are widely used for transmural
-thickness estimation. \textcite{jones2000laplace} solved Laplace's equation
-between the two tissue boundaries and used the resulting non-intersecting field
-lines to establish corresponding paths. Thickness is obtained from the path
-length between the boundaries along these streamlines.
+thickness estimation. In a method developed for cortical rather than cardiac
+anatomy, \textcite{jones2000laplace} solved Laplace's equation between the two
+tissue boundaries and used the resulting non-intersecting field lines to
+establish corresponding paths. The same geometric principle can be transferred
+to myocardial boundaries, with thickness obtained from the path length between
+the boundaries along these streamlines.
 \textcite{yezzi2003thickness} formulated an Eulerian PDE method that computes
 distances propagated from both boundaries along the Laplacian field. Their sum
 gives the local tissue thickness.
