@@ -178,7 +178,9 @@ Modern segmentation networks can identify endocardial and epicardial boundaries
 reliably on the acquired slices. U-Net established the encoder--decoder pattern
 used by many medical segmentation systems, while nnU-Net showed that much of
 their configuration can be adapted automatically to a dataset
-\parencite{ronneberger2015unet,isensee2021nnunet}. Although both methods improve
+\parencite{ronneberger2015unet,isensee2021nnunet}. 
+
+Although both methods improve
 the observed contours, they still optimise agreement on sampled image planes.
 High slice-wise overlap can therefore coexist with uncertain through-plane
 geometry. Moreover, because the contours become constraints on the reconstructed
@@ -283,6 +285,7 @@ assigned zero values, while additional samples displaced to either side of the
 contour provide the sign needed to distinguish interior from exterior. The
 resulting implicit field can be evaluated on a regular grid. Marching Cubes then
 extracts a mesh from the sampled field \parencite{lorensen1987marchingcubes}.
+
 Unlike SSM fitting, this
 procedure does not require a phase-specific template or fixed mesh
 correspondence. Unlike linear lofting, it defines the intervening geometry as a
@@ -423,6 +426,15 @@ to the initial estimate. Regularisation produces spatially smooth thickness maps
 suitable for bullseye visualisation, at the cost of potentially attenuating real
 local variation when the smoothing parameter is too aggressive.
 
+Wall-thickness values depend on both the measurement method and the reconstructed
+surfaces. Smoothing may make a measurement more stable, but it can also change
+the distance between the endocardial and epicardial surfaces. Similarly, an
+irregular surface can create thickness variation that does not reflect the
+myocardium. For this reason, thickness methods should be compared on the same
+surfaces. Reconstructions should also be compared using the same thickness
+method. The present work evaluates both reconstruction consistency and agreement
+between thickness methods.
+
 \subsection{Summary and research gap}
 \label{subsec:research-gap}
 
@@ -441,3 +453,10 @@ clinical observations and SSM-derived synthetic geometries. Such an integrated
 framework would combine the complementary strengths of population-based shape
 priors, continuous implicit representations, and clinical contour data while
 supporting wall-thickness measurement beyond the acquired slices.
+
+There is also an evaluation gap. When no complete three-dimensional reference is
+available, contour agreement only tests the acquired slices. It cannot validate
+the reconstructed shape between slices. Evaluation should therefore distinguish
+contour fidelity from agreement between reconstruction methods. Thickness values
+must also be interpreted as measurements on an inferred wall, not as direct
+observations. These principles guide the evaluation in the following chapters.

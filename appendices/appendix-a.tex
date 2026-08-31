@@ -65,6 +65,24 @@ RBF mesh-preparation operations, and model configuration described in
 
 \begin{table}[htbp]
 	\centering
+	\caption[Training-loss terms]{Purpose of the five training-loss terms.}
+	\label{tab:loss-terms}
+	\small
+	\begin{tabular}{p{0.19\textwidth} p{0.34\textwidth} p{0.35\textwidth}}
+		\toprule
+		Term & Purpose & Effect on reconstruction \\
+		\midrule
+		$\mathcal{L}_{\mathrm{surf}}$ & Fits zero-level sets to surface samples & Places endocardial and epicardial surfaces on the target meshes \\
+		$\mathcal{L}_{\mathrm{SDF}}$ & Fits cached query-point distances & Provides dense volumetric supervision \\
+		$\mathcal{L}_{\mathrm{eik}}$ & Encourages $\lVert \nabla f \rVert = 1$ & Regularises the decoder as a signed-distance field \\
+		$\mathcal{L}_{\mathrm{off}}$ & Repels off-surface points from zero & Reduces spurious zero crossings away from the myocardium \\
+		$\mathcal{L}_{\mathrm{WT}}$ & Fits the predicted wall offset to wall targets & Constrains separation of the predicted fields \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+	\centering
 	\caption[Model architecture settings]{Main architecture settings of the
 	model.}
 	\label{tab:model-hyperparameters}

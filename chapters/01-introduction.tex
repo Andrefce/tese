@@ -8,12 +8,6 @@
 \label{ch:introduction}
 
 \noindent
-This chapter introduces the clinical and technical motivation for reconstructing
-three-dimensional left-ventricular geometry from sparse cardiac magnetic
-resonance imaging (MRI). It defines the reconstruction problem, presents the
-research questions and objectives, and summarises the main contributions of
-this thesis.
-
 \section{Motivation}
 
 \label{sec:motivation}
@@ -39,11 +33,11 @@ limited number of discrete observations.
 
 This distinction becomes important when measurements are extended beyond the
 acquired slices. Myocardial wall thickness, for example, is not simply a
-property of isolated contours. It varies across the ventricle and can reflect
+property of isolated contours. It varies across the ventricle (local thickness) and can reflect
 changes in cardiac structure, including myocardial hypertrophy
 \parencite{grossman1974wallthickness}. Estimating such quantities from sparse
 observations therefore depends not only on the accuracy of the segmentation,
-but also on how well the underlying three-dimensional geometry is represented.
+but also on how well the underlying three-dimensional geometry is represented. 
 
 A continuous reconstruction can provide a more coherent description of the
 LV and enable measurements in regions that are not directly observed. Such
@@ -134,18 +128,16 @@ quantities relevant to cardiac analysis.
 This thesis addresses the following research questions:
 
 \begin{enumerate}[label=\textbf{RQ\arabic*.}]
-\item To what extent can the proposed model reconstruct continuous,
-watertight endocardial and epicardial LV surfaces from sparse SAX contours,
-how closely does it follow the observed contours, and how far does it agree
-with conventional implicit and shape-model reconstructions of the same
-contours?
+\item To what extent can a continuous, watertight three-dimensional surface
+of an anatomical structure be reconstructed from sparse two-dimensional
+contours, and how does this reconstruction compare with conventional
+implicit and shape-model approaches applied to the same contours?
 
-\item Can the phase-conditioned model represent end-diastolic and
-end-systolic LV geometry while maintaining a positive myocardial-wall
-separation between the endocardial and epicardial surfaces?
+\item Can a single model represent multiple physiological states of the
+same structure while preserving a physically plausible separation between
+its inner and outer surfaces?
 
-\item To what extent do local and regional wall-thickness measurements on
-the reconstructed geometry agree with those obtained from
-RBF-derived clinical geometry, and how does that agreement depend on the
-measurement method?
+\item To what extent do measurements derived from the reconstructed
+geometry agree with those obtained from reference clinical geometry, and
+how does that agreement depend on the measurement method?
 \end{enumerate}
