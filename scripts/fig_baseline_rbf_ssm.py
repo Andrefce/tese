@@ -129,13 +129,31 @@ def _evaluate_rbf(interpolator: RBFInterpolator, points: np.ndarray,
         return scipy_path()
 
     values = np.empty(len(points), dtype=np.float64)
-    blocks = [(start, min(start + chunk, len(points)))
-              for start in range(0, len(points), chunk)]
-    with ThreadPoolExecutor(max_workers=min(4, os.cpu_count() or 1)) as pool:
-        # NumPy releases the GIL inside these element-wise kernels.
-        pool.map(lambda span: values.__setitem__(
-            slice(*span), block(points[span[0]:span[1]])), blocks)
-    return values
+
+    def fill(span: tuple[int, int]) -> None:
+        values[slice(*span)] = block(points[span[0]:span[1]])
+
+    # Each block materialises a (chunk x centres) matrix, so the peak scales with
+    # chunk size times the worker count. Halving both on MemoryError keeps the
+    # values identical -- blocks are row-independent -- and only trades speed.
+    workers = min(4, os.cpu_count() or 1)
+    while True:
+        blocks = [(start, min(start + chunk, len(points)))
+                  for start in range(0, len(points), chunk)]
+        try:
+            with ThreadPoolExecutor(max_workers=workers) as pool:
+                # NumPy releases the GIL inside these element-wise kernels. The
+                # results must be consumed: ThreadPoolExecutor.map is lazy, so an
+                # exception in a block would otherwise be discarded and leave that
+                # slice of `values` holding uninitialised np.empty data.
+                for _ in pool.map(fill, blocks):
+                    pass
+            return values
+        except MemoryError:
+            if chunk <= 256 and workers == 1:
+                return scipy_path()
+            workers = max(1, workers // 2)
+            chunk = max(256, chunk // 2)
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -222,15 +240,38 @@ def read_vtk_polydata(path: Path) -> tuple[np.ndarray, np.ndarray]:
     return vertices, np.asarray(faces, dtype=np.int64)
 
 
+def _load_csv_matrix(path: Path) -> np.ndarray:
+    """Read a numeric csv.gz into an array, caching the parse as .npy.
+
+    ``np.genfromtxt`` materialises every field as a Python object before
+    building the array, which needs gigabytes for the 66129x100 mode matrix and
+    raises MemoryError on a small machine. ``pandas.read_csv`` streams the same
+    values into a float64 buffer, and the .npy sidecar makes later loads a
+    single mmap-able read instead of re-parsing 31 MB of gzip.
+    """
+    cache = path.with_suffix(path.suffix + ".npy")
+    if cache.exists() and cache.stat().st_mtime >= path.stat().st_mtime:
+        return np.load(cache)
+
+    import pandas as pd
+
+    values = pd.read_csv(path, header=None, dtype=np.float64).to_numpy()
+    if values.ndim == 2 and values.shape[1] == 1:
+        values = values[:, 0]
+    try:
+        np.save(cache, values)
+    except OSError:                              # a read-only cache is not fatal
+        pass
+    return values
+
+
 def load_shape_model(phase: str, n_modes: int = 25) -> dict:
     """Mean LV shape, PCA basis, and the endo/epi vertex split of the sheets."""
     ssm = ensure_ssm_dir()
     tag = "ED" if phase.upper() == "ED" else "ES"
     mean, faces = read_vtk_polydata(ssm / f"LV_{tag}_mean.vtk")
-    modes = np.genfromtxt(ssm / f"LV_{tag}_pc_100_modes.csv.gz",
-                          delimiter=",")[:, :n_modes]
-    variance = np.genfromtxt(ssm / f"LV_{tag}_var_100_modes.csv.gz",
-                             delimiter=",")[:n_modes]
+    modes = _load_csv_matrix(ssm / f"LV_{tag}_pc_100_modes.csv.gz")[:, :n_modes]
+    variance = _load_csv_matrix(ssm / f"LV_{tag}_var_100_modes.csv.gz")[:n_modes]
     basis = modes.reshape(len(mean), 3, n_modes) * np.sqrt(variance)  # b in std units
 
     template = trimesh.Trimesh(mean, faces, process=False)

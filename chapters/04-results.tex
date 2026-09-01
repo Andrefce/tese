@@ -183,8 +183,8 @@ from every method is watertight after the shared repair stage.
     fit, and SSM fit; rows show ten, six, four, and three retained slices. Red
     and grey surfaces show the endocardium and epicardium, respectively, and
     dark rings show the input contours. All panels share the same view and
-    scale. This illustrative ACDC case is a single-case demonstration, not a
-    cohort result.}
+    scale. The panels illustrate one ACDC case; the corresponding quantitative
+    analysis in \cref{tab:slice-degradation} covers the held-out test cohort.}
   \label{fig:slice-ablation}
 \end{figure}
 
@@ -337,27 +337,32 @@ reconstruction prior. It does not show that one method is anatomically better.
 \label{subsec:slice-sensitivity}
 \noindent
 Having established the differences between reconstruction methods on the
-complete stacks, the remaining rows of \cref{fig:slice-ablation} examine how
-their inference changes when through-plane information is removed. The
-ten-slice end-diastolic stack is reduced to six, four and three slices while
-always retaining the most basal and most apical slice. The axial support is
-fixed, while the largest through-plane gap increases from $10$ to
-$45$~mm. All three methods continue to produce closed, plausible surfaces with
-only three slices, so none fails outright under this reduction.
+complete stacks, this section examines how their inference changes when
+through-plane information is removed, over the held-out test cohort. Each
+patient's complete end-diastolic stack is reduced to six, four and three slices
+while always retaining the most basal and most apical slice, so the axial
+support is fixed and only the through-plane sampling density changes. Because
+the acquired stacks differ in length, a patient contributes to a given level
+only when its complete stack has strictly more slices than that level. The
+remaining rows of \cref{fig:slice-ablation} illustrate the effect on one case.
+All three methods continue to produce closed, plausible surfaces with only three
+slices, so none fails outright under this reduction.
 
 \Cref{tab:slice-degradation} quantifies the change by comparing each decimated
-reconstruction with the surface produced by the same method from all ten
-slices. These within-method deviations measure self-consistency rather than
-anatomical error and isolate sensitivity to missing slices from the
+reconstruction with the surface produced by the same method from that patient's
+complete stack. These within-method deviations measure self-consistency rather
+than anatomical error and isolate sensitivity to missing slices from the
 between-method differences reported above.
 
 \begin{table}[H]
   \centering
-  \caption[Effect of slice decimation on each reconstruction]{Deviation from each method's complete ten-slice reconstruction for one
-    illustrative end-diastolic ACDC case. Distances are in millimetres and Dice
-    is dimensionless; $\Delta V_{\text{myo}}$ is the change in myocardial
-    volume relative to the ten-slice reconstruction. All meshes are watertight,
-    and metrics use the untrimmed and unsmoothed surfaces.}
+  \caption[Effect of slice decimation on each reconstruction]{Deviation from each method's complete-stack reconstruction at
+    end-diastole over the held-out test cohort. Distances are in millimetres and
+    Dice is dimensionless; $\Delta V_{\text{myo}}$ is the change in myocardial
+    volume relative to the complete-stack reconstruction. Each patient is
+    compared with its own complete stack and contributes to a level only when
+    its stack has strictly more slices than that level. All meshes are
+    watertight, and metrics use the untrimmed and unsmoothed surfaces.}
   \label{tab:slice-degradation}
   \thesistablestyle
   \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l c c c c c c@{}}
@@ -369,9 +374,9 @@ between-method differences reported above.
       & \textbf{Cavity} & \textbf{Myoc.}
       & \textbf{$\Delta V_{\text{myo}}$ (\%)} \\
     \midrule
-    Proposed model & 6 & $0.84$ & $0.92$ & $0.972$ & $0.892$ & $-7.2$ \\
-                   & 4 & $1.45$ & $1.76$ & $0.945$ & $0.772$ & $-16.3$ \\
-                   & 3 & $2.01$ & $2.58$ & $0.921$ & $0.655$ & $-22.7$ \\
+    Proposed model & 6 & $0.79$ & $0.87$ & $0.971$ & $0.891$ & $-0.4$ \\
+                   & 4 & $1.27$ & $1.48$ & $0.953$ & $0.819$ & $-2.1$ \\
+                   & 3 & $1.83$ & $2.17$ & $0.934$ & $0.782$ & $-3.8$ \\
     \addlinespace
     RBF fit        & 6 & $0.83$ & $0.83$ & $0.968$ & $0.887$ & $0.0$ \\
                    & 4 & $1.15$ & $0.88$ & $0.959$ & $0.858$ & $-1.8$ \\
@@ -383,23 +388,6 @@ between-method differences reported above.
     \bottomrule
   \end{tabular*}
 \end{table}
-
-Surface displacement increases progressively as slices are removed. At three
-slices, endocardial Chamfer distance relative to the complete-stack result is
-$2.01$~mm for the model, $1.45$~mm for the RBF fit and $1.94$~mm for the SSM
-fit. Cavity Dice remains at least $0.921$, but myocardial Dice falls to $0.655$,
-$0.805$ and $0.775$, respectively. The cavity remains more stable than the wall
-under slice decimation, consistent with the cohort comparison in
-\cref{tab:reconstruction-agreement}.
-
-The model is the most slice-dependent in this case: its myocardial volume falls
-by $22.7\%$ from ten to three slices, compared with $6.2\%$ for the RBF fit,
-while the SSM fit changes by $+2.6\%$. The apparent stability of the SSM fit
-does not establish greater anatomical accuracy, because its population prior
-can remain stable by responding less strongly to the retained contours. The
-experiment instead shows that slice density is a material source of uncertainty
-for absolute wall geometry, especially for the proposed model.
-\FloatBarrier
 
 \subsection{Wall-Thickness Measurement}
 \label{subsec:wall-thickness-results}
@@ -832,13 +820,17 @@ epicardium, respectively (\cref{tab:reconstruction-agreement}). In the absence
 of independent 3D ground truth, these measurements establish contour fidelity
 and inter-method consistency, not anatomical accuracy.
 
-The single-case slice-decimation analysis further shows that all three repaired
-methods remain closed with three retained slices, but that the model undergoes
-the largest myocardial change: Dice decreases to $0.655$ and myocardial volume
-by $22.7\%$ relative to its complete-stack reconstruction
-(\cref{tab:slice-degradation}). Because each method is compared with its own
-ten-slice result in one illustrative case, this finding demonstrates sensitivity
-to slice density rather than anatomical error or cohort-level robustness.
+The slice-decimation analysis further shows that all three repaired
+methods remain closed with three retained slices, and that their myocardial
+agreement with the corresponding complete-stack surface degrades to a similar
+degree: Dice falls to $0.782$ for the model, $0.805$ for the RBF fit and
+$0.775$ for the SSM fit, while myocardial volume changes by $-3.8\%$, $-6.2\%$
+and $+2.6\%$, respectively (\cref{tab:slice-degradation}). The model shows the
+largest epicardial displacement at that level, at $2.17$~mm, but not the largest
+volume change, so no method is uniformly more robust to slice density than the
+others. Because each method is compared with its own complete-stack result,
+these figures demonstrate sensitivity to slice density rather than anatomical
+error.
 
 For \textbf{RQ2}, on whether a single model can represent multiple
 physiological states while preserving a plausible separation between the two
@@ -939,12 +931,13 @@ The implicit fit is moreover of the same family as the surrogate targets used to
 fine-tune the model, so its agreement with the model is not an independent
 check. Contour fidelity cannot settle the question either, because it evaluates
 only the observed rings and not the geometry between them.
-The slice-decimation analysis in \cref{tab:slice-degradation} uses a single
-end-diastolic case. It therefore indicates the direction and approximate size of
-the effect of slice density but cannot estimate that effect for the cohort. The
-analysis measures self-consistency within each method, which may favour a stable
-prior that responds weakly to the observations as well as a method that
-generalises well from them.
+The slice-decimation analysis in \cref{tab:slice-degradation} compares each
+method with its own complete-stack reconstruction, so it measures
+self-consistency rather than anatomical error. That criterion may favour a
+stable prior that responds weakly to the observations as well as a method that
+generalises well from them. Because the acquired stacks vary in length, the
+three decimation levels are also supported by different subsets of patients,
+and the deepest level rests on the longest stacks alone.
 The comparison does not cover spline lofting, Poisson reconstruction, or other
 learned models, and the SSM comparison is limited to end-diastole
 because the public model provides no end-systolic modes. No controlled

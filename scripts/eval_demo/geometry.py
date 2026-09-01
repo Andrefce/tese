@@ -606,13 +606,14 @@ def build_voxel_geometry(seg: Segmentation, iso_pitch: float = 1.0,
 
 
 def build_model_geometry(net, cfg, contours: dict, grid_res: int = 96,
-                         phase_val: float = 0.0, taubin_iters: int = 12) -> dict:
+                         phase_val: float = 0.0, taubin_iters: int = 12,
+                         batch: int = 65536) -> dict:
     """CardioSDF surfaces: encode contours -> dense SDF -> cleaned marching cubes."""
     from cardiosdf_model import dense_sdf_grid, encode_contours
 
     z = encode_contours(net, contours["xyz"], contours["tissue"], cfg, phase_val)
     sdf_e, sdf_p, delta, lo, hi, voxel = dense_sdf_grid(
-        net, z, contours["xyz"], cfg, grid_res=grid_res)
+        net, z, contours["xyz"], cfg, grid_res=grid_res, batch=batch)
 
     iso = float(cfg.get("iso_level", 0.0))
     meshes = {}
