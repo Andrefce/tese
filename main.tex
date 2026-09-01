@@ -43,7 +43,12 @@
 \usepackage{longtable}
 \usepackage{caption}
 \captionsetup{font={footnotesize,singlespacing}, labelfont=bf}
-\captionsetup[table]{font={small,singlespacing}, justification=centering}
+\captionsetup[table]{
+  font={small,singlespacing},
+  justification=raggedright,
+  singlelinecheck=false,
+  skip=4pt
+}
 \newcommand{\thesistablestyle}{%
   \small\singlespacing
   \renewcommand{\arraystretch}{1.15}%

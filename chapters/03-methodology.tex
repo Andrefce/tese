@@ -27,8 +27,6 @@ use the same contour representation, allowing the model to receive a consistent
 form of sparse observation throughout training.
 
 \begin{figure}[H]
-
-```
 \centering
 \includegraphics[width=0.85\linewidth]{cardiosdf_pipeline_visual_flow}
 
@@ -40,8 +38,6 @@ outputs. ACDC data are shown in panels~(a)--(b); panels~(c)--(e) use
 illustrative SSM-derived geometry rather than reported results.}
 
 \label{fig:methodology-pipeline}
-```
-
 \end{figure}
 
 Reconstructing the endocardium and epicardium as unrelated surfaces could
@@ -864,8 +860,7 @@ where $s$ is the scale that maps normalised coordinates back to millimetres.
 The raw analytic offset is predicted directly rather than measured between two
 meshes, and it is not necessarily a Euclidean transmural separation. For
 visualisation, it is calibrated separately for each phase by
-$o_{\mathrm{cal}}=\alpha
-o_{\mathrm{raw}}$, where $\alpha$ is the ratio between the mean
+$o_{\mathrm{cal}} = \alpha\,o_{\mathrm{raw}}$, where $\alpha$ is the ratio between the mean
 segmentation-distance-transform reference and the mean raw analytic offset.
 The calibration fixes the mean magnitude by construction and is not an
 independent test of anatomical accuracy. Wall thickness is instead estimated on

@@ -133,8 +133,9 @@ geometric prior or synthetic training examples, but remain limited by the
 topology and anatomical variation represented in the source atlas.
 
 Implicit methods offer a different compromise. DeepSDF and Occupancy Networks
-show that geometry can be represented continuously and converted to a mesh at a
-chosen resolution \parencite{deepsdf2019,occupancynetworks2019,lorensen1987marchingcubes}.
+represent geometry as continuous implicit fields
+\parencite{occupancynetworks2019,deepsdf2019}, from which meshes can be extracted
+using methods such as Marching Cubes \parencite{lorensen1987marchingcubes}.
 Work on Eikonal regularisation and Fourier features further addresses distance-field
 consistency and the recovery of local spatial variation
 \parencite{gropp2020igr,tancik2020fourierfeatures}. By improving field
@@ -167,7 +168,7 @@ derived from the reconstructed wall.
 Short-axis (SAX) cine MRI is the standard protocol for left-ventricle (LV)
 evaluation, producing 2D slices perpendicular to the long axis with high
 in-plane resolution (1--2~mm) but large inter-slice gaps (6--10~mm)
-\parencite{petitjean2011segmentationreview,cerqueira2002segmentation}. The
+\parencite{petitjean2011segmentationreview}. The
 resulting anisotropy creates the central reconstruction problem: the observed
 contours are detailed within each slice, but the geometry between slices,
 especially near the apex and base, must be inferred. The AHA 17-segment
@@ -332,15 +333,15 @@ implicit representation that reconstructs the left and right ventricles,
 including the endocardial and epicardial boundaries of the LV myocardium. The
 study is closely related to sparse-contour reconstruction because both
 approaches seek continuous cardiac shape from incomplete observations.
-Br{'a}s et al. use image data directly, whereas contour-based approaches
+Br\'as et al. use image data directly, whereas contour-based approaches
 operate on segmented point observations.
 
-\textcite{muffoletto2026nihc} also reconstruct three-dimensional cardiac shape
+\textcite{muffoletto2025nihc} also reconstruct three-dimensional cardiac shape
 from sparse segmentations with a neural implicit representation. Their method
 uses a learned biventricular shape prior and includes both SAX and long-axis
-views. It is therefore broader than LV-focused SDF reconstruction. The study
-does not report a public dataset or code release, which limits its direct
-reproducibility and comparison with other approaches.
+views. It is therefore broader than LV-focused SDF reconstruction. At the time
+of writing, the authors provide a public project repository, although a complete
+code and dataset release could not be verified.
 
 The INR literature also provides mechanisms relevant to thin cardiac anatomy.
 Fourier features improve the recovery of local spatial variation, while Eikonal
@@ -389,12 +390,12 @@ nearest point may lie tangentially rather than across the wall.
 
 Ray-based methods address this limitation by casting a ray from each endocardial
 vertex along its surface normal until it intersects the epicardium. The
-intersection is computed via the M"oller--Trumbore algorithm, accelerated with
+intersection is computed via the M\"oller--Trumbore algorithm, accelerated with
 a Bounding Volume Hierarchy (BVH) to $O(\log F)$ per query. Measuring along the
 surface normal better approximates a transmural direction but remains sensitive
 to normal noise: a slight rotation can produce a spurious long or short ray. The
 Shape Diameter Function variant improves robustness by casting a cone of $K$
-rays (typically $K{=}7$) at a half-angle of $30^{\circ}$ around the normal and
+rays (typically $K = 7$) at a half-angle of $30^{\circ}$ around the normal and
 reporting the median intersection distance, effectively filtering outlier hits
 caused by local mesh irregularities.
 
