@@ -54,7 +54,9 @@
   \renewcommand{\arraystretch}{1.15}%
 }
 \usepackage[expansion=false]{microtype}
-\usepackage{csquotes}
+% Body language is English; without this csquotes inherits babel's main
+% language (portuguese) and typesets bibliography titles with guillemets.
+\usepackage[style=american]{csquotes}
 \usepackage{xcolor}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta, positioning, calc}
@@ -80,10 +82,10 @@
 % --- Bibliography (biblatex + biber) -------------------------
 \usepackage[
   backend     = biber,
-  style       = apa,         % ISCTE-IUL default for CS theses; switch with care
-  sorting     = nyt,         % APA convention: name, year, title
-  maxbibnames = 20,          % APA 7: list up to 20 authors in the bibliography
-  minbibnames = 20,
+  style       = ieee,        % IEEE numeric citations and reference list
+  sorting     = none,        % IEEE convention: order of first citation
+  maxbibnames = 6,           % IEEE: "et al." after six authors
+  minbibnames = 3,
   giveninits  = true,
   url         = false,
   doi         = true,
@@ -91,10 +93,11 @@
 ]{biblatex}
 \addbibresource{bibliography/references.bib}
 
-% APA 7: double-spaced entries with a 0.5-inch hanging indent and no blank lines.
-\renewcommand*{\bibfont}{\normalfont\normalsize\doublespacing}
-\setlength{\bibitemsep}{0pt}
-\setlength{\bibhang}{1.27cm}
+% IEEE: single-spaced entries with a small gap between references.
+% \setstretch, not \singlespacing: the latter emits a \vskip that breaks the
+% biblatex list and leaks the entry labels out of the bibliography.
+\renewcommand*{\bibfont}{\normalfont\normalsize\setstretch{1}}
+\setlength{\bibitemsep}{0.5\baselineskip}
 
 % --- Cross-references (load AFTER hyperref) ------------------
 \usepackage[hidelinks]{hyperref}
@@ -235,6 +238,9 @@
 % ============================================================
 \backmatter
 
+% american, not english: babel's main language is portuguese, and the American
+% dialect is what gives IEEE strings and punctuation inside quotation marks.
+\selectlanguage{american}
 \renewcommand{\bibname}{Bibliography}
 \printbibliography[title={Bibliography}]
 
