@@ -6,62 +6,169 @@
 \label{ch:conclusions}
 
 \noindent
-This thesis investigated the reconstruction of continuous three-dimensional
-left ventricular (LV) geometry from sparse short-axis (SAX) contours with an
-implicit neural representation. It also examined whether the reconstructed
-surfaces support computational estimates of myocardial wall thickness. The
-evaluation establishes what the proposed approach achieves and where the
-present evidence remains limited.
+This chapter closes the thesis. It summarises what was built and why, answers
+the three research questions of \cref{sec:research-questions} on the evidence
+of \cref{ch:results}, states the contributions, delimits the claims, and sets
+out the work that should follow.
+
+\section{Summary of the Work}
+\label{sec:conclusion-summary}
+\noindent
+The thesis started from a geometric limitation of short-axis (SAX) cardiac MRI.
+Each slice observes the left ventricle (LV) finely, at an in-plane pixel size
+below $2$~mm, but the slices lie several millimetres apart, so the
+three-dimensional wall on which clinical measurement depends is never observed
+directly and has to be inferred. We treated that inference as the learning of a
+continuous signed-distance representation. A phase-conditioned implicit model
+was pre-trained on synthetic shapes sampled from a statistical shape model
+(SSM) and fine-tuned on end-diastolic (ED) and end-systolic (ES) surfaces fitted
+to ACDC and M\&Ms-2 segmentations. The model reads the sparse contour rings
+through a global PointNet pathway and a local feature grid, predicts the
+endocardial signed-distance field, and defines the epicardial field as that
+field minus a strictly positive, directly supervised offset, so the two surfaces
+cannot cross. Its output was compared with a radial-basis-function (RBF)
+implicit fit and an SSM fit of the same rings, and myocardial wall thickness was
+measured on all three geometries with four local estimators, localised on the
+AHA 17-segment model, and contrasted between normal and hypertrophic patients.
 
 \section{Answers to the Research Questions}
 \label{sec:conclusion-research-questions}
 \noindent
-For \textbf{RQ1}, the model reconstructs continuous endocardial and epicardial
-surfaces from the held-out ACDC and M\&Ms-2 contours, with contour fidelity near
-the in-plane image resolution and watertightness after repair. Differences among
-the three reconstruction methods show that the completed wall geometry remains
-sensitive to the chosen prior.
+\textbf{RQ1} asked to what extent a continuous, watertight surface can be
+reconstructed from sparse contours, and how such a reconstruction compares with
+conventional implicit and shape-model alternatives. On the held-out ACDC and
+M\&Ms-2 test patients, the model reproduces its input rings to within
+$1.50$~mm on the endocardium and $1.96$~mm on the epicardium, which is the order
+of the in-plane pixel size, and every surface it produces is watertight after
+the shared repair stage. Its geometry lies closer to the RBF interpolant
+(Chamfer distance $1.57$ and $1.90$~mm) than to the SSM fit ($2.08$ and
+$2.59$~mm), and it responds to pathology more evenly than the population prior:
+between the normal and hypertrophic subsets its mean contour distance moves from
+$1.45$ to $1.60$~mm, whereas that of the SSM fit moves from $1.42$ to
+$2.63$~mm. The comparison also shows where the three priors diverge. They agree
+on the cavity, with a Dice coefficient of $0.88$ to $0.91$ and enclosed volumes
+of $119$, $119$ and $127$~ml, but not on the wall, where the Dice coefficient
+falls to $0.69$ to $0.77$ and the myocardial volume ranges from $88$ to
+$136$~ml. Removing slices down to three per stack degrades all three methods by
+a similar amount without breaking any of them. A closed, contour-faithful
+surface can therefore be recovered from sparse SAX rings, but the wall
+completed between the slices remains a property of the prior rather than of the
+data, and the spread between methods is the honest measure of that uncertainty.
 
-For \textbf{RQ2}, one phase-conditioned model represents both surfaces at ED and
-ES, and the reconstructed wall thickens in all seventeen AHA segments. The
-evaluation does not report pointwise minimum separation or surface-intersection
-checks, so it establishes phase-conditioned representation rather than positive
-separation at every point or phase-specific accuracy.
+\textbf{RQ2} asked whether a single model can represent multiple physiological
+states while preserving a physically plausible separation between the inner
+and outer surfaces. One phase-conditioned network reconstructs both ED and ES
+geometry, and because the epicardial field is the endocardial field minus a
+positive offset, the ordering of the two surfaces is fixed by the architecture
+rather than checked after the fact. On the reconstructed surfaces, the
+Laplace-derived wall thickness rises from $9.21$~mm at ED to $13.87$~mm at ES
+over the ACDC pathology subset, and all seventeen AHA segments thicken, with
+the smallest relative change at the base and the largest in the mid-cavity and
+apical segments. The evaluation did not, however, measure a pointwise minimum
+separation on the extracted meshes, test for intersections after repair, or
+report the ED--ES change in cavity volume, and the public SSM offers no ES
+modes against which the systolic geometry could be compared. RQ2 therefore
+receives a qualified answer: the model represents both phases with a wall that
+thickens consistently between them, but positive separation is established by
+construction of the fields and by regional means, not verified at every point
+of the output.
 
-For \textbf{RQ3}, field-based estimates on the proposed and RBF-derived
-geometries preserve similar between-patient variation but differ in absolute
-scale, while the cone-ray estimator diverges more strongly. Wall-thickness
-values therefore depend on both the reconstruction prior and the measurement
-path.
+\textbf{RQ3} asked how closely measurements derived from the reconstructed
+geometry agree with those from reference clinical geometry, and how that
+agreement depends on the measurement method. Both factors matter, and they act
+in different ways. With the estimator held fixed, the reconstruction prior
+shifts the absolute scale of the wall: patient-level mean thickness on the
+model correlates with that on the RBF fit at $r = 0.99$ for the three non-ray
+estimators, yet is $0.82$ to $1.16$~mm thicker, and against the SSM fit the
+correlation falls to $0.72$ to $0.77$ with a bias of $2.53$ to $2.91$~mm. With
+the geometry held fixed, the Yezzi--Prince method and the EDT boundary sum
+agree with the Laplace field to within a bias below $1$~mm and an intraclass
+correlation of $0.77$, whereas the SDF cone-ray estimator is biased by
+$+3.31$~mm with limits of agreement of $\pm 12.74$~mm and an intraclass
+correlation of $0.28$, because a straight ray leaves a curved wall where a
+streamline does not. Strong correlation between geometries thus does not imply
+agreement in millimetres; the reconstruction prior and the measurement path are
+separate sources of offset of comparable size, and path-following estimators
+are the appropriate choice on a curved wall. Because the RBF fit is a
+smooth-surface comparator rather than an anatomical reference, these figures
+bound the reproducibility of the measurement, not its accuracy.
+
+The pathology-stratified analysis adds that the reconstructed geometry retains
+patient-specific variation instead of collapsing towards an average shape. The
+hypertrophic group is thicker in every AHA segment; its patient-level mean ED
+thickness exceeds that of the normal group by $3.67$~mm (95\% CI
+$[2.54,\ 4.67]$) and its thickest segment by $5.37$~mm ($[4.11,\ 6.56]$), both
+with large effect sizes, whereas relative systolic thickening does not separate
+the groups. These are descriptive separations within the model output on ten
+hypertrophic patients, not a diagnostic result.
 
 \section{Contributions}
 \label{sec:conclusion-contributions}
 \noindent
-The first contribution is a common contour-and-surface data pipeline for
-synthetic LV shapes and clinical ED/ES segmentations. The second is a
-phase-conditioned implicit model that combines global and local contour
-features and couples the epicardial field to the endocardial field through a
-positive offset. The third is an evaluation framework that connects surface and
-volume metrics with four local thickness estimators, continuous 3D maps, AHA-17
-regional summaries, and patient-level NOR--HCM comparisons. Together, these
-components provide a reproducible way to study geometric completion and derived
-measurements from sparse SAX observations.
+The thesis makes three contributions. The first is a data pipeline that brings
+synthetic SSM meshes and clinical ED and ES segmentations from two public
+datasets into one sample format, with contour rings, surface samples, dense
+signed-distance supervision and wall-offset targets, so that a model can be
+pre-trained on population geometry and fine-tuned on patient data without a
+change of representation. The second is the phase-conditioned implicit model,
+whose encoder pools endocardial and epicardial evidence separately before
+merging it and complements the global code with a local feature grid read at
+every query point, and whose decoder couples the epicardial field to the
+endocardial field through a directly supervised positive offset. The third is
+an evaluation protocol for sparse-contour reconstruction in the absence of 3D
+ground truth: fidelity to the observed rings, symmetric agreement between
+differently motivated reconstructions, self-consistency under slice
+decimation, and a wall-thickness comparison that separates the effect of the
+geometry from the effect of the estimator before the values are localised on
+the AHA model and contrasted between patient groups. The protocol does not
+depend on this particular network, and its central finding, that reconstruction
+priors agree about the cavity and disagree about the wall, concerns the problem
+rather than the model.
+
+\section{Limitations}
+\label{sec:conclusion-limitations}
+\noindent
+The answers above hold within the limits set out in \cref{sec:threats}. No
+independent three-dimensional reference exists for these scans, so every
+geometric figure in the thesis measures fidelity to the rings or agreement
+between methods, never distance from the true anatomy, and every thickness
+figure describes reproducibility rather than validated measurement. Because the
+RBF comparator belongs to the same family as the surrogate surfaces used for
+fine-tuning, its close agreement with the model is partly expected. Twenty
+normal and ten hypertrophic ACDC patients support a directional observation
+about pathology and no more, and the seventeen segment values of each patient
+are repeated measures within one heart rather than independent samples. The SSM
+comparison is confined to end-diastole, no ablation isolates the contribution
+of synthetic pre-training, local conditioning, phase conditioning or the
+positive-offset coupling, and the pre-training loss history was not retained.
+What the evaluation offers is a careful characterisation of a working system,
+not a validation of it.
 
 \section{Future Work}
 \label{sec:conclusion-future-work}
 \noindent
-The first priority is evaluation against independent anatomical evidence, such
-as higher-resolution volumetric imaging or expert 3D surface and wall-thickness
-annotations, followed by validation on a larger external cohort. The second is
-a broader matched comparison, extending the present implicit and shape-model
-comparators with spline-based lofting and learned alternatives, using
-the same patients, physical spacing, repair procedure, and metrics, together
-with point-wise error maps that localise failures at the apex, base, and highly
-curved wall regions. The third is a targeted experimental study of synthetic
-pre-training, local conditioning, positive surface coupling, and wall-offset
-supervision. Extending phase conditioning beyond a binary ED/ES label would then
-allow temporal consistency across the full cardiac cycle to be investigated.
+The limitations fix the order of the next steps. The first need is an
+anatomical reference. Higher-resolution volumetric acquisitions, or expert
+three-dimensional surface and wall-thickness annotations on a larger external
+cohort, would turn the agreement figures reported here into accuracy figures
+and would show which of the three priors lies closest to the true wall. The
+second is a wider and fully matched comparison, adding spline lofting, Poisson
+reconstruction and learned alternatives under the same patients, physical
+spacing, repair procedure and metrics, with pointwise error maps that localise
+disagreement at the apex, the base and the most curved parts of the wall. The
+third is the controlled ablation that this thesis did not run: removing
+synthetic pre-training, local conditioning, phase conditioning and the
+positive-offset coupling in turn would show which components the behaviour
+depends on, and adding pointwise separation and intersection checks on the
+extracted meshes would complete the answer to RQ2. Replacing the binary phase
+label with a continuous position in the cardiac cycle would then allow the
+representation to be tested for coherence in time as well as continuity in
+space.
 
-Overall, the thesis establishes a reproducible framework for reconstructing
-paired LV surfaces and deriving locally resolved thickness summaries from sparse
-SAX contours.
+In sum, this thesis shows that a phase-conditioned implicit representation can
+turn a sparse SAX stack into closed, paired LV surfaces that honour the
+observed contours, thicken consistently between diastole and systole, and
+support locally resolved wall-thickness analysis. It also shows, through the
+disagreement between equally plausible reconstructions of the same rings, how
+much of the myocardial wall is still inferred rather than observed, and
+therefore how carefully any thickness derived from it must be read.
