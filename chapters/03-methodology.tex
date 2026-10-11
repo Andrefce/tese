@@ -24,24 +24,37 @@ endocardium, the inner boundary of the blood-filled cavity, and one on the
 epicardium, the outer boundary of the muscular wall, which is called the
 myocardium. Each stack is labelled as acquired at end-diastole (ED), when the
 ventricle is fullest, or at end-systole (ES), when it is most contracted.
-Panels~(a) and~(b) of \cref{fig:methodology-pipeline} show such a stack. The
+Panel~(b) of \cref{fig:methodology-pipeline} shows one segmented SAX image, and
+panel~(d) the stacks of rings obtained from all the planes of one ACDC case at
+ED and ES. The
 planes are several millimetres apart, so the wall is observed only where a
 plane cuts it and has to be inferred everywhere else. The required outputs are
 the two closed surfaces that pass through these rings and fill the gaps between
-them (panel~(c)), a thickness value at every point of the reconstructed wall
-(panel~(d)), and a summary of those values in the 17-segment layout of the
+them (panel~(e)), a thickness value at every point of the reconstructed wall
+(panel~(f)), and a summary of those values in the 17-segment layout of the
 American Heart Association (AHA), the standard division of the ventricle used
-in clinical reporting (panel~(e)).
+in clinical reporting (panel~(g)).
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.85\linewidth]{cardiosdf_pipeline_visual_flow}
+\includegraphics[width=\linewidth]{fig_methodology_pipeline}
 \vspace{2mm}
-\caption[End-to-end reconstruction and thickness-measurement pipeline]{Overview
-of the proposed approach, from sparse SAX observations to reconstructed LV
-surfaces and wall-thickness outputs. Panels~(a)--(b) show ACDC data;
-panels~(c)--(e) use illustrative SSM-derived geometry with a synthetic
-epicardium and do not show reported results.}
+\caption[Overview of the methodology]{Overview of the methodology.
+(a)~Stage~1 pre-trains the model on synthetic ED surfaces sampled from the
+statistical shape model and on the SAX contours sliced from them. (b)~Stage~2
+fine-tunes the same model, starting from the Stage~1 weights, on clinical ED
+and ES cases, whose contours come from expert SAX labels and whose target
+surfaces are smooth fits to those contours. (c)~The model reads the contour
+points together with the cardiac phase and returns the endocardial and
+epicardial surfaces; the long-axis section shows the reconstructed walls of one
+ED case, with dots where the observed rings cross the section plane.
+(d)--(g)~Inference on one ACDC case at ED (top) and ES (bottom): observed SAX
+contours, reconstructed surfaces with the epicardium partly cut away, local wall
+thickness measured with the Laplace field method, and its mean over each AHA-17
+segment, with the anterior wall at the top and the septum on the left. Both
+phases share one colour scale, and surfaces are smoothed for display only. The
+case in (b)--(g) illustrates the pipeline; cohort results are reported in
+\cref{ch:results}.}
 \label{fig:methodology-pipeline}
 \end{figure}
 
@@ -52,11 +65,12 @@ be constructed. Three-dimensional LV surfaces were therefore built from two
 sources. The first is a statistical shape model (SSM), a compact description
 of how ventricle shape varies across a population. Sampling it gives complete
 surfaces, which are used to pre-train the model, that is, to teach it the
-general shape of a ventricle before it sees any patient. The second source is
+general shape of a ventricle before it sees any patient (panel~(a)). The
+second source is
 the clinical contours of two public datasets, ACDC and M\&Ms-2, through which
 smooth surfaces are fitted. These give patient-specific ED and ES targets for
 fine-tuning, the second training stage, in which the model adapts to real
-patients.
+patients (panel~(b)).
 
 The second obstacle is that the two surfaces are not independent: the
 epicardium must lie outside the endocardium everywhere, including between the
@@ -75,7 +89,8 @@ established estimators are run on the same reconstructed surfaces, the most
 consistent one is selected, and only then are regional AHA-17 values computed.
 
 Most of the building blocks are established methods, and the chapter names
-their origin where each appears. The model has two parts: an encoder, which
+their origin where each appears. The model has two parts (panel~(c)): an
+encoder, which
 reads the contour points and condenses them into a short description, and a
 decoder, which turns that description into the two fields. The decoder is of
 the DeepSDF type \parencite{deepsdf2019}: given the description of a shape, it

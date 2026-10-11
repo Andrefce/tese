@@ -81,6 +81,27 @@ clinical contours with a conventional smooth-surface method based on radial
 basis functions (RBFs). The aim is not to replace clinical interpretation, but
 to investigate whether continuous geometric representations can provide a more
 consistent basis for quantitative analysis of sparse cardiac MRI.
+\Cref{fig:intro-overview} summarises this pipeline, from the segmented SAX
+slices of both phases to the reconstructed surfaces, their local
+wall-thickness maps, and a regional summary of systolic wall thickening.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.72\linewidth]{intro_pipeline_overview}
+	\vspace{2mm}
+	\caption[Overview of the proposed pipeline]{Overview of the proposed
+	pipeline. (a)~SAX cardiac MRI slices at end-diastole (ED) and end-systole
+	(ES), segmented into endocardium, epicardium, and right ventricle. (b)~The
+	segmented slices placed at their physical positions along the long axis
+	of the LV, forming a sparse stack. The LV contours of each phase are given
+	to the proposed model, which reconstructs continuous endocardial and
+	epicardial surfaces for (c)~ED and (d)~ES; the endocardium is coloured by
+	the local myocardial wall thickness. (e)~The two phases are combined to
+	show how much the wall thickens from ED to ES at each position on the
+	surface, with the AHA 17-segment boundaries drawn in black. (f)~The same
+	thickening summarised per segment in the AHA 17-segment bullseye.}
+	\label{fig:intro-overview}
+\end{figure}
 
 \section{Problem Statement}
 \label{sec:problem}
