@@ -37,24 +37,16 @@ in clinical reporting (panel~(g)).
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\linewidth]{fig_methodology_pipeline}
+\includegraphics[width=0.8\linewidth]{fig_methodology_pipeline}
 \vspace{2mm}
 \caption[Overview of the methodology]{Overview of the methodology.
-(a)~Stage~1 pre-trains the model on synthetic ED surfaces sampled from the
-statistical shape model and on the SAX contours sliced from them. (b)~Stage~2
-fine-tunes the same model, starting from the Stage~1 weights, on clinical ED
-and ES cases, whose contours come from expert SAX labels and whose target
-surfaces are smooth fits to those contours. (c)~The model reads the contour
-points together with the cardiac phase and returns the endocardial and
-epicardial surfaces; the long-axis section shows the reconstructed walls of one
-ED case, with dots where the observed rings cross the section plane.
-(d)--(g)~Inference on one ACDC case at ED (top) and ES (bottom): observed SAX
-contours, reconstructed surfaces with the epicardium partly cut away, local wall
-thickness measured with the Laplace field method, and its mean over each AHA-17
-segment, with the anterior wall at the top and the septum on the left. Both
-phases share one colour scale, and surfaces are smoothed for display only. The
-case in (b)--(g) illustrates the pipeline; cohort results are reported in
-\cref{ch:results}.}
+(a)~Pre-training on synthetic ED surfaces and their SAX contours.
+(b)~Fine-tuning on clinical ED and ES contours with fitted target surfaces.
+(c)~Phase-conditioned reconstruction of the endocardial and epicardial
+surfaces. (d)--(g)~Clinical inference from observed contours to reconstructed
+surfaces, local Laplace wall thickness, and AHA-17 regional values. ED and ES
+share one colour scale, and surfaces are smoothed for display only. Cohort
+results are reported in \cref{ch:results}.}
 \label{fig:methodology-pipeline}
 \end{figure}
 
@@ -88,42 +80,16 @@ point on the outer surface. Instead of fixing one definition in advance, four
 established estimators are run on the same reconstructed surfaces, the most
 consistent one is selected, and only then are regional AHA-17 values computed.
 
-Most of the building blocks are established methods, and the chapter names
-their origin where each appears. The model has two parts (panel~(c)): an
-encoder, which
-reads the contour points and condenses them into a short description, and a
-decoder, which turns that description into the two fields. The decoder is of
-the DeepSDF type \parencite{deepsdf2019}: given the description of a shape, it
-returns the signed distance at any point, so the surface can be read out at
-any resolution. The encoder is a PointNet \parencite{qi2017pointnet}: it
-applies the same small network to every point and keeps, for each learned
-feature, the strongest response, so the result does not depend on how many
-points there are or in what order they arrive. Because such a summary forgets
-where each point was, a second encoder keeps a coarse three-dimensional grid
-of local features, as in Convolutional Occupancy Networks
-\parencite{peng2020convonet}. Two standard ingredients complete the model.
-Fourier features \parencite{tancik2020fourierfeatures} present the coordinates
-of a point as sine and cosine waves, which makes fine detail easier to learn,
-and the regularisation terms of \textcite{gropp2020igr} make the predicted
-field behave like a true distance. Outside the model, the clinical targets are
-built with the radial basis function (RBF) surface fitting of
-\textcite{carr2001rbf}, a classical way to pass a smooth surface through
-scattered points; the population shape model is the UK Digital Heart Project
-atlas of \textcite{bai2015biventricularatlas}; and the thickness estimators
-and the AHA-17 layout come from the literature reviewed in
-\cref{subsec:thickness-review}.
-
-What is new is how these parts are put together to close the gap identified
-in \cref{subsec:research-gap}. Every contour point carries its tissue and its
-cardiac phase, so one model serves ED and ES. Endocardial and epicardial
-points are summarised separately before they are merged. The epicardial field
-is tied to the endocardial field by a positive offset, which guarantees a
-positive wall and is trained directly against the measured wall distance.
-Training moves from synthetic SSM geometry to clinical ED and ES targets
-through one shared sample format (cache). And the evaluation is designed for a setting
-in which no three-dimensional ground truth exists.
-\Cref{tab:model-components-origin} in \cref{sec:architecture} summarises this
-division for the model itself.
+Together, these choices define a reconstruction and measurement pipeline for
+the setting identified in \cref{subsec:research-gap}. The model conditions its
+implicit representation on the tissue and cardiac phase of each contour point,
+summarises the two boundaries separately, and couples their fields through a
+positive offset. Training transfers from synthetic SSM geometry to clinical ED
+and ES targets through one sample format, while evaluation accounts for the
+absence of independent three-dimensional ground truth. The origins of the
+model components and their adaptation to this task are detailed in
+\cref{sec:architecture} and summarised in
+\cref{tab:model-components-origin}.
 
 The chapter follows the pipeline of \cref{fig:methodology-pipeline}.
 \Cref{sec:data-preparation} constructs the two supervision streams and the
@@ -131,14 +97,13 @@ shared sample format. \Cref{sec:architecture} describes the model, and
 \cref{sec:training-inference} how it is trained, how surfaces are extracted
 from it, and which alternative reconstructions it is compared against.
 \Cref{sec:wall-thickness-protocol} defines the thickness estimators, the
-three-dimensional thickness maps, and the AHA-17 aggregation. \Cref{ch:results}
-then applies this protocol: it measures how closely each reconstruction follows
-the observed rings and how far it agrees with an RBF fit and an SSM fit of the
-same rings, how the reconstructions degrade as slices are removed, how the
-four thickness estimators agree with one another, and how regional thickness
-differs between healthy hearts and hearts with hypertrophic cardiomyopathy, a
-disease in which the wall thickens abnormally, and between ED and ES. These
-analyses answer, in turn, the three research questions of
+three-dimensional thickness maps, and the AHA-17 aggregation.
+\Cref{ch:results} then applies this protocol to evaluate agreement with the
+observed rings, RBF fits, and SSM fits, as well as degradation when slices are
+removed. It also examines agreement among the four thickness estimators and
+regional differences between ED and ES and between healthy hearts and hearts
+with hypertrophic cardiomyopathy, a disease characterised by abnormal wall
+thickening. Together, these analyses answer the three research questions of
 \cref{sec:research-questions}.
 
 \section{Data Preparation}
@@ -220,21 +185,21 @@ only if it satisfied
 \end{equation}
 where $d$ is the number of active modes and $\chi^2_{0.99,d}$ is the 99th
 percentile of the chi-squared distribution with $d$ degrees of freedom. The
-first condition keeps every individual mode within three standard deviations of
-the mean. The second bounds the overall deviation: the sum measures how far the
-sample lies from the mean shape once every mode is weighed by its own spread
-(the Mahalanobis distance), and the threshold admits only combinations that
-would occur in 99\% of the population. Each accepted vector is substituted into
-\cref{eq:ssm-generation} to obtain new vertex positions, which are connected
-into triangles exactly as in the mean mesh; the result is a closed and
-consistently oriented surface by construction. Each surface is then checked
-against four simple geometric descriptors, namely its enclosed volume, its
-surface area, a sphericity index (how close the shape is to a sphere), and the
-direction of its surface normals (the directions perpendicular to the surface)
-at the apex and base, and it is discarded if any value falls outside bounds
-calibrated on the population; exact volume and area computations on every
-fortieth sample confirmed that the fast descriptors were reliable. Of 2048
-candidates, 1300 (63\%) were accepted.
+first condition keeps every mode within three standard deviations of the mean.
+The second limits the overall Mahalanobis distance, which measures the
+combined deviation after each mode has been scaled by its population
+variability. The threshold retains combinations within the 99th percentile of
+the model distribution.
+
+Each statistically valid vector is substituted into
+\cref{eq:ssm-generation}. The resulting vertices retain the connectivity of
+the mean mesh, producing a closed and consistently oriented surface. Geometric
+plausibility is then assessed from the enclosed volume, surface area,
+sphericity, and the direction of the surface normals at the apex and base.
+Samples outside bounds calibrated on the population are discarded. Exact
+volume and area calculations on every fortieth sample confirmed the
+reliability of the faster descriptors. Of 2048 candidates, 1300 (63\%) passed
+both the statistical and geometric checks.
 
 The SSM provides only the endocardial surface. An epicardial surface was
 synthesised by moving each endocardial vertex $p_i$ outward along its normal
@@ -331,24 +296,20 @@ source of synthetic pre-training geometry.
 
 Each segmentation is distributed as a NIfTI file, the standard container for
 medical image volumes. The file stores the label volume together with the
-physical size and position of its voxels, the three-dimensional pixels of the
-volume. The volume is first reoriented to a common anatomical convention,
-called RAS+, in which the three axes point towards the patient's right,
-anterior, and superior sides; the physical voxel spacing is preserved, so that
-every patient is expressed in the same frame and in millimetres. Each voxel of
-the label volume carries an integer that names the structure it belongs to,
-such as cavity, myocardium, or right ventricle; because the two datasets
-number these structures differently, the labels are mapped to a common
-definition of cavity and myocardium. On every acquired SAX slice, the boundary
-of the cavity gives the endocardial ring and the outer boundary of cavity plus
-myocardium gives the epicardial ring; when a slice contains more than one
-closed boundary, for instance because of a small detached fragment of the
-label, only the largest ring is kept. Each ring is resampled to 60 evenly
-spaced points, so that every slice contributes the same number of points
-regardless of image resolution, and the points are stored at the measured
-position of the slice along the long axis. These points serve two purposes:
-they are the sparse observation the encoder receives, and they are the
-constraints from which the target surfaces are built.
+physical size and position of its voxels. Each volume is reoriented to the
+RAS+ anatomical convention, whose axes point towards the patient's right,
+anterior, and superior sides. Physical voxel spacing is preserved so that all
+cases remain expressed in millimetres within a common coordinate frame.
+Because ACDC and M\&Ms-2 assign different integer labels to the anatomical
+structures, the cavity and myocardium labels are mapped to common definitions.
+
+On each acquired SAX slice, the cavity boundary defines the endocardial ring,
+while the outer boundary of the combined cavity and myocardium defines the
+epicardial ring. If a label contains several closed boundaries, as can occur
+with a small detached fragment, only the largest is retained. Each ring is
+resampled to 60 evenly spaced points and stored at its measured position along
+the long axis. The resulting points are both the sparse observation supplied
+to the encoder and the constraints used to construct the target surfaces.
 
 The endocardial and epicardial surfaces are fitted separately. For either
 surface $s$, let $p_i$ be a contour point and $n_i$ its outward in-plane
@@ -365,43 +326,42 @@ used here, the function is
 	\qquad \phi(r)=r^2\log r,
 	\label{eq:clinical-rbf-field}
 \end{equation}
-where the centres $c_j$ are the constraint points and the weights $w_j$,
-$a_0$, and $a$ are chosen so that the function satisfies the constraints. The
-contour points fix where the function is zero, and paired points placed a
-distance $d=2.5$~mm inside and outside each contour point fix its sign and
-local scale:
+In \cref{eq:clinical-rbf-field}, the centres $c_j$ are the constraint points,
+and the weights $w_j$, $a_0$, and $a$ are chosen so that the function satisfies
+the constraints. The contour points fix where the function is zero, while
+paired points placed a distance $d=2.5$~mm inside and outside each contour
+point fix its sign and local scale through
 \begin{equation}
 	f_s(p_i)=0,
 	\qquad f_s(p_i+d n_i)=d,
 	\qquad f_s(p_i-d n_i)=-d.
 	\label{eq:clinical-rbf-constraints}
 \end{equation}
-A regularisation parameter of 0.5 lets the function pass close to, rather than
-exactly through, the constraints, which reduces its sensitivity to small
+The constraints in \cref{eq:clinical-rbf-constraints} are applied with a
+regularisation parameter of 0.5. This lets the function pass close to, rather
+than exactly through, the constraints, reducing its sensitivity to small
 irregularities in the drawn contours.
 
 Each fitted function is evaluated on a 1.0~mm grid that extends 8.0~mm beyond
 the rings in-plane and 1.5~mm beyond the first and last ring along the long
 axis, so that the surface can close just beyond the observed extent. The region
-where $f_s\leq0$, the inside of the surface, is reduced to its valid connected
-part (small disconnected pockets are discarded) and converted to a
-signed-distance volume, and the volume is smoothed with
-a Gaussian filter of width 1.2~mm, which replaces each value by a weighted
-average of its neighbours, before marching cubes, a standard algorithm that
-extracts a triangle mesh from the zero level set on a grid, produces the
-surface \parencite{lorensen1987marchingcubes}. Smoothing the field at this
-stage removes the small step-like ripples that the voxel grid would otherwise
-imprint on the surface, without moving mesh vertices afterwards. The extracted
-mesh is accepted unchanged if it is a single closed shell with consistently
-oriented faces and no handles or tunnels; otherwise only the failed property
-is repaired. Cases with fewer than two valid rings per surface, a failed fit,
-a surface that could not be repaired into a single closed shell, implausible
-dimensions, or an endocardium not fully enclosed by its epicardium are
-excluded. The full sequence of operations and their parameters is listed in
-\cref{tab:real-pipeline} of \cref{app:supplementary-methods}, and
-\cref{fig:real-mesh-steps} illustrates it on one case: the endocardial and
-epicardial constraints are fitted separately, and their surfaces then pass
-through the same checks.
+where $f_s\leq0$ is restricted to its valid connected component, discarding
+small disconnected pockets, and converted to a signed-distance volume. A
+Gaussian filter with a width of 1.2~mm smooths this volume before marching
+cubes extracts the zero-level surface
+\parencite{lorensen1987marchingcubes}. Applying the smoothing before mesh
+extraction removes small voxel-induced ripples without subsequently moving the
+mesh vertices.
+
+The extracted mesh is accepted unchanged when it forms a single closed shell
+with consistently oriented faces and no handles or tunnels. Otherwise, only
+the failed property is repaired. A case is excluded if either surface has
+fewer than two valid rings, the RBF fit fails, a single closed shell cannot be
+recovered, the dimensions are implausible, or the epicardium does not fully
+enclose the endocardium. The complete operations and parameters are listed in
+\cref{tab:real-pipeline} of \cref{app:supplementary-methods}, while
+\cref{fig:real-mesh-steps} illustrates the separate fitting and validation of
+the two surfaces.
 
 \begin{figure}[H]
 	\centering
@@ -569,31 +529,17 @@ signed distance and the positive offset that defines the epicardial field.
 	\label{fig:model-architecture}
 \end{figure}
 
-Each of these parts has a precedent, and \cref{tab:model-components-origin}
-separates what is borrowed from what is specific to this work. The decoder is a
-signed-distance network conditioned on a latent code, a compact vector of
-numbers that summarises one shape, as introduced by DeepSDF
-\parencite{deepsdf2019}; here, however, the code is produced by an encoder from
-the observed contours rather than fitted separately to every shape by
-optimisation, so that a new case is reconstructed in a single evaluation of the
-network. The global encoder is a PointNet \parencite{qi2017pointnet}, in which
-the same small network is applied to every point and the results are combined
-by max-pooling, keeping for each feature the largest value over all points;
-this is the standard way to encode a set of points whose order carries no
-meaning. The local feature volume follows Convolutional Occupancy Networks
-\parencite{peng2020convonet}, which showed that a single summary vector loses
-the information of where each piece of evidence was, and that spreading the
-point features over a coarse three-dimensional grid and reading that grid near
-each query point restores it. The positional encoding is the
-Fourier-feature mapping of \textcite{tancik2020fourierfeatures}. Compared with
-the recent cardiac implicit models reviewed in
+The architecture combines established components but adapts their roles to the
+available contour data. \Cref{tab:model-components-origin} identifies the
+origin of each component and the corresponding modification in this work.
+Compared with the recent cardiac implicit models reviewed in
 \cref{subsec:dl-reconstruction-review}, which reconstruct from image data
 \parencite{bras2026anisotropy} or from sparse segmentations of both ventricles
 with long-axis views and a learned biventricular prior
 \parencite{muffoletto2025nihc}, the proposed model takes only LV contour points
-with a tissue and a phase label, and it makes the relation between the two
-surfaces part of the architecture: the epicardial field is defined from the
-endocardial field through a positive offset that is supervised directly.
+with tissue and phase labels. It also makes the relation between the two
+surfaces part of the architecture by defining the epicardial field through a
+directly supervised positive offset from the endocardial field.
 
 \begin{table}[H]
 	\centering
@@ -620,7 +566,7 @@ endocardial field through a positive offset that is supervised directly.
 \label{subsec:architecture-input}
 \noindent
 For a batch of $B$ cases processed together, the encoder receives the contour
-points as one padded array, or tensor,
+points as the padded tensor defined in \cref{eq:contour-input-tensor}:
 \begin{equation}
 	P \in \mathbb{R}^{B\times N\times5}
 	\label{eq:contour-input-tensor}
@@ -641,66 +587,69 @@ to be summarised separately before they are combined.
 \subsection{Contour encoder}
 \label{subsec:contour-encoder}
 \noindent
-The global pathway is a PointNet \parencite{qi2017pointnet}: a shared network
-with layer widths $5\rightarrow64\rightarrow128\rightarrow256\rightarrow256$,
-with ReLU activations (simple non-linear functions) between the layers,
-processes every point independently, so that no ordering is imposed within a
-ring or between slices, and the per-point features are then pooled. Writing
-$P = \{p_i\}_{i=1}^{N}$ for the points of one case, each point receives the
-256-dimensional feature
+The global pathway follows PointNet \parencite{qi2017pointnet}. A shared
+network with layer widths
+$5\rightarrow64\rightarrow128\rightarrow256\rightarrow256$ and ReLU
+activations processes each point independently. The encoder therefore does not
+depend on the order of points within a ring or between slices. For the points
+$P = \{p_i\}_{i=1}^{N}$ of one case, the network assigns each point a
+256-dimensional feature, as expressed in \cref{eq:point-encoding}:
 \begin{equation}
 	h_i = \phi_{\mathrm{enc}}(p_i),
 	\label{eq:point-encoding}
 \end{equation}
-where $\phi_{\mathrm{enc}}$ is the shared network. The departure from the
-standard PointNet is in the pooling. Instead of one maximum over all points,
-the maximum is taken separately over the endocardial set $\mathcal{E}$ and the
-epicardial set $\mathcal{P}$,
+where $\phi_{\mathrm{enc}}$ denotes the shared network.
+
+The pooling operation differs from standard PointNet. Rather than taking one
+maximum over all points, the encoder pools the endocardial set $\mathcal{E}$
+and the epicardial set $\mathcal{P}$ separately, as shown in
+\cref{eq:tissue-pooling}:
 \begin{equation}
 	z_{\mathrm{endo}} = \max_{i \in \mathcal{E}} h_i,
 	\qquad
 	z_{\mathrm{epi}} = \max_{i \in \mathcal{P}} h_i,
 	\label{eq:tissue-pooling}
 \end{equation}
-independently in every feature channel, so that the strongest response to each
-learned geometric pattern is kept for each boundary before the two are merged.
-The two descriptors are concatenated into a 512-dimensional vector and
-projected to the global latent code
+where the maximum is computed independently in each feature channel. This
+preserves the strongest response to each learned pattern for each boundary
+before their information is combined. The resulting descriptors form a
+512-dimensional vector, which is projected to the global latent code according
+to \cref{eq:latent-projection}:
 \begin{equation}
 	z = W_z [z_{\mathrm{endo}}, z_{\mathrm{epi}}] + b_z,
 	\label{eq:latent-projection}
 \end{equation}
-with $z\in\mathbb{R}^{256}$, which gives the decoder a compact description of
-the whole case.
+where $z\in\mathbb{R}^{256}$ provides the decoder with a compact description
+of the complete case.
 
-Max-pooling has a cost: compressing all points into one vector discards where
-each piece of evidence was located. The local pathway restores this
-information, following Convolutional Occupancy Networks
-\parencite{peng2020convonet}. A second shared network with widths
-$5\rightarrow64\rightarrow64\rightarrow32$ assigns a 32-dimensional feature to
-every valid point, and the features are scattered into a regular $16^3$ grid
-covering the normalised extent $[-1.8,1.8]^3$; the features of points that fall
-in the same cell are averaged, so the content of a cell does not depend on how
-many contour points it happens to contain. Three $3\times3\times3$
-convolutions, small filters that combine each cell with its immediate
-neighbours, with Group Normalisation (a rescaling of the features that
-stabilises training) and ReLU after the first two, spread information into
-neighbouring cells and produce
+Compressing all points into $z$ discards their locations. A local pathway,
+following Convolutional Occupancy Networks \parencite{peng2020convonet},
+retains this spatial information. A second shared network with widths
+$5\rightarrow64\rightarrow64\rightarrow32$ assigns a 32-dimensional feature
+to every valid point. These features are placed in a regular $16^3$ grid over
+the normalised extent $[-1.8,1.8]^3$. Features that fall in the same cell are
+averaged, preventing densely sampled regions from having greater influence
+solely because they contain more points.
+
+Three $3\times3\times3$ convolutions then propagate information between
+neighbouring cells. Group Normalisation and ReLU follow the first two
+convolutions, producing the feature volume in
+\cref{eq:local-feature-volume}:
 \begin{equation}
 	V \in \mathbb{R}^{32\times16\times16\times16}.
 	\label{eq:local-feature-volume}
 \end{equation}
-For a query point $x$, the local feature is read from this volume by trilinear
-interpolation, a weighted average of the eight surrounding cells,
+For a query point $x$, trilinear interpolation of the eight surrounding cells
+gives the local feature defined in \cref{eq:local-volume-interp}:
 \begin{equation}
 	v(x) = \mathrm{Interp}(V, x).
 	\label{eq:local-volume-interp}
 \end{equation}
-Unlike $z$, which is the same for every query of a case, $v(x)\in\mathbb{R}^{32}$
-changes with the query location and describes the contour evidence near it.
-The grid is deliberately coarse: a few hundred contour points cannot support a
-fine volume, and its role is to give context to the decoder, not to serve as
-the reconstruction grid.
+The global code $z$ is shared by every query in a case, whereas
+$v(x)\in\mathbb{R}^{32}$ describes the contour evidence near $x$. The grid is
+deliberately coarse because a few hundred contour points cannot support a fine
+volume. Its purpose is to provide local context to the decoder, not to define
+the reconstruction resolution.
 
 \subsection{Implicit decoder with positive-offset coupling}
 \label{subsec:monotone-epi-decoder}
@@ -710,14 +659,15 @@ continuous coordinates, in the manner of DeepSDF \parencite{deepsdf2019}. A
 network fed with plain coordinates tends towards overly smooth fields, so each
 query point is first expanded with Fourier features
 \parencite{tancik2020fourierfeatures}, which add sine and cosine components at
-several spatial frequencies. For $x\in\mathbb{R}^3$, the encoding is
+several spatial frequencies. For $x\in\mathbb{R}^3$, the encoding is defined
+in \cref{eq:fourier-encoding}:
 \begin{equation}
 	\gamma(x) = [x, \sin(2^0\pi x), \cos(2^0\pi x), \ldots,
 	\sin(2^{L-1}\pi x), \cos(2^{L-1}\pi x)],
 	\label{eq:fourier-encoding}
 \end{equation}
 with $L=3$, giving $3+6L=21$ components. The encoded coordinate is concatenated
-with the global code to form the decoder input
+with the global code to form the decoder input in \cref{eq:decoder-input}:
 \begin{equation}
 	h_{\mathrm{in}}(x)=[z,\gamma(x)]\in\mathbb{R}^{277}.
 	\label{eq:decoder-input}
@@ -739,7 +689,8 @@ them cross or touch wherever the data are sparse, producing a wall of zero or
 negative thickness between slices. The final hidden representation therefore
 feeds two coupled output layers, or heads: one predicts the endocardial
 signed-distance value $f_{\mathrm{endo}}(x)$, the other a strictly positive
-offset $\delta(x)$, and the epicardial field is defined as
+offset $\delta(x)$. The epicardial field is coupled to these outputs through
+\cref{eq:monotone-epi}:
 \begin{equation}
 	f_{\mathrm{epi}}(x) = f_{\mathrm{endo}}(x) - \delta(x),
 	\qquad \delta(x)>0.
@@ -792,23 +743,17 @@ no second asymmetry is introduced at fine-tuning. The cost is that phase
 information is coarse, a binary label rather than a position in the cardiac
 cycle, and that the prior remains biased towards diastolic shape.
 
-Training adjusts the weights of the network so as to minimise a loss function,
-a single number that measures how far the current predictions are from what
-the targets require. Here that requirement has five parts, and each becomes
-one term of the loss. The predicted surfaces should pass through the sampled
-points of the target surfaces (surface term). The predicted fields should take
-the stored signed-distance values at the query points throughout the volume,
-not only on the surfaces (dense SDF term). Each field should behave like a
-true distance, changing by one unit per unit travelled, which is expressed by
-requiring its gradient to have unit length (Eikonal term). The fields should
-not approach zero anywhere other than at the two surfaces, so values in free
-space are pushed away from zero (off-surface term). And the offset $\delta$ at
-the endocardial surface should equal the actual distance to the epicardial
-target, so that the coupling learns the real wall separation rather than
-merely keeping the fields ordered (wall term). The first four are standard in
-implicit surface learning, following DeepSDF \parencite{deepsdf2019} and the
-Eikonal regularisation of \textcite{gropp2020igr}; the fifth is specific to
-the coupled output.
+The objective imposes five complementary constraints. The surface term places
+the predicted zero level sets on the target surfaces, while the dense SDF term
+fits the stored signed distances throughout the sampled volume. The Eikonal
+term encourages unit gradient magnitude, as required of a signed-distance
+field, and the off-surface term prevents additional zero level sets in free
+space. Finally, the wall term fits $\delta$ to the target separation between
+the endocardium and epicardium. This final constraint teaches the coupling to
+represent wall separation rather than merely preserve the ordering of the two
+fields. The first four terms follow established implicit-surface objectives
+\parencite{deepsdf2019,gropp2020igr}; the wall term is specific to the coupled
+output.
 
 Formally, let $\mathcal{E}$ and $\mathcal{P}$ denote sampled endocardial and
 epicardial surface points, $\mathcal{Q}$ the stored query points,
@@ -818,7 +763,7 @@ $q\in\mathcal{Q}$, $y_{\mathrm{endo}}(q)$ and $y_{\mathrm{epi}}(q)$ are the
 stored signed-distance targets, and at each $x\in\mathcal{E}$ the wall target
 $t(x)=-y_{\mathrm{epi}}(x)$ is the distance from that endocardial point to the
 epicardial surface. Writing $\mathbb{E}$ for the mean over the indicated set
-of points, the terms are
+of points, the five terms are defined in \cref{eq:training-loss-terms}:
 \begin{align}
 	\mathcal{L}_{\mathrm{surf}} ={}&
 	\mathbb{E}_{x\in\mathcal{E}}[|f_{\mathrm{endo}}(x)|]
@@ -838,7 +783,8 @@ of points, the terms are
 \end{align}
 where $\alpha=5$ and $\ell_{\beta}$ is the Smooth-L1 penalty, which grows like
 a squared error for small differences and like an absolute error for large
-ones, so that a few badly wrong points do not dominate the term:
+ones, so that a few badly wrong points do not dominate the term. The penalty
+is defined in \cref{eq:wall-smooth-l1}:
 \begin{equation}
 	\ell_{\beta}(a)=
 	\begin{cases}
@@ -849,20 +795,21 @@ ones, so that a few badly wrong points do not dominate the term:
 	\label{eq:wall-smooth-l1}
 \end{equation}
 All distances are expressed in the normalised coordinate system of each case,
-and the complete objective is
+and the terms are combined into the complete objective in
+\cref{eq:training-objective}:
 \begin{align}
 	\mathcal{L}_{\mathrm{total}} ={}&
 	\lambda_{\mathrm{surf}}\mathcal{L}_{\mathrm{surf}} +
 	\lambda_{\mathrm{SDF}}\mathcal{L}_{\mathrm{SDF}} +
 	\lambda_{\mathrm{eik}}\mathcal{L}_{\mathrm{eik}} +
 	\lambda_{\mathrm{off}}\mathcal{L}_{\mathrm{off}} +
-	\lambda_{\mathrm{WT}}\mathcal{L}_{\mathrm{WT}} .
+	\lambda_{\mathrm{WT}}\mathcal{L}_{\mathrm{WT}},
 	\label{eq:training-objective}
 \end{align}
 where the weights $\lambda$ balance the five terms. The Eikonal term is
-computed in full precision to keep its gradient calculation stable.
-\Cref{tab:loss-terms} in \cref{app:supplementary-methods} summarises the role
-of each term.
+computed in full precision to keep its gradient calculation stable; the
+weights and implementation settings are reported in
+\cref{tab:loss-terms} of \cref{app:supplementary-methods}.
 
 The training run reported here uses the AdamW optimiser, a standard
 gradient-based method, with a learning rate (step size) of $2\times10^{-5}$
@@ -923,7 +870,8 @@ means that the reported metrics describe a repaired mesh rather than the
 unmodified decoder output.
 
 Because the decoder predicts $\delta$ at every point, a raw offset is also
-available at every endocardial vertex. In millimetres,
+available at every endocardial vertex. Its value in millimetres is given by
+\cref{eq:raw-analytic-offset}:
 \begin{equation}
 	o_{\mathrm{raw}}(x) = s\,\delta(x,z,v(x)),
 	\label{eq:raw-analytic-offset}
@@ -934,9 +882,9 @@ $o_{\mathrm{cal}} = \alpha\,o_{\mathrm{raw}}$, where $\alpha$ is the ratio of
 the mean of a reference thickness, computed directly from the segmentation
 voxels with the distance-transform method of \cref{subsec:thickness-methods},
 to the mean raw offset. The calibration fixes the mean by
-construction and is not a test of accuracy, and, for the reason given in
-\cref{subsec:monotone-epi-decoder}, the offset itself is not a thickness
-measurement; every reported thickness value comes from the protocol of
+construction and is not a test of accuracy. As established in
+\cref{subsec:monotone-epi-decoder}, all reported thickness values are instead
+computed on the extracted surfaces using the protocol of
 \cref{sec:wall-thickness-protocol}.
 
 The model is compared with two reconstructions built from exactly the same
@@ -1021,7 +969,8 @@ with one cell per segment.
 The Euclidean Distance Transform (EDT) boundary sum is the simplest. A
 distance transform assigns to every voxel of the myocardium its straight-line
 distance to the nearest point of a given boundary; the method computes one
-such transform for each surface and adds them,
+such transform for each surface and adds them, as defined in
+\cref{eq:edt-thickness}:
 \begin{equation}
 	t^{\mathrm{EDT}}(x) = D_{\mathrm{endo}}(x) + D_{\mathrm{epi}}(x),
 	\label{eq:edt-thickness}
@@ -1034,13 +983,13 @@ on a common path across the wall.
 
 The Laplace field method replaces nearest points with a smooth path across the
 wall. A scalar field $\psi$ is defined over the myocardium by solving Laplace's
-equation,
+equation with the boundary conditions in \cref{eq:laplace-thickness}:
 \begin{equation}
 	\nabla^2 \psi = 0,
 	\qquad
 	\psi|_{\mathrm{endo}} = 0,
 	\qquad
-	\psi|_{\mathrm{epi}} = 1.
+	\psi|_{\mathrm{epi}} = 1,
 	\label{eq:laplace-thickness}
 \end{equation}
 which makes $\psi$ rise as smoothly as possible from 0 on the endocardium to 1
@@ -1058,7 +1007,8 @@ method \parencite{yezzi2003thickness} removes this weakness by computing,
 along the same field, the distance travelled from each boundary with a pair of
 transport equations solved on the voxel grid (an Eulerian formulation, meaning
 that the quantities are computed at fixed grid points rather than by tracing
-individual paths), in simplified form
+individual paths). Their simplified form is given in
+\cref{eq:yezzi-prince-thickness}:
 \begin{equation}
 	\nabla \psi \cdot \nabla u = -1,
 	\qquad
@@ -1072,7 +1022,8 @@ The cone-ray method pairs each endocardial point with the epicardial point
 reached along its surface normal, but guards against a single badly oriented
 ray. Following the shape diameter function of \textcite{shapira2008sdf}, $K$
 rays are cast within a cone of half-angle $30^{\circ}$ around the normal, and
-the median of the valid intersection distances is kept,
+the median of the valid intersection distances is kept, as defined in
+\cref{eq:cone-ray-thickness}:
 \begin{equation}
 	t_i^{\mathrm{cone}} = \operatorname{median}_{k=1}^{K} d_{ik},
 	\qquad K=7.
@@ -1137,14 +1088,14 @@ fixed colour scale makes the maps comparable across patients and phases
 \noindent
 For clinical reporting, the local map of the selected estimator is summarised
 in the AHA 17-segment model \parencite{cerqueira2002segmentation}. The model
-was defined for two-dimensional imaging. The ventricle is divided along its
-long axis into basal, mid-cavity, and apical thirds; each third is read on a
-representative SAX slice and divided into angular sectors around the centre of
-the cavity, six in the basal and mid-cavity thirds and four in the apical
-third, numbered from the anterior wall with the septal segments facing the
-right ventricle; and the tip of the apex forms the seventeenth segment. In
-routine use, the thickness of each segment is then read on that slice at
-points chosen by the observer.
+was defined for two-dimensional imaging and divides the ventricle along its
+long axis into basal, mid-cavity, and apical thirds. A representative SAX
+slice from each third is partitioned into angular sectors around the cavity:
+six sectors in the basal and mid-cavity regions and four in the apical region.
+The sectors are numbered from the anterior wall, with the septal segments
+facing the right ventricle, while the apical tip forms the seventeenth segment.
+In routine use, an observer measures the thickness of each segment on the
+corresponding slice.
 
 Transferring this definition to a reconstructed surface requires only that
 every vertex receive the two coordinates the definition relies on, a position
@@ -1156,23 +1107,24 @@ whose cavity cross-section is larger, and every endocardial vertex is given a
 normalised position between 0 at the base and 1 at the apex. Vertices in the
 first third of this range form the basal ring, those in the second third the
 mid-cavity ring, those between two thirds and 0.85 the apical ring, and those
-beyond 0.85 the apical cap, which is segment 17. The angle of each vertex is
-measured in the SAX plane around the centre of the endocardial vertices, with
-its zero fixed by the right-ventricular label of the segmentation: the
-direction from the LV centre to the centre of the right ventricle marks the
-septum, the wall shared by the two ventricles, and the anterior reference lies
-a quarter turn from it. The basal and mid-cavity rings are then cut into six
-sectors of $60^{\circ}$ and the apical ring into four sectors of
-$90^{\circ}$, giving segments 1--6, 7--12, and 13--16
-(\cref{fig:aha17-cut}). A quality-assurance step visualises the detected
-base, apex, and septal direction before the segments are formed. Unrolling
-the rings onto concentric circles gives the familiar bullseye, with the basal
-ring outermost and the apical cap at the centre; each cell of the bullseye now
-summarises all vertices of one surface patch. Within each segment the vertex
-values are combined with robust summaries, the mean and percentiles, so that
-isolated outliers do not dominate the regional value. The aggregation does not
-replace the per-vertex maps; it restates the same measurements in a form
-clinicians are used to.
+beyond 0.85 the apical cap, which is segment 17.
+
+The angle of each vertex is measured in the SAX plane around the centre of the
+endocardial vertices. Its orientation is fixed by the right-ventricular label:
+the direction from the LV centre to the right-ventricular centre identifies
+the septum, and the anterior reference lies a quarter turn from it. The basal
+and mid-cavity rings are divided into six sectors of $60^{\circ}$, while the
+apical ring is divided into four sectors of $90^{\circ}$. These divisions form
+segments 1--6, 7--12, and 13--16, respectively
+(\cref{fig:aha17-cut}).
+
+Before assigning the segments, a quality-assurance view displays the detected
+base, apex, and septal direction. The rings are then unrolled onto concentric
+circles to form the bullseye, with the basal ring outermost and the apical cap
+at the centre. Each cell therefore summarises the vertices of one surface
+patch. Within each segment, the mean and percentiles provide complementary
+regional summaries rather than relying on a single statistic. This aggregation
+complements rather than replaces the per-vertex maps.
 
 \begin{figure}[H]
 	\centering
@@ -1183,10 +1135,5 @@ clinicians are used to.
 	\label{fig:aha17-cut}
 \end{figure}
 
-This completes the pipeline of \cref{fig:methodology-pipeline}. Its outputs,
-two reconstructed surfaces per case, four local thickness fields on them, and
-AHA-17 summaries of the selected field, are the material of \cref{ch:results}.
-There, agreement with the observed rings and with the RBF and SSM fits
-addresses the first research question; the behaviour of the coupled surfaces
-across ED and ES addresses the second; and the agreement among thickness
-estimators and the regional comparisons address the third.
+The resulting surfaces, local thickness fields, and AHA-17 summaries provide
+the inputs to the evaluation presented in \cref{ch:results}.

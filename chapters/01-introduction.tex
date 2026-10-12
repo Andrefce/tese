@@ -13,16 +13,12 @@ Understanding cardiac structure is fundamentally a geometric problem. The
 left ventricle (LV), the chamber that pumps oxygenated blood into the body, is
 a continuously varying three-dimensional structure whose shape, size, and wall
 thickness change throughout the cardiac cycle. Each heartbeat is a cycle of
-filling and contraction. At end-diastole (ED) the ventricle has filled with
-blood and is at its largest; at end-systole (ES) it has contracted and
-expelled part of that blood, so the cavity is smallest and the muscular wall,
-the myocardium, is at its thickest. These two instants, or cardiac phases,
-are the ones routinely segmented and measured in clinical practice, because
-the change between them quantifies how well the ventricle pumps. The shape of
-the ventricle and the thickness of its wall at these phases provide important
-information about cardiac function and about structural remodelling, the
-changes in shape and wall thickness through which the heart adapts to disease;
-changes in ventricular geometry and myocardial thickness are associated with
+filling and contraction. At end-diastole (ED), the ventricle is filled and at
+its largest; at end-systole (ES), it has contracted, so the cavity is smallest
+and the muscular wall, the myocardium, is at its thickest. These phases are
+routinely segmented and measured because the change between them quantifies
+ventricular pumping function. Ventricular geometry and myocardial thickness
+also provide information about structural remodelling and are associated with
 several forms of cardiac disease
 \parencite{grossman1974wallthickness,demarvao2014atlas,medrano2014lvshapevariation}.
 
@@ -39,11 +35,10 @@ high, while the distance between adjacent slices is substantially larger.
 Consequently, a structure that is anatomically continuous is represented by a
 limited number of discrete observations.
 
-This distinction becomes important when measurements are extended beyond the
-acquired slices. Myocardial wall thickness, for example, is not simply a
-property of isolated contours. It varies across the ventricle (local thickness) and can reflect
-changes in cardiac structure, including myocardial hypertrophy, an abnormal
-thickening of the wall
+This limitation becomes important when measurements extend beyond the acquired
+slices. Myocardial wall thickness is not simply a property of isolated
+contours: it varies across the ventricle and can reflect structural changes,
+including myocardial hypertrophy, an abnormal thickening of the wall
 \parencite{grossman1974wallthickness}. Estimating such quantities from sparse
 observations therefore depends not only on the accuracy of the segmentation,
 but also on how well the underlying three-dimensional geometry is represented. 
@@ -62,7 +57,7 @@ The central challenge addressed in this thesis is therefore not the extraction
 of LV contours alone, but the inference of the three-dimensional geometry that
 lies between sparse observations. A useful reconstruction must recover
 continuous endocardial and epicardial surfaces while preserving patient-specific
-shape and maintaining a anatomically plausible myocardial wall. Simple
+shape and maintaining an anatomically plausible myocardial wall. Simple
 interpolation or surface lofting can provide continuity, but does not
 necessarily recover the geometry that best represents the underlying anatomy.
 
