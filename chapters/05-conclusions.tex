@@ -14,22 +14,21 @@ out the work that should follow.
 \section{Summary of the Work}
 \label{sec:conclusion-summary}
 \noindent
-The thesis started from a geometric limitation of short-axis (SAX) cardiac MRI.
-Each slice observes the left ventricle (LV) finely, at an in-plane pixel size
+The thesis started from a geometric limitation of SAX cardiac MRI.
+Each slice observes the LV finely, at an in-plane pixel size
 below $2$~mm, but the slices lie several millimetres apart, so the
 three-dimensional wall on which clinical measurement depends is never observed
 directly and has to be inferred. We treated that inference as the learning of a
 continuous signed-distance representation. A phase-conditioned implicit model
-was pre-trained on synthetic shapes sampled from a statistical shape model
-(SSM) and fine-tuned on end-diastolic (ED) and end-systolic (ES) surfaces fitted
+was pre-trained on synthetic shapes sampled from an SSM and fine-tuned on ED and ES surfaces fitted
 to ACDC and M\&Ms-2 segmentations. The model reads the sparse contour rings
 through a global PointNet pathway and a local feature grid, predicts the
 endocardial signed-distance field, and defines the epicardial field as that
 field minus a strictly positive, directly supervised offset, so the two surfaces
-cannot cross. Its output was compared with a radial-basis-function (RBF)
+cannot cross. Its output was compared with an RBF
 implicit fit and an SSM fit of the same rings, and myocardial wall thickness was
 measured on all three geometries with four local estimators, localised on the
-AHA 17-segment model, and contrasted between normal and hypertrophic patients.
+AHA 17-segment model, and contrasted between normal and HCM patients.
 
 \section{Answers to the Research Questions}
 \label{sec:conclusion-research-questions}
@@ -43,11 +42,11 @@ of the in-plane pixel size, and every surface it produces is watertight after
 the shared repair stage. Its geometry lies closer to the RBF interpolant
 (Chamfer distance $1.57$ and $1.90$~mm) than to the SSM fit ($2.08$ and
 $2.59$~mm), and it responds to pathology more evenly than the population prior:
-between the normal and hypertrophic subsets its mean contour distance moves from
+between the normal and HCM subsets its mean contour distance moves from
 $1.45$ to $1.60$~mm, whereas that of the SSM fit moves from $1.42$ to
 $2.63$~mm. The comparison also shows where the three priors diverge. They agree
-on the cavity, with a Dice coefficient of $0.88$ to $0.91$ and enclosed volumes
-of $119$, $119$ and $127$~ml, but not on the wall, where the Dice coefficient
+on the cavity, with a DSC of $0.88$ to $0.91$ and enclosed volumes
+of $119$, $119$ and $127$~ml, but not on the wall, where the DSC
 falls to $0.69$ to $0.77$ and the myocardial volume ranges from $88$ to
 $136$~ml. Removing slices down to three per stack degrades all three methods by
 a similar amount without breaking any of them. A closed, contour-faithful
@@ -82,10 +81,8 @@ model correlates with that on the RBF fit at $r = 0.99$ for the three non-ray
 estimators, yet is $0.82$ to $1.16$~mm thicker, and against the SSM fit the
 correlation falls to $0.72$ to $0.77$ with a bias of $2.53$ to $2.91$~mm. With
 the geometry held fixed, the Yezzi--Prince method and the EDT boundary sum
-agree with the Laplace field to within a bias below $1$~mm and an intraclass
-correlation of $0.77$, whereas the SDF cone-ray estimator is biased by
-$+3.31$~mm with limits of agreement of $\pm 12.74$~mm and an intraclass
-correlation of $0.28$, because a straight ray leaves a curved wall where a
+agree with the Laplace field to within a bias below $1$~mm and an ICC of $0.77$, whereas the SDF cone-ray estimator is biased by
+$+3.31$~mm with LoA of $\pm 12.74$~mm and an ICC of $0.28$, because a straight ray leaves a curved wall where a
 streamline does not. Strong correlation between geometries thus does not imply
 agreement in millimetres; the reconstruction prior and the measurement path are
 separate sources of offset of comparable size, and path-following estimators
@@ -95,12 +92,12 @@ bound the reproducibility of the measurement, not its accuracy.
 
 The pathology-stratified analysis adds that the reconstructed geometry retains
 patient-specific variation instead of collapsing towards an average shape. The
-hypertrophic group is thicker in every AHA segment; its patient-level mean ED
+HCM group is thicker in every AHA segment; its patient-level mean ED
 thickness exceeds that of the normal group by $3.67$~mm (95\% CI
 $[2.54,\ 4.67]$) and its thickest segment by $5.37$~mm ($[4.11,\ 6.56]$), both
 with large effect sizes, whereas relative systolic thickening does not separate
 the groups. These are descriptive separations within the model output on ten
-hypertrophic patients, not a diagnostic result.
+HCM patients, not a diagnostic result.
 
 \section{Contributions}
 \label{sec:conclusion-contributions}
@@ -135,10 +132,10 @@ between methods, never distance from the true anatomy, and every thickness
 figure describes reproducibility rather than validated measurement. Because the
 RBF comparator belongs to the same family as the surrogate surfaces used for
 fine-tuning, its close agreement with the model is partly expected. Twenty
-normal and ten hypertrophic ACDC patients support a directional observation
+normal and ten HCM ACDC patients support a directional observation
 about pathology and no more, and the seventeen segment values of each patient
 are repeated measures within one heart rather than independent samples. The SSM
-comparison is confined to end-diastole, no ablation isolates the contribution
+comparison is confined to ED, no ablation isolates the contribution
 of synthetic pre-training, local conditioning, phase conditioning or the
 positive-offset coupling, and the pre-training loss history was not retained.
 What the evaluation offers is a careful characterisation of a working system,
