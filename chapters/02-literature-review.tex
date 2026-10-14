@@ -55,19 +55,19 @@ methods directly relevant to the reviewed approaches.
 The search returned 142 records. After duplicate removal and screening, 28
 studies met the selection criteria; backward citation searching added 7, giving
 a final corpus of 35 publications. \Cref{fig:prisma-flow} summarises this
-process.
+process as a Preferred Reporting Items for Systematic Reviews and
+Meta-Analyses (PRISMA) flow diagram \parencite{page2021prisma}.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.88\textwidth]{prisma_literature_flow.pdf}
-\caption[PRISMA literature-selection flow diagram]{Preferred Reporting Items for
-Systematic Reviews and Meta-Analyses (PRISMA) flow diagram
+\caption[PRISMA literature-selection flow diagram]{PRISMA flow diagram
 summarising the selection of the 35 publications included in the review.}
 \label{fig:prisma-flow}
 \end{figure}
 
-The selected studies cover cardiac MRI data and segmentation, statistical shape
-models (SSMs), learned 3D reconstruction, and wall-thickness measurement. The next
+The selected studies cover cardiac MRI data and segmentation, SSMs, learned 3D
+reconstruction, and wall-thickness measurement. The next
 section relates these areas to the specific problem of recovering paired LV
 surfaces from sparse contours.
 
@@ -85,8 +85,7 @@ representations of three-dimensional anatomy.
 Cine cardiac MRI captures the LV at several points in the cardiac cycle. Of
 these, ED, when the cavity is largest, and ES,
 when it is smallest, provide a useful description of ventricular contraction
-and are the phases labelled in benchmarks such as the Automated Cardiac
-Diagnosis Challenge (ACDC)
+and are the phases labelled in benchmarks such as ACDC
 \parencite{bernard2018acdc}.
 
 In a SAX acquisition, each plane samples a cross-section perpendicular to the
@@ -193,16 +192,14 @@ is available rather than remaining local to one slice.
 ACDC provides expert ED and ES labels across five diagnostic groups, including
 normal ventricles and hypertrophic cardiomyopathy (HCM) \parencite{bernard2018acdc}. Its phase and
 diagnostic variation make it useful for testing whether a reconstruction retains
-contraction-related and abnormal shape differences. The second Multi-Centre, Multi-Vendor and Multi-Disease Cardiac
-Segmentation challenge (M\&Ms-2)
-focuses on right-ventricular segmentation and extends evaluation across centres,
+contraction-related and abnormal shape differences. M\&Ms-2 focuses on right-ventricular segmentation and extends evaluation across centres,
 scanner vendors, and diseases \parencite{martinisla2023mnms2}. For
 reconstruction, its multi-source design shows that performance on one acquisition
 source does not guarantee transfer to another. A plausible surface on one cohort
 is insufficient evidence of generalisation because acquisition variation affects
 the contours from which the entire surface is inferred.
 
-At population scale, the United Kingdom (UK) Biobank provides a large and standardised cardiac
+At population scale, the UK Biobank provides a large and standardised cardiac
 MRI resource \parencite{sudlow2015ukbiobank}. Automated segmentation of this
 cohort has enabled large anatomical studies and statistical atlases
 \parencite{bai2018automated}. Together, slice-wise clinical observations and
@@ -386,7 +383,8 @@ propagates directly into the thickness estimate. The literature describes
 five families of measurement methods, each with distinct trade-offs.
 
 The simplest approach uses nearest-neighbour distance: for each endocardial
-vertex, a KD-tree identifies the closest epicardial point, yielding a measurement
+vertex, a $k$-d tree \parencite{bentley1975kdtree} identifies the closest
+epicardial point, yielding a measurement
 in $O(N \log M)$ time. Its runtime depends on mesh size and the implementation.
 Nearest-neighbour distance can provide a lower bound on the true transmural
 thickness because it ignores the anatomical direction of measurement --- the
@@ -394,11 +392,12 @@ nearest point may lie tangentially rather than across the wall.
 
 Ray-based methods address this limitation by casting a ray from each endocardial
 vertex along its surface normal until it intersects the epicardium. The
-intersection is computed via the M\"oller--Trumbore algorithm, accelerated with
-a Bounding Volume Hierarchy (BVH) to $O(\log F)$ per query. Measuring along the
+intersection is computed via the M\"oller--Trumbore algorithm
+\parencite{moller1997raytriangle}, accelerated with a bounding volume hierarchy
+to $O(\log F)$ per query. Measuring along the
 surface normal better approximates a transmural direction but remains sensitive
 to normal noise: a slight rotation can produce a spurious long or short ray. The
-Shape Diameter Function variant improves robustness by casting a cone of $K$
+shape diameter function variant \parencite{shapira2008sdf} improves robustness by casting a cone of $K$
 rays (typically $K = 7$) at a half-angle of $30^{\circ}$ around the normal and
 reporting the median intersection distance, effectively filtering outlier hits
 caused by local mesh irregularities.
@@ -410,7 +409,8 @@ approximates local thickness ($t = D_{\mathrm{endo}} + D_{\mathrm{epi}}$). The
 estimate is exact for planar parallel boundaries but can be biased in curved
 regions because the nearest-boundary directions do not necessarily follow a
 common transmural path. The method is computationally efficient ($O(V)$ via the
-Saito--Toriwaki algorithm) but limited by voxel resolution.
+Saito--Toriwaki algorithm \parencite{saito1994edt}) but limited by voxel
+resolution.
 
 Partial differential equation (PDE)-based methods are widely used for transmural
 thickness estimation. In a method developed for cortical rather than cardiac

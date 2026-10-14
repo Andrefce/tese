@@ -18,7 +18,7 @@ The thesis started from a geometric limitation of SAX cardiac MRI.
 Each slice observes the LV finely, at an in-plane pixel size
 below $2$~mm, but the slices lie several millimetres apart, so the
 three-dimensional wall on which clinical measurement depends is never observed
-directly and has to be inferred. We treated that inference as the learning of a
+directly and has to be inferred. That inference was treated as the learning of a
 continuous signed-distance representation. A phase-conditioned implicit model
 was pre-trained on synthetic shapes sampled from an SSM and fine-tuned on ED and ES surfaces fitted
 to ACDC and M\&Ms-2 segmentations. The model reads the sparse contour rings
@@ -33,9 +33,12 @@ AHA 17-segment model, and contrasted between normal and HCM patients.
 \section{Answers to the Research Questions}
 \label{sec:conclusion-research-questions}
 \noindent
-\textbf{RQ1} asked to what extent a continuous, watertight surface can be
-reconstructed from sparse contours, and how such a reconstruction compares with
-conventional implicit and shape-model alternatives. On the held-out ACDC and
+\textbf{RQ1} asked how a reconstruction learned from synthetic and clinical
+geometry compares with RBF and SSM reconstructions of the same sparse contours
+in contour fidelity, agreement between slices, and sensitivity to slice
+density. Closed surfaces from sparse contours were already attainable with
+these conventional methods and with earlier implicit models, so the question
+was not whether the model could produce one. On the held-out ACDC and
 M\&Ms-2 test patients, the model reproduces its input rings to within
 $1.50$~mm on the endocardium and $1.96$~mm on the epicardium, which is the order
 of the in-plane pixel size, and every surface it produces is watertight after
@@ -49,14 +52,19 @@ on the cavity, with a DSC of $0.88$ to $0.91$ and enclosed volumes
 of $119$, $119$ and $127$~ml, but not on the wall, where the DSC
 falls to $0.69$ to $0.77$ and the myocardial volume ranges from $88$ to
 $136$~ml. Removing slices down to three per stack degrades all three methods by
-a similar amount without breaking any of them. A closed, contour-faithful
-surface can therefore be recovered from sparse SAX rings, but the wall
-completed between the slices remains a property of the prior rather than of the
-data, and the spread between methods is the honest measure of that uncertainty.
+a similar amount without breaking any of them. The learned prior therefore
+matches the conventional methods in closure and robustness to sparsity,
+follows the contours about as closely as the SSM fit, which also regularises,
+infers geometry closer to the smooth interpolant than to the population model,
+and degrades less than the SSM fit on hypertrophic anatomy. It does not remove
+the underlying ambiguity: the wall completed between the slices remains a
+property of the prior rather than of the data, and the spread between methods
+is the honest measure of that uncertainty.
 
-\textbf{RQ2} asked whether a single model can represent multiple physiological
-states while preserving a physically plausible separation between the inner
-and outer surfaces. One phase-conditioned network reconstructs both ED and ES
+\textbf{RQ2} asked whether a single phase-conditioned model can reconstruct
+paired endocardial and epicardial surfaces at ED and ES while maintaining a
+positive wall thickness, without a separate model for each phase or
+independent reconstruction of the two surfaces. One phase-conditioned network reconstructs both ED and ES
 geometry, and because the epicardial field is the endocardial field minus a
 positive offset, the ordering of the two surfaces is fixed by the architecture
 rather than checked after the fact. On the reconstructed surfaces, the
@@ -72,10 +80,10 @@ thickens consistently between them, but positive separation is established by
 construction of the fields and by regional means, not verified at every point
 of the output.
 
-\textbf{RQ3} asked how closely measurements derived from the reconstructed
-geometry agree with those from reference clinical geometry, and how that
-agreement depends on the measurement method. Both factors matter, and they act
-in different ways. With the estimator held fixed, the reconstruction prior
+\textbf{RQ3} asked how strongly wall thickness measured on the reconstructed
+geometry depends on the reconstruction prior and on the estimator, and whether
+regional and pathology-related differences are retained. Both factors matter,
+and they act in different ways. With the estimator held fixed, the reconstruction prior
 shifts the absolute scale of the wall: patient-level mean thickness on the
 model correlates with that on the RBF fit at $r = 0.99$ for the three non-ray
 estimators, yet is $0.82$ to $1.16$~mm thicker, and against the SSM fit the
@@ -90,8 +98,9 @@ are the appropriate choice on a curved wall. Because the RBF fit is a
 smooth-surface comparator rather than an anatomical reference, these figures
 bound the reproducibility of the measurement, not its accuracy.
 
-The pathology-stratified analysis adds that the reconstructed geometry retains
-patient-specific variation instead of collapsing towards an average shape. The
+On the second part of RQ3, the pathology-stratified analysis shows that the
+reconstructed geometry retains patient-specific variation instead of
+collapsing towards an average shape. The
 HCM group is thicker in every AHA segment; its patient-level mean ED
 thickness exceeds that of the normal group by $3.67$~mm (95\% CI
 $[2.54,\ 4.67]$) and its thickest segment by $5.37$~mm ($[4.11,\ 6.56]$), both

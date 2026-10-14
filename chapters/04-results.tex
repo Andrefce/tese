@@ -112,7 +112,7 @@ it carries a population prior that the cohort partly falls outside. Wall
 thickness is compared between
 the model, the RBF fit, and the SSM fit with the four algorithms selected in
 \cref{subsec:thickness-methods}: the Laplace field method, the Yezzi--Prince
-method, the SDF cone-ray method, and the EDTboundary sum. Because the SAX stacks are sparse relative to their in-plane
+method, the SDF cone-ray method, and the EDT boundary sum. Because the SAX stacks are sparse relative to their in-plane
 resolution, all three reconstruction methods must infer the through-plane
 geometry, and their absolute millimetre values should be read with care.
 
@@ -121,7 +121,7 @@ geometry, and their absolute millimetre values should be read with care.
 \noindent
 The final model is produced in two stages. A first stage pre-trains
 the signed-distance decoder for roughly $200$ epochs on the synthetic SSM
-meshes. This stage provides a geometric prior, and its checkpoint initializes
+meshes. This stage provides a geometric prior, and its checkpoint initialises
 the second stage. The reported model is then fine-tuned on the real
 ED and ES data described in \cref{ch:methodology}. The
 available training history records the fine-tuning stage; no numerical claim is
@@ -748,8 +748,9 @@ level rather than treating the 17 segments as independent observations.
   \centering
   \caption[Patient-level NOR--HCM wall-thickness contrasts]{Patient-level contrasts between the normal and HCM groups. Values are
     mean $\pm$ SD. Differences are HCM minus NOR with a 95\%
-    percentile-bootstrap confidence interval (CI) from 10\,000 patient-level
-    resamples. Positive Hedges' $g$ indicates a larger value in HCM.}
+    percentile-bootstrap confidence interval (CI) \parencite{efron1979bootstrap}
+    from 10\,000 patient-level resamples. Positive Hedges' $g$
+    \parencite{hedges1981effectsize} indicates a larger value in HCM.}
   \label{tab:aha17-group-effects}
   \thesistablestyle
   \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l c c c c@{}}
@@ -818,14 +819,14 @@ The results address the three research questions stated in
 \cref{sec:research-questions}, although the available evidence answers some
 components more directly than others.
 
-For \textbf{RQ1}, on whether a continuous, watertight surface can be
-reconstructed from sparse contours and how it compares with conventional
-alternatives, the ED evaluation shows that the model follows the
-observed contour rings with mean distances of $1.50$~mm on the endocardium and
-$1.96$~mm on the epicardium (\cref{tab:contour-fidelity}). After the shared
-repair stage, all evaluated meshes are watertight; closure is therefore a
-property of the complete reconstruction pipeline rather than of raw surface
-extraction alone. Pairwise Chamfer distances are $1.57$ and $1.90$~mm against
+For \textbf{RQ1}, which compares the learned reconstruction with RBF and SSM
+reconstructions of the same contours, the ED evaluation shows that the model
+follows the observed contour rings with mean distances of $1.50$~mm on the
+endocardium and $1.96$~mm on the epicardium (\cref{tab:contour-fidelity}).
+Closure does not distinguish the methods: after the shared repair stage, the
+meshes of all three are watertight, so closure is a property of the complete
+reconstruction pipeline rather than of the learned prior. What does
+distinguish them is the geometry inferred away from the slices. Pairwise Chamfer distances are $1.57$ and $1.90$~mm against
 the RBF fit and $2.08$ and $2.59$~mm against the SSM fit for the endocardium and
 epicardium, respectively (\cref{tab:reconstruction-agreement}). In the absence
 of independent 3D ground truth, these measurements establish contour fidelity
@@ -843,9 +844,9 @@ others. Because each method is compared with its own complete-stack result,
 these figures demonstrate sensitivity to slice density rather than anatomical
 error.
 
-For \textbf{RQ2}, on whether a single model can represent multiple
-physiological states while preserving a plausible separation between the two
-surfaces, the model represents separate endocardial and epicardial
+For \textbf{RQ2}, on whether a single phase-conditioned model can reconstruct
+paired surfaces at ED and ES while maintaining a positive wall thickness, the
+model represents separate endocardial and epicardial
 surfaces at ED and ES, and the Laplace-derived regional mean thickness increases
 in all seventeen segments, from $9.21$~mm at ED to $13.87$~mm at ES overall
 (\cref{tab:aha17-cohort}). The current evaluation does not, however, report a
@@ -856,9 +857,9 @@ positive separation at every evaluated point or phase-specific reconstruction
 accuracy. The absence of matched ES modes for the SSM further limits the phase
 comparison.
 
-For \textbf{RQ3}, on how closely measurements derived from the reconstructed
-geometry agree with those from reference clinical geometry and how that
-agreement depends on the measurement method, applying the same estimator to the
+For \textbf{RQ3}, on how wall thickness depends on the reconstruction prior
+and on the estimator, and whether regional and pathology-related differences
+are retained, applying the same estimator to the
 proposed and RBF reconstructions yields correlations of $r=0.95$ to $0.99$ in patient-level mean
 thickness, but positive biases of $0.82$ to $3.10$~mm show that strong
 correlation does not imply agreement in absolute scale
@@ -870,7 +871,7 @@ with the Laplace field than does the SDF cone-ray estimator
 dependence on both reconstruction geometry and measurement method, but local
 and regional agreement with the RBF-derived geometry remains unreported.
 
-The pathology-stratified analysis provides additional descriptive evidence.
+The pathology-stratified analysis addresses the second part of RQ3.
 Relative to the normal group, the HCM group has a $3.67$~mm higher patient-level
 mean ED thickness and a $5.37$~mm higher maximum ED segment, with both
 CIs excluding zero (\cref{tab:aha17-group-effects}). The

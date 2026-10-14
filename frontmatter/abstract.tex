@@ -5,16 +5,42 @@
 \chapter*{Abstract}
 
 \noindent
-% TODO: write the English abstract (~250–400 words). Recommended structure:
-%   1. Context and motivation;
-%   2. Problem / research gap;
-%   3. Proposed approach;
-%   4. Main results;
-%   5. Conclusions and impact.
+Short-axis cardiac magnetic resonance imaging shows the left ventricle
+through separate slices, so the regions between them must be reconstructed to
+obtain a continuous representation of the ventricular wall. Interpolation
+algorithms can connect the available contours, but they do not guarantee that
+the resulting shape corresponds to the patient's anatomy. Regional clinical
+assessment uses the American Heart Association (AHA) 17-segment model, yet
+visual assessment remains observer-dependent, and thickness measurements on
+selected slices do not describe the entire ventricular wall.
 
-This thesis addresses the problem of \ldots\ % TODO
+This thesis develops a machine-learning approach that reconstructs the left
+ventricle from these contours. An implicit neural representation describes
+the inner and outer surfaces of the ventricular wall continuously and
+considers cardiac phase, allowing the ventricle to be reconstructed at
+end-diastole and end-systole. Training begins with synthetic ventricular
+shapes, followed by fine-tuning on data derived from clinical segmentations.
+Wall thickness is computed at local points on the reconstructed surface and
+summarised within the seventeen AHA segments.
+
+The reconstructions are compared with methods based on radial basis functions
+and a statistical shape model. The reconstructed surfaces follow the observed
+contours, but the methods agree more closely on the cavity than on the
+myocardial wall. Thickness measurements depend on both the reconstructed shape
+and the algorithm used to calculate them, so a strong correlation between
+measurements does not mean that their values are equivalent. The AHA-based
+analysis also captures wall thickening between cardiac phases.
+
+The work links continuous ventricular reconstruction to objective,
+geometry-based wall-thickness measurements at local and AHA-segment levels.
+Without an independent three-dimensional anatomical reference, it is not
+possible to confirm which reconstruction best represents the true anatomy,
+but the results show how the choices made to complete the ventricular shape
+influence the analysis of its thickness.
 
 \vspace{1em}
-\noindent\textbf{Keywords:} keyword 1, keyword 2, keyword 3. % TODO
+\noindent\textbf{Keywords:} Cardiac magnetic resonance imaging; left ventricle;
+three-dimensional reconstruction; implicit neural representations; signed
+distance functions; myocardial wall thickness.
 
 \clearpage

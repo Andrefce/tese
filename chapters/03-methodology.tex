@@ -27,8 +27,8 @@ to infer a coherent three-dimensional pair of surfaces from sparse contours,
 then use that geometry to measure wall thickness throughout the ventricle.
 
 Training examples with both sparse contours and independent three-dimensional
-LV surfaces are not available in the public datasets. We therefore build
-supervision from two complementary sources. An SSM,
+LV surfaces are not available in the public datasets. Supervision is therefore
+built from two complementary sources. An SSM,
 which compactly represents variation in ventricular shape, supplies complete
 synthetic surfaces for pre-training the model to recover general LV geometry.
 Clinical contours from ACDC and M\&Ms-2 provide patient-specific anatomy in
@@ -39,7 +39,7 @@ geometric prior, and clinical cases adapt it to observed patient anatomy.
 At inference, only the segmented contours are supplied. The model must recover
 both boundaries in the unobserved regions while keeping the epicardium outside
 the endocardium. To enforce this relationship throughout the volume, rather
-than only at the observed slices, the endocardium is represented by a
+than only at the observed slices, the endocardium is represented by an
 SDF, whose value gives the signed distance to the
 surface. The epicardial field is defined by subtracting a strictly positive
 offset from the endocardial field, preventing the surfaces from crossing. A
@@ -47,8 +47,8 @@ cardiac-phase input lets the same model reconstruct both ED and ES.
 
 Even after reconstruction, thickness requires a measurement choice: on a
 curved wall, different ways of pairing inner and outer surface points can
-yield different values. We therefore apply four established estimators to the
-same geometry, compare their consistency, and use the selected estimator to
+yield different values. Four established estimators are therefore applied to
+the same geometry and compared for consistency; the selected estimator is used to
 summarise thickness in the AHA-17 regions. Since the clinical datasets do not
 provide independent three-dimensional ground truth, evaluation also compares
 the reconstructions with the observed contours and with surfaces fitted from
@@ -271,8 +271,8 @@ applies to ED and ES alike. The clinical targets were therefore built by
 RBF fitting, which leaves the SSM in its role as the
 source of synthetic pre-training geometry.
 
-Each segmentation is distributed as a NIfTI file, the standard container for
-medical image volumes. The file stores the label volume together with the
+Each segmentation is distributed as a Neuroimaging Informatics Technology
+Initiative (NIfTI) file, a standard container for medical image volumes. The file stores the label volume together with the
 physical size and position of its voxels. Each volume is reoriented to the
 RAS+ anatomical convention, whose axes point towards the patient's right,
 anterior, and superior sides. Physical voxel spacing is preserved so that all
@@ -356,6 +356,12 @@ enclose the endocardium. The complete operations and parameters are listed in
 the two surfaces.
 
 
+Once the surfaces have been constructed, the remaining task is to prepare
+them for learning. The contours describe what the model will observe, while
+distances sampled from the surfaces describe what it should predict. Both
+must use the same coordinates for these predictions to be compared with their
+targets.
+
 The two meshes of each case are centred and scaled with the same translation
 and scale factor, and 2048 query points are drawn near the surfaces and
 throughout a box that encloses them with a margin, with their signed distances
@@ -415,11 +421,10 @@ do not change when training moves from the synthetic to the clinical stream.
 	\centering
 	\includegraphics[width=0.9\linewidth]{fig_contour_augmentation}
 	\vspace{2mm}
-	\caption[Contour-input augmentation examples]{Examples of contour-input
-	augmentation: the unaltered contour stack, slice translation, slice
-	rotation, and contour-point dropout. Endocardial and epicardial points are
-	shown in blue and orange, respectively; the target mesh is the same in
-	every case.}
+	\caption[Contour-input augmentation examples]{Contour-input augmentation:
+	(a)~original stack; (b)~per-slice translation and point jitter;
+	(c)~slice dropout; (d)~rotation and scaling; (e)~point dropout;
+	(f)~fixed target mesh. Endocardium in blue, epicardium in orange.}
 	\label{fig:contour-augmentation}
 \end{figure}
 
@@ -493,6 +498,21 @@ in space the contours lie, and an implicit decoder, evaluated at any point,
 combines both with the coordinates of that point to return the endocardial
 signed distance and the positive offset that defines the epicardial field.
 
+\begin{figure}[p]
+	\centering
+	\includegraphics[width=0.83\linewidth]{fig_model_architecture}
+	\vspace{2mm}
+	\caption[Proposed model architecture.]{Phase-conditioned model architecture,
+	from the sparse contour observation~(a) through the global and local encoder
+	paths~(b) and the implicit decoder~(c) to the coupled fields and extracted
+	surfaces~(d). The point cloud in~(a) and the cut surfaces in~(d) are the
+	observed contours and the corresponding reconstruction of one ACDC case,
+	with the epicardium opened to expose the endocardial cavity. The offset
+	$\delta$ shown in the figure is a separation between field values, not a
+	measured thickness.}
+	\label{fig:model-architecture}
+\end{figure}
+
 The design builds on established methods for learning from point sets and
 representing shapes implicitly. The contours are treated as an unordered point
 set and summarised by a shared per-point network with max-pooling, as in
@@ -520,21 +540,6 @@ pre-trained on synthetic SSM shapes and then fine-tuned on clinical ED and ES
 cases. \Cref{tab:model-components-origin} pairs each component with its origin
 and the corresponding modification.
 
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.83\linewidth]{fig_model_architecture}
-	\vspace{2mm}
-	\caption[Proposed model architecture.]{Phase-conditioned model architecture,
-	from the sparse contour observation~(a) through the global and local encoder
-	paths~(b) and the implicit decoder~(c) to the coupled fields and extracted
-	surfaces~(d). The point cloud in~(a) and the cut surfaces in~(d) are the
-	observed contours and the corresponding reconstruction of one ACDC case,
-	with the epicardium opened to expose the endocardial cavity. The offset
-	$\delta$ shown in the figure is a separation between field values, not a
-	measured thickness.}
-	\label{fig:model-architecture}
-\end{figure}
-
 Compared with the recent cardiac implicit models reviewed in
 \cref{subsec:dl-reconstruction-review}, which reconstruct from image data
 \parencite{bras2026anisotropy} or from sparse segmentations of both ventricles
@@ -543,7 +548,7 @@ with long-axis views and a learned biventricular prior
 with tissue and phase labels, and it enforces the nesting of the two surfaces
 by construction.
 
-\begin{table}[H]
+\begin{table}[tbp]
 	\centering
 	\caption[Origin of the model components]{Model components, the prior work
 	each one builds on, and what is specific to this work.}
@@ -564,9 +569,16 @@ by construction.
 	\end{tabular}
 \end{table}
 
+\FloatBarrier
 \subsection{What the model observes}
 \label{subsec:architecture-input}
 \noindent
+The reconstruction begins with the contour points prepared in the previous
+section, not with the MRI images themselves. Each point tells the model where
+a boundary was observed, which boundary it belongs to, and at which cardiac
+phase. The notation below describes how this information is supplied to the
+network.
+
 For a batch of $B$ cases processed together, the encoder receives the contour
 points as the padded tensor defined in \cref{eq:contour-input-tensor}:
 \begin{equation}
@@ -589,6 +601,12 @@ to be summarised separately before they are combined.
 \subsection{Contour encoder}
 \label{subsec:contour-encoder}
 \noindent
+Before predicting a surface, the model needs a useful description of the
+observed contours. The encoder builds this description at two scales: a
+summary of the whole ventricle and a spatial grid of local contour information.
+The decoder can then use both the overall shape and the nearby observations
+when predicting a boundary between slices.
+
 The global pathway follows PointNet \parencite{qi2017pointnet}. A shared
 network with layer widths
 $5\rightarrow64\rightarrow128\rightarrow256\rightarrow256$ and rectified linear unit (ReLU)
@@ -634,8 +652,8 @@ averaged, preventing densely sampled regions from having greater influence
 solely because they contain more points.
 
 Three $3\times3\times3$ convolutions then propagate information between
-neighbouring cells. Group Normalisation and ReLU follow the first two
-convolutions, producing the feature volume in
+neighbouring cells. Group Normalisation \parencite{wu2018groupnorm} and ReLU
+follow the first two convolutions, producing the feature volume in
 \cref{eq:local-feature-volume}:
 \begin{equation}
 	V \in \mathbb{R}^{32\times16\times16\times16}.
@@ -656,6 +674,12 @@ the reconstruction resolution.
 \subsection{Implicit decoder with positive-offset coupling}
 \label{subsec:monotone-epi-decoder}
 \noindent
+The encoder describes the case, but it does not yet produce a surface. The
+decoder uses that description to predict field values at locations throughout
+the volume, including between the observed slices. The locations where each
+field is zero form its surface; coupling the two fields keeps the inner and
+outer boundaries separated.
+
 The decoder represents each surface as the zero level set of a function of
 continuous coordinates, in the manner of DeepSDF \parencite{deepsdf2019}. A
 network fed with plain coordinates tends towards overly smooth fields, so each
@@ -783,7 +807,8 @@ of points, the five terms are defined in \cref{eq:training-loss-terms}:
 	\mathbb{E}_{x\in\mathcal{E}}[\ell_{\beta_{\mathrm{WT}}}(\delta(x)-t(x))],
 	\label{eq:training-loss-terms}
 \end{align}
-where $\alpha=5$ and $\ell_{\beta}$ is the Smooth-L1 penalty, which grows like
+where $\alpha=5$ and $\ell_{\beta}$ is the Smooth-L1 penalty
+\parencite{girshick2015fastrcnn}, which grows like
 a squared error for small differences and like an absolute error for large
 ones, so that a few badly wrong points do not dominate the term. The penalty
 is defined in \cref{eq:wall-smooth-l1}:
@@ -813,11 +838,12 @@ computed in full precision to keep its gradient calculation stable; the
 weights and implementation settings are reported in
 \cref{tab:loss-terms} of \cref{app:supplementary-methods}.
 
-The training run reported here uses the AdamW optimiser, a standard
-gradient-based method, with a learning rate (step size) of $2\times10^{-5}$
-and weight decay $5\times10^{-4}$; the learning rate follows cosine annealing
-with warm restarts, decreasing along a cosine curve and being reset at
-intervals, with an initial restart period of 100 eposchs (passes over the
+The training run reported here uses the AdamW optimiser
+\parencite{loshchilov2019adamw}, a standard gradient-based method, with a
+learning rate (step size) of $2\times10^{-5}$ and weight decay
+$5\times10^{-4}$; the learning rate follows cosine annealing with warm
+restarts \parencite{loshchilov2017sgdr}, decreasing along a cosine curve and being reset at
+intervals, with an initial restart period of 100 epochs (passes over the
 training set). Pre-training lasted approximately 200 epochs; fine-tuning then
 ran for 776 epochs, and the checkpoint at epoch 695 was selected by validation
 loss. Training uses mixed precision (lower-precision arithmetic where it is
@@ -825,39 +851,18 @@ safe) and gradient clipping at 1.0 (a cap on the size of each update); each of
 two GPUs processes a batch of 8 cases and gradients are accumulated over two
 steps, for an effective batch size of 32. Weights are lightly clipped instead
 of spectrally normalised, because the decoder is evaluated at many points per
-step and GPU memory is the limiting resource. \Cref{tab:training-config}
-collects these settings.
-
-\begin{table}[H]
-	\centering
-	\caption[Model training configuration]{Training configuration used for the
-	model.}
-	\label{tab:training-config}
-	\small
-	\begin{tabular}{p{0.30\textwidth} p{0.48\textwidth}}
-		\toprule
-		Setting & Value \\
-		\midrule
-		Training strategy & SSM pre-training, then fine-tuning on real ED/ES \\
-		Training mode & Combined ED and ES with phase conditioning \\
-		Augmentation & Contour-input perturbations for synthetic ED and real ED/ES; targets unchanged \\
-		Optimiser & AdamW \\
-		Learning rate & $2\times10^{-5}$ \\
-		Scheduler & Cosine annealing with warm restarts ($T_0=100$ epochs) \\
-		Weight decay & $5\times10^{-4}$ \\
-		Training duration & Approximately 200 pre-training epochs, then 776 fine-tuning epochs (best checkpoint: 695) \\
-		Batch size & 8 per GPU $\times$ 2 GPUs, accumulated for 2 steps (effective batch size 32) \\
-		Gradient clipping & 1.0 \\
-		Precision & Automatic mixed precision \\
-		Hardware & 2 GPUs in parallel \\
-		Inference grid & $96^3$ \\
-		\bottomrule
-	\end{tabular}
-\end{table}
+step and GPU memory is the limiting resource. \Cref{tab:training-config} in
+\cref{app:supplementary-methods} collects these settings.
 
 \subsection{Inference, offset extraction, and comparators}
 \label{subsec:inference-offset-extraction}
 \noindent
+The learned fields must now be converted into explicit surfaces that can be
+inspected and measured. The decoder is evaluated throughout a grid, and a mesh
+is extracted for each boundary. Checking these meshes is a separate step from
+learning the fields, because thickness measurement requires usable surface
+geometry.
+
 At inference time, the encoder turns the contours into $z$ and $V$ once, and
 the decoder is evaluated on a regular $96^3$ grid of points. Marching cubes
 extracts the zero level sets of $f_{\mathrm{endo}}$ and $f_{\mathrm{epi}}$ from
@@ -946,7 +951,8 @@ vertices or at points projected onto the endocardium, and the resulting fields
 are summarised by their mean, median, SD, 5th and 95th
 percentiles, fraction of valid values, and runtime, and shown as
 three-dimensional colour maps and as AHA-17 bullseye plots, circular diagrams
-with one cell per segment.
+with one cell per segment. \Cref{fig:wall-thickness-methods} contrasts the
+four pairing rules on one wall cross-section.
 
 \begin{table}[H]
 	\centering
@@ -965,6 +971,22 @@ with one cell per segment.
 		\bottomrule
 	\end{tabular}
 \end{table}
+
+\begin{figure}[tbp]
+	\centering
+	\includegraphics[width=\linewidth]{fig_wall_thickness_methods}
+	\vspace{2mm}
+	\caption[Comparison of wall-thickness estimators.]{Conceptual comparison of the four wall-thickness estimators on a
+	single myocardial cross-section (endocardium in blue, epicardium in orange).
+		(a) EDT boundary sum: distances from an interior point to each boundary are
+		added. (b) Laplace field: curved paths of a potential rising from 0 to 1
+		cross its level lines (dashed) at right angles, and thickness follows from
+		the gradient magnitude. (c) Yezzi--Prince: travel distances $u$ and $v$ from
+		opposite boundaries along the same field are summed. (d) SDF cone rays: the
+		median distance of a fan of rays around the endocardial normal is kept
+		(highlighted), limiting the effect of any single ill-oriented ray.}
+	\label{fig:wall-thickness-methods}
+\end{figure}
 
 The EDT boundary sum is the simplest. A
 distance transform assigns to every voxel of the myocardium its straight-line
@@ -1028,30 +1050,14 @@ the median of the valid intersection distances is kept, as defined in
 	\label{eq:cone-ray-thickness}
 \end{equation}
 The estimate remains approximately transmural, measuring across rather than
-along the wall, while being more robust than a single normal ray. \Cref{fig:wall-thickness-methods} contrasts the four pairing
-rules on one wall cross-section.
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\linewidth]{fig_wall_thickness_methods}
-	\vspace{2mm}
-	\caption[Comparison of wall-thickness estimators.]{Conceptual comparison of the four wall-thickness estimators on a
-	single myocardial cross-section (endocardium in blue, epicardium in orange).
-		(a) EDT boundary sum: distances from an interior point to each boundary are
-		added. (b) Laplace field: curved paths of a potential rising from 0 to 1
-		cross its level lines (dashed) at right angles, and thickness follows from
-		the gradient magnitude. (c) Yezzi--Prince: travel distances $u$ and $v$ from
-		opposite boundaries along the same field are summed. (d) SDF cone rays: the
-		median distance of a fan of rays around the endocardial normal is kept
-		(highlighted), limiting the effect of any single ill-oriented ray.}
-	\label{fig:wall-thickness-methods}
-\end{figure}
+along the wall, while being more robust than a single normal ray.
 
 What is specific to this work is not the estimators but how they are used: all
 four are run on the same reconstructed surfaces under the same conditions, and
 their agreement with one another, rather than with a reference that does not
 exist, decides which one carries the regional analysis.
 
+\FloatBarrier
 \subsection{Local three-dimensional wall thickness}
 \label{subsec:local-3d-thickness}
 \noindent
@@ -1090,6 +1096,11 @@ The sectors are numbered from the anterior wall, with the septal segments
 facing the RV, while the apical tip forms the seventeenth segment.
 In routine use, an observer measures the thickness of each segment on the
 corresponding slice.
+
+The local thickness map contains many more values than a regional report
+needs. Assigning those values to anatomically oriented regions allows the
+same parts of the ventricle to be compared across cases and cardiac phases,
+while retaining the full surface map for more detailed inspection.
 
 Transferring this definition to a reconstructed surface requires only that
 every vertex receive the two coordinates the definition relies on, a position
