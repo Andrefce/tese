@@ -191,7 +191,23 @@
 
 % frontmatter pieces open on the next page; only numbered chapters force a recto
 \makeatletter
-\let\thesis@cleardoublepage\cleardoublepage
+\def\thesis@cleardoublepage{%
+  \clearpage
+  \if@twoside
+    \ifodd\c@page
+    \else
+      \thispagestyle{empty}%
+      \null
+      \vfill
+      \begin{center}
+        {\color{black!65}\normalsize\itshape This page is intentionally left blank.}
+      \end{center}
+      \vfill
+      \newpage
+      \if@twocolumn\null\newpage\fi
+    \fi
+  \fi
+}
 \makeatother
 \let\cleardoublepage\clearpage
 

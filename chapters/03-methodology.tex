@@ -10,7 +10,7 @@ This chapter presents the methodology for reconstructing three-dimensional LV
 geometry from sparse SAX contours and measuring myocardial wall thickness on
 the resulting surfaces. The approach combines synthetic geometric supervision
 with clinical MRI-derived data, a phase-conditioned implicit representation,
-and a comparison of local wall-thickness estimators.
+and a comparison of local wall-thickness methods.
 
 \section{Overview}
 \label{sec:method-overview}
@@ -47,8 +47,8 @@ cardiac-phase input lets the same model reconstruct both ED and ES.
 
 Even after reconstruction, thickness requires a measurement choice: on a
 curved wall, different ways of pairing inner and outer surface points can
-yield different values. Four established estimators are therefore applied to
-the same geometry and compared for consistency; the selected estimator is used to
+yield different values. Four established methods are therefore applied to
+the same geometry and compared for consistency; the selected method is used to
 summarise thickness in the AHA-17 regions. Since the clinical datasets do not
 provide independent three-dimensional ground truth, evaluation also compares
 the reconstructions with the observed contours and with surfaces fitted from
@@ -80,22 +80,23 @@ The sections that follow develop each stage in turn.
 \Cref{sec:data-preparation} describes how the two supervision streams are
 constructed and brought into a shared sample format; \cref{sec:architecture}
 and \cref{sec:training-inference} explain the model, its training, and surface
-extraction. \Cref{sec:wall-thickness-protocol} then defines the measurement
-estimators and AHA-17 aggregation. In \cref{ch:results}, these methods are
-evaluated against the observed contours and fitted surfaces, under slice
-removal, and across cardiac phases and patient groups. Together, the results
+extraction. \Cref{sec:wall-thickness-protocol} then describes the measurement
+methods and how results are grouped into AHA-17 regions. In \cref{ch:results},
+these methods are evaluated against the observed contours and fitted
+surfaces, under slice removal, and across cardiac phases and patient groups.
+Together, the results
 address the research questions in \cref{sec:research-questions}.
 
 \section{Data Preparation}
 \label{sec:data-preparation}
 \noindent
-The model is trained to map contours to surfaces, so every training case must
+Because the model maps contours to surfaces, every training case must
 contain both: a sparse contour stack as input and a pair of closed
 three-dimensional surfaces as target. Public cardiac MRI datasets provide only
 the first half. ACDC and M\&Ms-2 supply images and slice-wise segmentation
 masks, label images in which every pixel is marked as cavity, myocardium, or
 background, but not the closed (``watertight'') endocardial and epicardial
-surfaces that a signed-distance decoder needs as supervision. The training data were
+surfaces that a signed-distance decoder needs as supervision. Training data were
 therefore constructed from two sources that fill this gap in complementary
 ways. The UK Digital Heart Project LV
 SSM\footnote{\url{https://github.com/UK-Digital-Heart-Project/Statistical-Shape-Model}}
@@ -119,11 +120,11 @@ controlled, which makes it a convenient source of supervision for pre-training.
 What it cannot provide matters just as much: the sampled shapes carry no
 scanner-dependent acquisition effects, no variation in how a clinician would
 have drawn the contours, and, for the model used here, no systolic geometry.
-The synthetic stream is therefore used to teach the model what an LV looks
+Synthetic pre-training therefore teaches the model what an LV looks
 like in general, before the clinical stream exposes it to the conditions of
 the evaluation data.
 
-The shape model is the UK Digital Heart Project LV SSM of
+The synthetic stream draws on the UK Digital Heart Project LV SSM of
 \textcite{bai2015biventricularatlas}, built from more than 1,000
 high-resolution cardiac MRI scans of healthy subjects. It provides a mean
 endocardial surface of 22\,043 vertices (the corner points of the triangles
@@ -367,12 +368,11 @@ and scale factor, and 2048 query points are drawn near the surfaces and
 throughout a box that encloses them with a margin, with their signed distances
 recorded, exactly as for the synthetic stream.
 
-One property of these targets governs the interpretation of every later
-result. They are \emph{surrogate targets}: RBF-derived surfaces that stand in
-for the three-dimensional reference geometry that does not exist, and whose
-shape between the slices depends on the kernel, the off-surface constraints,
-the regularisation, and the extraction resolution just described. Agreement
-between the model and these targets shows that the model has learned to
+These RBF-fitted surfaces stand in for the three-dimensional reference
+geometry, which is unavailable. Their shape between the slices depends on the
+kernel, the off-surface constraints, the regularisation, and the extraction
+resolution just described. Agreement between the model and these targets
+shows that the model has learned to
 reproduce a particular, reasonable reconstruction of the rings, not that it has
 recovered the true anatomy between them. \Cref{ch:results} keeps this
 distinction explicit by also measuring every reconstruction against the
@@ -485,12 +485,12 @@ now be described without reference to the source of a sample.
 \section{Model Architecture}
 \label{sec:architecture}
 \noindent
-The data impose three requirements on the model. Its input is a set of a few
+Three requirements shape the model. The input is a set of a few
 hundred points whose number varies from case to case and whose order carries
 no meaning, so the encoder must be indifferent to point count and order. Its
 output is a pair of surfaces that must be continuous between the slices and
 correctly nested everywhere, so the decoder must produce two related fields
-rather than one. And the same model must represent diastolic and systolic
+rather than one. Finally, the same model must represent diastolic and systolic
 hearts, so the phase must reach every stage that interprets the contours.
 \Cref{fig:model-architecture} shows the resulting design. A global encoder
 summarises the whole contour set in one vector, a local encoder records where
@@ -513,13 +513,13 @@ signed distance and the positive offset that defines the epicardial field.
 	\label{fig:model-architecture}
 \end{figure}
 
-The design builds on established methods for learning from point sets and
-representing shapes implicitly. The contours are treated as an unordered point
-set and summarised by a shared per-point network with max-pooling, as in
-PointNet \parencite{qi2017pointnet}. The spatial detail lost in that summary
-is recovered from a convolutional feature grid sampled at each query point,
+Its design builds on established methods for learning from point sets and
+representing shapes implicitly. Contours are treated as an unordered point set
+and summarised by a shared per-point network with max-pooling, as in
+PointNet \parencite{qi2017pointnet}. Spatial detail lost in that summary is
+recovered from a convolutional feature grid sampled at each query point,
 following Convolutional Occupancy Networks \parencite{peng2020convonet}. The
-surfaces themselves are zero level sets of signed-distance fields predicted by
+surfaces are zero level sets of signed-distance fields predicted by
 a latent-conditioned network in the manner of DeepSDF \parencite{deepsdf2019},
 with Fourier features of the query coordinates
 \parencite{tancik2020fourierfeatures} and Eikonal regularisation during
@@ -573,7 +573,7 @@ by construction.
 \subsection{What the model observes}
 \label{subsec:architecture-input}
 \noindent
-The reconstruction begins with the contour points prepared in the previous
+Reconstruction begins with the contour points prepared in the previous
 section, not with the MRI images themselves. Each point tells the model where
 a boundary was observed, which boundary it belongs to, and at which cardiac
 phase. The notation below describes how this information is supplied to the
@@ -607,10 +607,10 @@ summary of the whole ventricle and a spatial grid of local contour information.
 The decoder can then use both the overall shape and the nearby observations
 when predicting a boundary between slices.
 
-The global pathway follows PointNet \parencite{qi2017pointnet}. A shared
-network with layer widths
+Following PointNet \parencite{qi2017pointnet}, the global pathway applies a
+shared network with layer widths
 $5\rightarrow64\rightarrow128\rightarrow256\rightarrow256$ and rectified linear unit (ReLU)
-activations processes each point independently. The encoder therefore does not
+activations to each point independently. The encoder therefore does not
 depend on the order of points within a ring or between slices. For the points
 $P = \{p_i\}_{i=1}^{N}$ of one case, the network assigns each point a
 256-dimensional feature, as expressed in \cref{eq:point-encoding}:
@@ -620,9 +620,8 @@ $P = \{p_i\}_{i=1}^{N}$ of one case, the network assigns each point a
 \end{equation}
 where $\phi_{\mathrm{enc}}$ denotes the shared network.
 
-The pooling operation differs from standard PointNet. Rather than taking one
-maximum over all points, the encoder pools the endocardial set $\mathcal{E}$
-and the epicardial set $\mathcal{P}$ separately, as shown in
+Unlike standard PointNet, this pooling operation takes separate maxima for the
+endocardial set $\mathcal{E}$ and the epicardial set $\mathcal{P}$, as shown in
 \cref{eq:tissue-pooling}:
 \begin{equation}
 	z_{\mathrm{endo}} = \max_{i \in \mathcal{E}} h_i,
@@ -674,13 +673,13 @@ the reconstruction resolution.
 \subsection{Implicit decoder with positive-offset coupling}
 \label{subsec:monotone-epi-decoder}
 \noindent
-The encoder describes the case, but it does not yet produce a surface. The
+Although the encoder describes the case, it does not yet produce a surface. The
 decoder uses that description to predict field values at locations throughout
 the volume, including between the observed slices. The locations where each
 field is zero form its surface; coupling the two fields keeps the inner and
 outer boundaries separated.
 
-The decoder represents each surface as the zero level set of a function of
+Each surface is represented by the decoder as the zero level set of a function of
 continuous coordinates, in the manner of DeepSDF \parencite{deepsdf2019}. A
 network fed with plain coordinates tends towards overly smooth fields, so each
 query point is first expanded with Fourier features
@@ -709,7 +708,7 @@ the decoder at the input layer, at this skip connection, and in the offset
 head described next, so that the prediction at a point depends on the nearby
 contours as well as on the global shape.
 
-The output stage is where the model departs from an ordinary implicit decoder.
+At the output stage, the model departs from an ordinary implicit decoder.
 Predicting the endocardium and the epicardium as two unrelated fields would let
 them cross or touch wherever the data are sparse, producing a wall of zero or
 negative thickness between slices. The final hidden representation therefore
@@ -769,7 +768,7 @@ no second asymmetry is introduced at fine-tuning. The cost is that phase
 information is coarse, a binary label rather than a position in the cardiac
 cycle, and that the prior remains biased towards diastolic shape.
 
-The objective imposes five complementary constraints. The surface term places
+Five complementary constraints shape the objective. The surface term places
 the predicted zero level sets on the target surfaces, while the dense SDF term
 fits the stored signed distances throughout the sampled volume. The Eikonal
 term encourages unit gradient magnitude, as required of a signed-distance
@@ -838,7 +837,7 @@ computed in full precision to keep its gradient calculation stable; the
 weights and implementation settings are reported in
 \cref{tab:loss-terms} of \cref{app:supplementary-methods}.
 
-The training run reported here uses the AdamW optimiser
+The reported run uses the AdamW optimiser
 \parencite{loshchilov2019adamw}, a standard gradient-based method, with a
 learning rate (step size) of $2\times10^{-5}$ and weight decay
 $5\times10^{-4}$; the learning rate follows cosine annealing with warm
@@ -857,8 +856,8 @@ step and GPU memory is the limiting resource. \Cref{tab:training-config} in
 \subsection{Inference, offset extraction, and comparators}
 \label{subsec:inference-offset-extraction}
 \noindent
-The learned fields must now be converted into explicit surfaces that can be
-inspected and measured. The decoder is evaluated throughout a grid, and a mesh
+Usable surfaces are needed to inspect and measure the reconstruction. The
+decoder is evaluated throughout a grid, and a mesh
 is extracted for each boundary. Checking these meshes is a separate step from
 learning the fields, because thickness measurement requires usable surface
 geometry.
@@ -891,11 +890,11 @@ voxels with the distance-transform method of \cref{subsec:thickness-methods},
 to the mean raw offset. The calibration fixes the mean by
 construction and is not a test of accuracy. As established in
 \cref{subsec:monotone-epi-decoder}, all reported thickness values are instead
-computed on the extracted surfaces using the protocol of
+computed on the extracted surfaces using the methods described in
 \cref{sec:wall-thickness-protocol}.
 
 The model is compared with two reconstructions built from exactly the same
-contour rings, chosen because they embody two different and well-understood
+contour rings. These comparators embody different and well-understood
 priors. The first is an RBF implicit fit obtained with the procedure of
 \cref{subsec:real-ed-es-datasets}: it interpolates the rings through a smooth
 field and belongs to the same family as the fine-tuning targets. The second is
@@ -919,30 +918,28 @@ result. Neither comparison isolates the contribution of individual model
 components. The reconstructed meshes now become the input to the measurement
 stage.
 
-\section{Wall-Thickness Evaluation Protocol}
+\section{Wall-Thickness Evaluation}
 \label{sec:wall-thickness-protocol}
 \noindent
-The output of the previous section is a pair of surfaces; the clinical
-quantity of interest is the distance between them. On a curved, tapering wall
-that distance is not uniquely defined, because it depends on which point of
-the epicardium is paired with a given point of the endocardium: the nearest
-point, the point reached by travelling perpendicular to the surface, or the
-point reached along a smooth path across the wall. Different pairing rules
-give different values on the same geometry, and a rule that behaves well on
-one geometry can be erratic on another. The protocol therefore keeps the two
-sources of variation apart. Thickness is always measured on the reconstructed
-endocardial and epicardial meshes; the segmentation volume provides only the
-contour rings and the orientation of the AHA coordinate system. Four
-established estimators with different pairing rules are run on the same
-surfaces, and the one that proves most consistent in \cref{ch:results} is used
-for the regional analysis. The protocol compares measurement methods and
-constructs three-dimensional thickness maps; it does not assess diagnostic
-performance for infarction, scarring, or hypertrophy.
+The preceding section produces the endocardial and epicardial surfaces used
+for thickness measurement. Measuring the distance between them requires
+pairing each point on one surface with a point on the other. On a curved,
+tapering wall, the result depends on the pairing rule: for example, it may use
+the nearest point, travel perpendicular to the surface, or follow a smooth
+path through the wall. These rules can give different thickness values on the
+same geometry. We therefore compare four established methods on the same
+reconstructed surfaces. The segmentation volume supplies the contour rings
+and the orientation of the AHA coordinate system; thickness is measured only
+on the reconstructed surfaces. The method whose measurements are most
+consistent in \cref{ch:results} is used for the regional analysis. This
+evaluation compares measurement methods and produces three-dimensional
+thickness maps; it does not assess diagnostic performance for infarction,
+scarring, or hypertrophy.
 
 \subsection{Selected thickness methods}
 \label{subsec:thickness-methods}
 \noindent
-The four methods span the main families identified in
+These four methods span the main families identified in
 \cref{subsec:thickness-review}: distance fields computed on a voxel grid, rays
 cast from one surface to the other, and methods based on PDEs, which define a smooth field across the wall and measure
 along it (\cref{tab:wall-thickness-methods}). None is assumed in advance to be
@@ -976,7 +973,7 @@ four pairing rules on one wall cross-section.
 	\centering
 	\includegraphics[width=\linewidth]{fig_wall_thickness_methods}
 	\vspace{2mm}
-	\caption[Comparison of wall-thickness estimators.]{Conceptual comparison of the four wall-thickness estimators on a
+	\caption[Comparison of wall-thickness methods.]{Conceptual comparison of the four wall-thickness methods on a
 	single myocardial cross-section (endocardium in blue, epicardium in orange).
 		(a) EDT boundary sum: distances from an interior point to each boundary are
 		added. (b) Laplace field: curved paths of a potential rising from 0 to 1
@@ -988,7 +985,7 @@ four pairing rules on one wall cross-section.
 	\label{fig:wall-thickness-methods}
 \end{figure}
 
-The EDT boundary sum is the simplest. A
+EDT boundary sum is the simplest method. A
 distance transform assigns to every voxel of the myocardium its straight-line
 distance to the nearest point of a given boundary; the method computes one
 such transform for each surface and adds them, as defined in
@@ -1003,7 +1000,7 @@ walls, but it is limited by voxel size and slightly overestimates thickness
 where the wall is strongly curved, because the two nearest points do not lie
 on a common path across the wall.
 
-The Laplace field method replaces nearest points with a smooth path across the
+By contrast, the Laplace field method replaces nearest points with a smooth path across the
 wall. A scalar field $\psi$ is defined over the myocardium by solving Laplace's
 equation with the boundary conditions in \cref{eq:laplace-thickness}:
 \begin{equation}
@@ -1038,9 +1035,10 @@ at fixed grid points rather than by tracing individual paths). Their simplified 
 where $u$ and $v$ are the distances travelled from the two boundaries and
 their sum is the thickness.
 
-The cone-ray method pairs each endocardial point with the epicardial point
-reached along its surface normal, but guards against a single badly oriented
-ray. Following the shape diameter function of \textcite{shapira2008sdf}, $K$
+For cone-ray estimation, each endocardial point is paired with the epicardial
+point reached along its surface normal, while multiple rays guard against a
+single badly oriented direction. Following the shape diameter function of
+\textcite{shapira2008sdf}, $K$
 rays are cast within a cone of half-angle $30^{\circ}$ around the normal, and
 the median of the valid intersection distances is kept, as defined in
 \cref{eq:cone-ray-thickness}:
@@ -1049,10 +1047,10 @@ the median of the valid intersection distances is kept, as defined in
 	\qquad K=7.
 	\label{eq:cone-ray-thickness}
 \end{equation}
-The estimate remains approximately transmural, measuring across rather than
+As a result, the estimate remains approximately transmural, measuring across rather than
 along the wall, while being more robust than a single normal ray.
 
-What is specific to this work is not the estimators but how they are used: all
+What is specific to this work is not the methods themselves but how they are used: all
 four are run on the same reconstructed surfaces under the same conditions, and
 their agreement with one another, rather than with a reference that does not
 exist, decides which one carries the regional analysis.
@@ -1061,7 +1059,7 @@ exist, decides which one carries the regional analysis.
 \subsection{Local three-dimensional wall thickness}
 \label{subsec:local-3d-thickness}
 \noindent
-Before any regional summary, each estimator produces a thickness value at
+Before any regional summary, each method produces a thickness value at
 every endocardial vertex of the repaired meshes of
 \cref{subsec:inference-offset-extraction}, that is, a continuous map over the
 whole reconstructed wall rather than a handful of measurements on selected
@@ -1086,7 +1084,7 @@ fixed colour scale makes the maps comparable across patients and phases
 \subsection{Regional AHA-17 mapping}
 \label{subsec:aha17-mapping}
 \noindent
-For clinical reporting, the local map of the selected estimator is summarised
+For clinical reporting, the local map from the selected method is summarised
 in the AHA 17-segment model \parencite{cerqueira2002segmentation}. The model
 was defined for two-dimensional imaging and divides the ventricle along its
 long axis into basal, mid-cavity, and apical thirds. A representative SAX
@@ -1128,8 +1126,8 @@ base, apex, and septal direction. The rings are then unrolled onto concentric
 circles to form the bullseye, with the basal ring outermost and the apical cap
 at the centre. Each cell therefore summarises the vertices of one surface
 patch. Within each segment, the mean and percentiles provide complementary
-regional summaries rather than relying on a single statistic. This aggregation
-complements rather than replaces the per-vertex maps.
+regional summaries rather than relying on a single statistic. These summaries
+complement rather than replace the per-vertex maps.
 
 \begin{figure}[H]
 	\centering

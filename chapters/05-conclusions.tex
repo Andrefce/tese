@@ -14,7 +14,7 @@ out the work that should follow.
 \section{Summary of the Work}
 \label{sec:conclusion-summary}
 \noindent
-The thesis started from a geometric limitation of SAX cardiac MRI.
+Sparse SAX cardiac MRI presents a geometric limitation.
 Each slice observes the LV finely, at an in-plane pixel size
 below $2$~mm, but the slices lie several millimetres apart, so the
 three-dimensional wall on which clinical measurement depends is never observed
@@ -27,8 +27,8 @@ endocardial signed-distance field, and defines the epicardial field as that
 field minus a strictly positive, directly supervised offset, so the two surfaces
 cannot cross. Its output was compared with an RBF
 implicit fit and an SSM fit of the same rings, and myocardial wall thickness was
-measured on all three geometries with four local estimators, localised on the
-AHA 17-segment model, and contrasted between normal and HCM patients.
+measured on all three geometries with four local methods, summarised across
+the AHA 17 segments, and compared between normal and HCM patients.
 
 \section{Answers to the Research Questions}
 \label{sec:conclusion-research-questions}
@@ -47,12 +47,12 @@ the shared repair stage. Its geometry lies closer to the RBF interpolant
 $2.59$~mm), and it responds to pathology more evenly than the population prior:
 between the normal and HCM subsets its mean contour distance moves from
 $1.45$ to $1.60$~mm, whereas that of the SSM fit moves from $1.42$ to
-$2.63$~mm. The comparison also shows where the three priors diverge. They agree
+$2.63$~mm. The three priors also diverge in their representation of the wall. They agree
 on the cavity, with a DSC of $0.88$ to $0.91$ and enclosed volumes
 of $119$, $119$ and $127$~ml, but not on the wall, where the DSC
 falls to $0.69$ to $0.77$ and the myocardial volume ranges from $88$ to
 $136$~ml. Removing slices down to three per stack degrades all three methods by
-a similar amount without breaking any of them. The learned prior therefore
+a similar amount without breaking any of them. Accordingly, the learned prior
 matches the conventional methods in closure and robustness to sparsity,
 follows the contours about as closely as the SSM fit, which also regularises,
 infers geometry closer to the smooth interpolant than to the population model,
@@ -71,9 +71,9 @@ rather than checked after the fact. On the reconstructed surfaces, the
 Laplace-derived wall thickness rises from $9.21$~mm at ED to $13.87$~mm at ES
 over the ACDC pathology subset, and all seventeen AHA segments thicken, with
 the smallest relative change at the base and the largest in the mid-cavity and
-apical segments. The evaluation did not, however, measure a pointwise minimum
-separation on the extracted meshes, test for intersections after repair, or
-report the ED--ES change in cavity volume, and the public SSM offers no ES
+apical segments. No pointwise minimum separation on the extracted meshes,
+intersection check after repair, or ED--ES change in cavity volume was
+evaluated, and the public SSM offers no ES
 modes against which the systolic geometry could be compared. RQ2 therefore
 receives a qualified answer: the model represents both phases with a wall that
 thickens consistently between them, but positive separation is established by
@@ -81,27 +81,27 @@ construction of the fields and by regional means, not verified at every point
 of the output.
 
 \textbf{RQ3} asked how strongly wall thickness measured on the reconstructed
-geometry depends on the reconstruction prior and on the estimator, and whether
+geometry depends on the reconstruction prior and the measurement method, and whether
 regional and pathology-related differences are retained. Both factors matter,
-and they act in different ways. With the estimator held fixed, the reconstruction prior
-shifts the absolute scale of the wall: patient-level mean thickness on the
+and they act in different ways. When the measurement method is held fixed, the
+reconstruction prior shifts the absolute thickness scale: patient-level mean thickness on the
 model correlates with that on the RBF fit at $r = 0.99$ for the three non-ray
-estimators, yet is $0.82$ to $1.16$~mm thicker, and against the SSM fit the
+methods, yet is $0.82$ to $1.16$~mm thicker, and against the SSM fit the
 correlation falls to $0.72$ to $0.77$ with a bias of $2.53$ to $2.91$~mm. With
 the geometry held fixed, the Yezzi--Prince method and the EDT boundary sum
-agree with the Laplace field to within a bias below $1$~mm and an ICC of $0.77$, whereas the SDF cone-ray estimator is biased by
+agree with the Laplace field to within a bias below $1$~mm and an ICC of $0.77$, whereas the SDF cone-ray method is biased by
 $+3.31$~mm with LoA of $\pm 12.74$~mm and an ICC of $0.28$, because a straight ray leaves a curved wall where a
 streamline does not. Strong correlation between geometries thus does not imply
 agreement in millimetres; the reconstruction prior and the measurement path are
-separate sources of offset of comparable size, and path-following estimators
-are the appropriate choice on a curved wall. Because the RBF fit is a
+separate sources of offset of comparable size. Methods that follow the wall's
+curved path are better suited to this task. Because the RBF fit is a
 smooth-surface comparator rather than an anatomical reference, these figures
 bound the reproducibility of the measurement, not its accuracy.
 
-On the second part of RQ3, the pathology-stratified analysis shows that the
+On the second part of RQ3, the analysis by disease group shows that the
 reconstructed geometry retains patient-specific variation instead of
-collapsing towards an average shape. The
-HCM group is thicker in every AHA segment; its patient-level mean ED
+collapsing towards an average shape. HCM thickness exceeds normal thickness in
+every AHA segment; its patient-level mean ED
 thickness exceeds that of the normal group by $3.67$~mm (95\% CI
 $[2.54,\ 4.67]$) and its thickest segment by $5.37$~mm ($[4.11,\ 6.56]$), both
 with large effect sizes, whereas relative systolic thickening does not separate
@@ -111,61 +111,59 @@ HCM patients, not a diagnostic result.
 \section{Contributions}
 \label{sec:conclusion-contributions}
 \noindent
-The thesis makes three contributions. The first is a data pipeline that brings
-synthetic SSM meshes and clinical ED and ES segmentations from two public
-datasets into one sample format, with contour rings, surface samples, dense
-signed-distance supervision and wall-offset targets, so that a model can be
-pre-trained on population geometry and fine-tuned on patient data without a
-change of representation. The second is the phase-conditioned implicit model,
-whose encoder pools endocardial and epicardial evidence separately before
-merging it and complements the global code with a local feature grid read at
-every query point, and whose decoder couples the epicardial field to the
-endocardial field through a directly supervised positive offset. The third is
-an evaluation protocol for sparse-contour reconstruction in the absence of 3D
-ground truth: fidelity to the observed rings, symmetric agreement between
-differently motivated reconstructions, self-consistency under slice
-decimation, and a wall-thickness comparison that separates the effect of the
-geometry from the effect of the estimator before the values are localised on
-the AHA model and contrasted between patient groups. The protocol does not
-depend on this particular network, and its central finding, that reconstruction
-priors agree about the cavity and disagree about the wall, concerns the problem
-rather than the model.
+This work makes three contributions. First, a shared data pipeline combines
+synthetic SSM meshes with clinical ED and ES segmentations from two public
+datasets. It stores contour rings, surface samples, signed-distance targets,
+and wall-offset targets in one format, allowing the model to be pre-trained on
+population shapes and fine-tuned on patient data without changing how the data
+are represented. Second, the phase-conditioned model processes endocardial and
+epicardial contour information separately, combines a global shape summary
+with local contour information, and uses a supervised positive offset to keep
+the epicardial field outside the endocardial field. Third, the evaluation
+approach assesses how closely reconstructions follow the observed rings, how
+much reconstructions from different methods agree, and how results change
+when slices are removed. It also compares wall-thickness methods on the same
+geometry, then summarises thickness by AHA segment and compares patient
+groups. This approach can be used with other networks. Its central finding,
+that reconstruction methods agree about the cavity but differ in the wall,
+concerns the reconstruction problem rather than this model alone.
 
 \section{Limitations}
 \label{sec:conclusion-limitations}
 \noindent
-The answers above hold within the limits set out in \cref{sec:threats}. No
+All answers remain subject to the limits set out in \cref{sec:threats}. No
 independent three-dimensional reference exists for these scans, so every
 geometric figure in the thesis measures fidelity to the rings or agreement
 between methods, never distance from the true anatomy, and every thickness
 figure describes reproducibility rather than validated measurement. Because the
-RBF comparator belongs to the same family as the surrogate surfaces used for
-fine-tuning, its close agreement with the model is partly expected. Twenty
-normal and ten HCM ACDC patients support a directional observation
+RBF comparator uses the same type of surface fitting as the model's training
+targets, its close agreement with the model is partly expected. Twenty normal
+and ten HCM ACDC patients support a directional observation
 about pathology and no more, and the seventeen segment values of each patient
 are repeated measures within one heart rather than independent samples. The SSM
-comparison is confined to ED, no ablation isolates the contribution
-of synthetic pre-training, local conditioning, phase conditioning or the
-positive-offset coupling, and the pre-training loss history was not retained.
-What the evaluation offers is a careful characterisation of a working system,
-not a validation of it.
+comparison is confined to ED. No experiment tested the contribution of
+synthetic pre-training, local conditioning, phase conditioning, or positive-offset
+coupling by removing these components one at a time, and the pre-training loss
+history was not retained. The evaluation describes how the system behaves but
+does not validate it.
 
 \section{Future Work}
 \label{sec:conclusion-future-work}
 \noindent
-The limitations fix the order of the next steps. The first need is an
+These limitations set the order of the next steps. The first need is an
 anatomical reference. Higher-resolution volumetric acquisitions, or expert
 three-dimensional surface and wall-thickness annotations on a larger external
 cohort, would turn the agreement figures reported here into accuracy figures
 and would show which of the three priors lies closest to the true wall. The
 second is a wider and fully matched comparison, adding spline lofting, Poisson
 reconstruction and learned alternatives under the same patients, physical
-spacing, repair procedure and metrics, with pointwise error maps that localise
-disagreement at the apex, the base and the most curved parts of the wall. The
-third is the controlled ablation that this thesis did not run: removing
+spacing, repair procedure and metrics, with error maps showing where
+reconstructions disagree at the apex, the base and the most curved parts of
+the wall. The
+third is a set of controlled tests, which this thesis did not run, that remove
 synthetic pre-training, local conditioning, phase conditioning and the
-positive-offset coupling in turn would show which components the behaviour
-depends on, and adding pointwise separation and intersection checks on the
+positive-offset coupling one at a time to show which components drive the
+model's behaviour. Adding pointwise separation and intersection checks on the
 extracted meshes would complete the answer to RQ2. Replacing the binary phase
 label with a continuous position in the cardiac cycle would then allow the
 representation to be tested for coherence in time as well as continuity in

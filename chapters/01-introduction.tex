@@ -161,7 +161,7 @@ endocardium keeps the outer surface outside the inner one by construction.
 Because no independent reference exists, the evaluation is comparative. The
 reconstruction is assessed against the observed contours and against RBF and
 SSM reconstructions of the same contours, including when slices are removed,
-and wall thickness is measured on each geometry with several estimators. This
+and wall thickness is measured on each geometry with several methods. This
 design separates the effect of the reconstruction prior from that of the
 measurement method, and asks not only whether the proposed model produces
 continuous surfaces, but whether the resulting geometry preserves quantities
@@ -194,7 +194,7 @@ the two surfaces independently?
 
 \item To what extent does myocardial wall thickness measured on the
 reconstructed geometry depend on the reconstruction prior and on the
-thickness estimator, and are regional and pathology-related differences in
+thickness method, and are regional and pathology-related differences in
 thickness retained?
 \end{enumerate}
 
@@ -203,15 +203,15 @@ thickness retained?
 \noindent
 The thesis makes three contributions: a shared supervision pipeline, an
 adaptation of implicit reconstruction to paired LV surfaces, and an evaluation
-protocol that distinguishes geometric and measurement consistency.
+approach that distinguishes geometric and measurement consistency.
 
 A shared data pipeline is developed for synthetic LV shapes sampled from an
 SSM and clinical ED and ES segmentations from ACDC
 and M\&Ms-2. Both sources are converted into contour inputs and surface-based
 supervision, allowing synthetic pre-training and clinical fine-tuning within
 the same representation. The clinical surfaces are fitted to the observed
-contours and serve as surrogate training targets, not as independent
-three-dimensional anatomical ground truth.
+contours and used to train the model; they are not independent three-dimensional
+anatomical ground truth.
 
 The model adapts established point-set and implicit-representation methods by
 summarising endocardial and epicardial contour evidence separately and
@@ -221,10 +221,10 @@ these components to represent paired LV surfaces at ED and ES. The
 contribution is this task-specific combination, not the underlying methods
 themselves.
 
-An evaluation protocol is also established to separate reconstruction from
+An evaluation approach is also established to separate reconstruction from
 measurement. It examines fidelity to the observed contours, agreement with
 RBF and SSM reconstructions of the same inputs, and sensitivity to slice
-removal. Four wall-thickness estimators are compared on the same geometry
+removal. Four wall-thickness methods are compared on the same geometry
 before local measurements are summarised in AHA-17 regions and examined
 across cardiac phases and patient groups. In the absence of independent
 three-dimensional ground truth, these comparisons characterise consistency
@@ -239,8 +239,9 @@ to its evaluation. \Cref{ch:literature-review} reviews cardiac MRI-based
 reconstruction and myocardial wall-thickness measurement, providing the
 context for the methodological choices. \Cref{ch:methodology} describes the
 data preparation, the proposed model, its training and inference, and the
-thickness-measurement protocol. \Cref{ch:results} evaluates the reconstructed
-geometry, its sensitivity to sparse observations, and the resulting local and
-regional thickness measurements. Finally, \cref{ch:conclusions} answers the
+methods used to measure wall thickness. \Cref{ch:results} evaluates the
+reconstructed geometry, its sensitivity to sparse observations, and the
+resulting local and regional thickness measurements. Finally,
+\cref{ch:conclusions} answers the
 research questions, summarises the contributions and limitations, and
 identifies directions for future work.
