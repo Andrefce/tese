@@ -42,7 +42,7 @@ was not whether the model could produce one. On the held-out ACDC and
 M\&Ms-2 test patients, the model reproduces its input rings to within
 $1.50$~mm on the endocardium and $1.96$~mm on the epicardium, which is the order
 of the in-plane pixel size, and every surface it produces is watertight after
-the shared repair stage. Its geometry lies closer to the RBF interpolant
+the shared repair stage. Its geometry lies closer to the smooth RBF fit
 (Chamfer distance $1.57$ and $1.90$~mm) than to the SSM fit ($2.08$ and
 $2.59$~mm), and it responds to pathology more evenly than the population prior:
 between the normal and HCM subsets its mean contour distance moves from
@@ -52,11 +52,11 @@ on the cavity, with a DSC of $0.88$ to $0.91$ and enclosed volumes
 of $119$, $119$ and $127$~ml, but not on the wall, where the DSC
 falls to $0.69$ to $0.77$ and the myocardial volume ranges from $88$ to
 $136$~ml. Removing slices down to three per stack degrades all three methods by
-a similar amount without breaking any of them. Accordingly, the learned prior
-matches the conventional methods in closure and robustness to sparsity,
-follows the contours about as closely as the SSM fit, which also regularises,
-infers geometry closer to the smooth interpolant than to the population model,
-and degrades less than the SSM fit on hypertrophic anatomy. It does not remove
+a similar amount without breaking any of them. The learned method still
+produces closed surfaces with only three slices, performs comparably to the
+conventional methods, follows the contours about as closely as the SSM fit,
+and infers geometry closer to the smooth RBF fit than to the population model.
+It also degrades less than the SSM fit on hypertrophic anatomy. It does not remove
 the underlying ambiguity: the wall completed between the slices remains a
 property of the prior rather than of the data, and the spread between methods
 is the honest measure of that uncertainty.

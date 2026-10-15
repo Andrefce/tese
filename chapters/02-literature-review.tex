@@ -90,8 +90,9 @@ and are the phases labelled in benchmarks such as ACDC
 
 In a SAX acquisition, each plane samples a cross-section perpendicular to the
 ventricular long axis. The anatomy is resolved in detail within a slice, but
-the larger separation between consecutive slices produces an anisotropic image
-stack \parencite{petitjean2011segmentationreview}. Segmentation can therefore
+the slices are much farther apart than the pixel spacing within each slice,
+producing an unevenly sampled image stack
+\parencite{petitjean2011segmentationreview}. Segmentation can therefore
 recover the myocardium where it is observed without determining how its
 boundaries curve, taper, or change in the unobserved intervals.
 
@@ -103,7 +104,7 @@ still creating an intersection, reversal, or local collapse in the wall between
 them, a difficulty also addressed by recent joint implicit reconstructions of
 cardiac structures \parencite{bras2026anisotropy}.
 
-Recovering the continuous geometry is consequently underdetermined: many smooth
+The contours alone do not determine one unique continuous surface: many smooth
 surfaces can pass through the same contour rings. Smoothing stabilises the
 reconstruction but can remove genuine regional variation; a strong population
 prior can bridge missing regions but may pull abnormal anatomy towards common
@@ -212,17 +213,17 @@ reflects the cohort and processing choices from which it was built. Combining
 them can reduce the weakness of either source alone, provided that the atlas is
 used as a prior rather than treated as patient-specific ground truth.
 
-SSMs encode anatomical variability by aligning a
-training population to point-to-point correspondence and applying principal
+SSMs encode anatomical variability by matching the same anatomical locations
+across the training population and applying principal
 component analysis (PCA) to extract
 the dominant modes of variation \parencite{cootes1995asm,heimann2009ssmreview}.
 They provide a compact description of plausible shape, but their quality depends
-on anatomical correspondence, alignment, and the diversity of the population
-used to construct them.
+on how accurately the same anatomical locations are matched, on alignment, and
+on the diversity of the population used to construct them.
 
 Cardiac SSMs have progressed from multi-object ventricular models to large
-population atlases. Dense correspondence allows coupled structures to be
-represented consistently across subjects \parencite{frangi2002cardiacssm},
+population atlases. Matching the same points across subjects allows related
+structures to be represented consistently \parencite{frangi2002cardiacssm},
 while the UK Digital Heart Project atlas captures population variation in
 ventricular shape and motion \parencite{bai2015biventricularatlas}. Their
 modelling of coordinated variation across related cardiac structures is directly
@@ -260,11 +261,12 @@ difference is the source of the reconstruction prior: linear interpolation uses
 only neighbouring contours, an SSM uses population-level modes of anatomical
 variation, and an RBF fit imposes smoothness through a continuous implicit field.
 
-Linear contour lofting first establishes correspondence between points on
-adjacent rings and then joins those points with triangular strips. It is
+Linear contour lofting first matches points between adjacent rings and then
+joins them with triangular strips. It is
 transparent, computationally inexpensive, and passes directly through the
 observed contours. However, the geometry between two slices is piecewise linear
-and depends on the chosen starting-point alignment and point correspondence.
+and depends on how the starting points are aligned and which points are matched
+between rings.
 Large inter-slice gaps therefore produce abrupt changes in slope, while the apex
 and base require explicit closure rules. These limitations make lofting useful
 as a direct interpolation baseline, but less suitable as the sole source of
@@ -358,9 +360,9 @@ other implicit approaches focus specifically on continuous anatomical surface
 reconstruction conditioned on cardiac phase.
 
 PointNet provides a complementary way to encode unordered observations
-\parencite{qi2017pointnet}. Its permutation-invariant formulation is relevant
-to SAX contours because arbitrary point ordering should not affect the inferred
-anatomy, making it suitable for point-based encoders in implicit surface models.
+\parencite{qi2017pointnet}. Its predictions do not change when the input points
+are listed in a different order, which is useful for SAX contours because their
+point ordering is arbitrary.
 
 \subsection{Wall-thickness measurement techniques}
 \label{subsec:thickness-review}
@@ -372,8 +374,8 @@ thickness is a principal determinant of left-ventricular diastolic stiffness,
 with hypertrophied ventricles exhibiting markedly elevated stiffness
 proportional to ED wall thickness. More recently,
 \textcite{huelnhagen2017t2wallthickness} showed at 7.0T MRI that wall thickness
-correlates with tissue transverse relaxation properties, confirming its value as
-a non-invasive surrogate for myocardial tissue characterisation. The AHA 17-segment
+correlates with tissue transverse relaxation properties, providing a non-invasive
+way to assess myocardial tissue properties. The AHA 17-segment
 model \parencite{cerqueira2002segmentation} provides the standard framework for
 reporting regional thickness values.
 
@@ -419,9 +421,9 @@ tissue boundaries and used the resulting non-intersecting field lines to
 establish corresponding paths. The same geometric principle can be transferred
 to myocardial boundaries, with thickness obtained from the path length between
 the boundaries along these streamlines.
-\textcite{yezzi2003thickness} formulated an Eulerian PDE method that computes
-distances propagated from both boundaries along the Laplacian field. Their sum
-gives the local tissue thickness.
+\textcite{yezzi2003thickness} developed a PDE method that calculates distance
+fields spreading from both boundaries along the Laplacian field. Adding these
+distances gives the local tissue thickness.
 
 Finally, mesh-based regularised correspondence methods combine an initial
 geometric estimate (normal projection or nearest neighbour) with iterative

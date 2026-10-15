@@ -48,8 +48,8 @@ from each observed ring point to the reconstructed surface, summarised by its
 mean and its 95th percentile.
 
 Dice similarity coefficient (DSC) measures the solid rather than the
-surface. After voxelisation it is twice the shared volume divided by the sum of
-the two volumes. It is computed for the endocardial cavity and for the
+surface. After converting both surfaces to voxel grids, it is twice the shared
+volume divided by the sum of the two volumes. It is computed for the endocardial cavity and for the
 myocardium and lies between zero and one. Enclosed \emph{volumes} are reported
 in millilitres for each method separately. A volume ratio is deliberately not
 reported: it would require designating one reconstruction as correct, which the
@@ -924,7 +924,7 @@ the quantitative tables report uncalibrated thickness estimates from geometric
 methods. The
 reconstruction additionally inherits the
 quality of the input segmentation, and the training data span more than one
-collection, so some domain shift between acquisition sources is expected.
+collection, so some differences between the acquisition sources are expected.
 Finally, the synthetic epicardium used during pre-training is a geometric
 construction rather than a measured surface, which the fine-tuning stage on real
 data is designed to correct but cannot fully rule out as a residual prior. A

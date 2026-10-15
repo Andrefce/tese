@@ -174,10 +174,9 @@ the model distribution.
 
 Each statistically valid vector is substituted into
 \cref{eq:ssm-generation}. The resulting vertices retain the connectivity of
-the mean mesh, producing a closed and consistently oriented surface. Geometric
-plausibility is then assessed from the enclosed volume, surface area,
+the mean mesh, producing a closed and consistently oriented surface. The shape checks then use the enclosed volume, surface area,
 sphericity, and the direction of the surface normals at the apex and base.
-Samples outside bounds calibrated on the population are discarded. Exact
+Samples outside limits set from the population data are discarded. Exact
 volume and area calculations on every fortieth sample confirmed the
 reliability of the faster descriptors. Of 2048 candidates, 1300 (63\%) passed
 both the statistical and geometric checks.

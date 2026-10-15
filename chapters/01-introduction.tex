@@ -82,10 +82,10 @@ resolves the ventricle at $1$--$2$~mm within each slice, but consecutive
 slices lie $6$--$10$~mm apart \parencite{petitjean2011segmentationreview}.
 Segmentation therefore delineates the myocardium accurately where it is
 imaged, yet leaves the geometry between slices, including the curvature of the
-apex and the closure of the base, unobserved. Recovering a continuous surface
-from such a stack is an ill-posed problem: many different surfaces pass
-through the same contours, and the result depends on the assumptions used to
-fill the gaps.
+apex and the closure of the base, unobserved. The contours alone cannot
+uniquely determine a continuous surface: many different
+surfaces can pass through the same contours, and the result depends on the
+assumptions used to fill the gaps.
 
 Several families of methods supply these assumptions. Contour lofting joins
 corresponding points on adjacent slices and passes exactly through the
@@ -100,9 +100,9 @@ fitted to the contour points \parencite{carr2001rbf}, trading regional detail
 for smoothness. More recently, implicit neural representations (INRs), which
 encode a shape as the set of points where a function computed by a neural
 network is zero \parencite{deepsdf2019,occupancynetworks2019}, have been used
-to reconstruct cardiac surfaces from anisotropic images and from sparse
-segmentations \parencite{bras2026anisotropy,muffoletto2025nihc}. Closed LV
-surfaces from sparse contours are therefore not new in themselves; the
+to reconstruct cardiac surfaces from images with widely spaced slices and
+from sparse segmentations \parencite{bras2026anisotropy,muffoletto2025nihc}.
+Closed LV surfaces from sparse contours are therefore not new in themselves; the
 approaches differ in the prior that fills the unobserved geometry, and hence
 in how far a measurement on that geometry reflects the data rather than the
 prior.
