@@ -15,7 +15,13 @@ it. For sourcing or summarising papers, delegate to the
 
 ## Build
 
-- Compile with `latexmk main.tex` (XeLaTeX config in [.latexmkrc](.latexmkrc)).
+- Build **only** with `powershell -ExecutionPolicy Bypass -File
+  scripts\build-thesis.ps1 -Mode full` (`-Mode fast` is the build-on-save
+  preview used by LaTeX Workshop). The script holds a lock, so it waits for
+  any build already running. **Never run `xelatex`, `biber` or `latexmk`
+  directly in this folder:** builds that overlap with the editor's
+  build-on-save corrupt `main.aux`, `main.bcf` and `main.pdf`.
+  ([.latexmkrc](.latexmkrc) is kept for other machines; it has no lock.)
 - Pipeline: XeLaTeX → biber → XeLaTeX → XeLaTeX.
 - After non-trivial edits, rebuild and read `main.log` for `Citation undefined`,
   `Reference … undefined`, and overfull `\hbox` warnings before reporting done.

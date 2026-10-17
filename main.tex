@@ -32,7 +32,21 @@
 
 % --- Graphics & typography -----------------------------------
 \usepackage{graphicx}
-\graphicspath{{images/}}
+% Build speed (MiKTeX): every failed lookup of a bare file name scans all TeX
+% trees (~0.2 s each), and graphicx probes several extensions per figure.
+% Figures are therefore searched only in the project folders below, with a
+% short extension list (PDF first, so vector figures still win over PNG).
+% Consequence: images must live in images/ or the project root.
+\graphicspath{{./images/}{./}}
+\DeclareGraphicsExtensions{.pdf,.png,.jpg,.jpeg}
+\makeatletter
+\let\thesis@Gin@getbase\Gin@getbase
+\def\Gin@getbase#1{%
+  \let\thesis@IfFileExists\IfFileExists
+  \ifx\filename@area\@empty\let\IfFileExists\@iffileonpath\fi
+  \thesis@Gin@getbase{#1}%
+  \let\IfFileExists\thesis@IfFileExists}
+\makeatother
 \usepackage{float}
 \usepackage{placeins}
 \usepackage{needspace}

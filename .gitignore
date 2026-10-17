@@ -20,6 +20,11 @@ __pycache__/
 *.toc
 *.vrb
 *.xdv
+# scripts/build-thesis.ps1 state and temporary files
+*.bcf.sha1
+*.bbl.prev
+*.building.pdf
+*-SAVE-ERROR
 
 # Keep the final PDF if you want to commit it; otherwise uncomment:
 main.pdf

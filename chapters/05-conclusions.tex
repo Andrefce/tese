@@ -34,79 +34,35 @@ the AHA 17 segments, and compared between normal and HCM patients.
 \label{sec:conclusion-research-questions}
 \noindent
 \textbf{RQ1} asked how a reconstruction learned from synthetic and clinical
-geometry compares with RBF and SSM reconstructions of the same sparse contours
-in contour fidelity, agreement between slices, and sensitivity to slice
-density. Closed surfaces from sparse contours were already attainable with
-these conventional methods and with earlier implicit models, so the question
-was not whether the model could produce one. On the held-out ACDC and
-M\&Ms-2 test patients, the model reproduces its input rings to within
-$1.50$~mm on the endocardium and $1.96$~mm on the epicardium, which is the order
-of the in-plane pixel size, and every surface it produces is watertight after
-the shared repair stage. Its geometry lies closer to the smooth RBF fit
-(Chamfer distance $1.57$ and $1.90$~mm) than to the SSM fit ($2.08$ and
-$2.59$~mm), and it responds to pathology more evenly than the population prior:
-between the normal and HCM subsets its mean contour distance moves from
-$1.45$ to $1.60$~mm, whereas that of the SSM fit moves from $1.42$ to
-$2.63$~mm. The three priors also diverge in their representation of the wall. They agree
-on the cavity, with a DSC of $0.88$ to $0.91$ and enclosed volumes
-of $119$, $119$ and $127$~ml, but not on the wall, where the DSC
-falls to $0.69$ to $0.77$ and the myocardial volume ranges from $88$ to
-$136$~ml. Removing slices down to three per stack degrades all three methods by
-a similar amount without breaking any of them. The learned method still
-produces closed surfaces with only three slices, performs comparably to the
-conventional methods, follows the contours about as closely as the SSM fit,
-and infers geometry closer to the smooth RBF fit than to the population model.
-It also degrades less than the SSM fit on hypertrophic anatomy. It does not remove
-the underlying ambiguity: the wall completed between the slices remains a
-property of the prior rather than of the data, and the spread between methods
-is the honest measure of that uncertainty.
+geometry compares with RBF and SSM reconstructions of the same sparse contours.
+The model follows its input contours to within about one in-plane pixel
+($1.50$~mm on the endocardium and $1.96$~mm on the epicardium), lies closer to
+the RBF fit than to the SSM fit, and, unlike the SSM fit, keeps a similar
+contour distance on normal and HCM cases. The three methods agree on the cavity
+but not on the wall, and removing slices degrades all three by similar amounts.
+The learned reconstruction therefore performs comparably to conventional
+fitting and handles abnormal anatomy more evenly than the population model, but
+it is not more robust to slice removal.
 
 \textbf{RQ2} asked whether a single phase-conditioned model can reconstruct
 paired endocardial and epicardial surfaces at ED and ES while maintaining a
-positive wall thickness, without a separate model for each phase or
-independent reconstruction of the two surfaces. One phase-conditioned network reconstructs both ED and ES
-geometry, and because the epicardial field is the endocardial field minus a
-positive offset, the ordering of the two surfaces is fixed by the architecture
-rather than checked after the fact. On the reconstructed surfaces, the
-Laplace-derived wall thickness rises from $9.21$~mm at ED to $13.87$~mm at ES
-over the ACDC pathology subset, and all seventeen AHA segments thicken, with
-the smallest relative change at the base and the largest in the mid-cavity and
-apical segments. No pointwise minimum separation on the extracted meshes,
-intersection check after repair, or ED--ES change in cavity volume was
-evaluated, and the public SSM offers no ES
-modes against which the systolic geometry could be compared. RQ2 therefore
-receives a qualified answer: the model represents both phases with a wall that
-thickens consistently between them, but positive separation is established by
-construction of the fields and by regional means, not verified at every point
-of the output.
+positive wall thickness. The answer is a qualified yes. One network
+reconstructs both phases, the epicardial field cannot cross the endocardial
+field by construction, and the reconstructed wall thickens in every AHA
+segment, from $9.21$~mm at ED to $13.87$~mm at ES. Pointwise separation on the
+extracted meshes and accuracy at ES were not verified.
 
-\textbf{RQ3} asked how strongly wall thickness measured on the reconstructed
-geometry depends on the reconstruction prior and the measurement method, and whether
-regional and pathology-related differences are retained. Both factors matter,
-and they act in different ways. When the measurement method is held fixed, the
-reconstruction prior shifts the absolute thickness scale: patient-level mean thickness on the
-model correlates with that on the RBF fit at $r = 0.99$ for the three non-ray
-methods, yet is $0.82$ to $1.16$~mm thicker, and against the SSM fit the
-correlation falls to $0.72$ to $0.77$ with a bias of $2.53$ to $2.91$~mm. With
-the geometry held fixed, the Yezzi--Prince method and the EDT boundary sum
-agree with the Laplace field to within a bias below $1$~mm and an ICC of $0.77$, whereas the SDF cone-ray method is biased by
-$+3.31$~mm with LoA of $\pm 12.74$~mm and an ICC of $0.28$, because a straight ray leaves a curved wall where a
-streamline does not. Strong correlation between geometries thus does not imply
-agreement in millimetres; the reconstruction prior and the measurement path are
-separate sources of offset of comparable size. Methods that follow the wall's
-curved path are better suited to this task. Because the RBF fit is a
-smooth-surface comparator rather than an anatomical reference, these figures
-bound the reproducibility of the measurement, not its accuracy.
-
-On the second part of RQ3, the analysis by disease group shows that the
-reconstructed geometry retains patient-specific variation instead of
-collapsing towards an average shape. HCM thickness exceeds normal thickness in
-every AHA segment; its patient-level mean ED
-thickness exceeds that of the normal group by $3.67$~mm (95\% CI
-$[2.54,\ 4.67]$) and its thickest segment by $5.37$~mm ($[4.11,\ 6.56]$), both
-with large effect sizes, whereas relative systolic thickening does not separate
-the groups. These are descriptive separations within the model output on ten
-HCM patients, not a diagnostic result.
+\textbf{RQ3} asked how strongly wall thickness depends on the reconstruction
+prior and the measurement method, and whether regional and pathology-related
+differences are retained. Both factors matter. The prior mainly shifts the
+absolute scale while largely preserving the ranking of patients, and a
+straight-ray measurement departs strongly from methods that follow the curved
+wall. Absolute thickness values are therefore comparable only within the same
+reconstruction and measurement pipeline. The reconstructed geometry does retain
+group differences: the HCM group is $3.67$~mm thicker than the normal group in
+patient-level mean ED thickness, whereas relative systolic thickening does not
+separate the groups. With ten HCM patients, this is a descriptive result rather
+than a diagnostic one.
 
 \section{Contributions}
 \label{sec:conclusion-contributions}
@@ -124,28 +80,17 @@ approach assesses how closely reconstructions follow the observed rings, how
 much reconstructions from different methods agree, and how results change
 when slices are removed. It also compares wall-thickness methods on the same
 geometry, then summarises thickness by AHA segment and compares patient
-groups. This approach can be used with other networks. Its central finding,
-that reconstruction methods agree about the cavity but differ in the wall,
-concerns the reconstruction problem rather than this model alone.
+groups. This evaluation approach can be applied to other networks.
 
 \section{Limitations}
 \label{sec:conclusion-limitations}
 \noindent
-All answers remain subject to the limits set out in \cref{sec:threats}. No
-independent three-dimensional reference exists for these scans, so every
-geometric figure in the thesis measures fidelity to the rings or agreement
-between methods, never distance from the true anatomy, and every thickness
-figure describes reproducibility rather than validated measurement. Because the
-RBF comparator uses the same type of surface fitting as the model's training
-targets, its close agreement with the model is partly expected. Twenty normal
-and ten HCM ACDC patients support a directional observation
-about pathology and no more, and the seventeen segment values of each patient
-are repeated measures within one heart rather than independent samples. The SSM
-comparison is confined to ED. No experiment tested the contribution of
-synthetic pre-training, local conditioning, phase conditioning, or positive-offset
-coupling by removing these components one at a time, and the pre-training loss
-history was not retained. The evaluation describes how the system behaves but
-does not validate it.
+The limitations discussed in \cref{sec:threats} bound all of these answers.
+The most important is the absence of an independent 3D reference: the
+geometric results measure fidelity to the contours and agreement between
+methods, and the thickness results measure reproducibility rather than
+accuracy. The pathology cohort is small, and no ablation experiment isolates
+the contribution of individual model components.
 
 \section{Future Work}
 \label{sec:conclusion-future-work}
@@ -160,7 +105,7 @@ reconstruction and learned alternatives under the same patients, physical
 spacing, repair procedure and metrics, with error maps showing where
 reconstructions disagree at the apex, the base and the most curved parts of
 the wall. The
-third is a set of controlled tests, which this thesis did not run, that remove
+third is a set of controlled tests that remove
 synthetic pre-training, local conditioning, phase conditioning and the
 positive-offset coupling one at a time to show which components drive the
 model's behaviour. Adding pointwise separation and intersection checks on the
