@@ -64,7 +64,7 @@ their summary in the AHA 17-segment layout.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.7\linewidth]{fig_methodology_pipeline}
+\includegraphics[width=0.83\linewidth]{fig_methodology_pipeline}
 \vspace{2mm}
 \caption[Overview of the methodology]{Overview of the methodology.
 (a)~Pre-training on synthetic ED surfaces and their SAX contours.
@@ -1022,7 +1022,7 @@ fixed colour scale makes the maps comparable across patients and phases
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.9\linewidth]{fig_lv_wall_thickness_3d}
+	\includegraphics[width=\linewidth]{fig_lv_wall_thickness_3d}
 	\vspace{2mm}
 	\caption[Local 3D wall-thickness map on the reconstructed LV.]{Local three-dimensional wall-thickness map on the reconstructed LV
 	endocardial surface, shown from two opposing viewpoints. Each vertex is
@@ -1063,6 +1063,15 @@ first third of this range form the basal ring, those in the second third the
 mid-cavity ring, those between two thirds and 0.85 the apical ring, and those
 beyond 0.85 the apical cap, which is segment 17.
 
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{fig_aha17_cut}
+	\vspace{2mm}
+	\caption[AHA-17 partition]{AHA-17 partitioning of the reconstructed LV
+	surface and corresponding bullseye representation.}
+	\label{fig:aha17-cut}
+\end{figure}
+
 The angle of each vertex is measured in the SAX plane around the centre of the
 endocardial vertices. Its orientation is fixed by the right-ventricular label:
 the direction from the LV centre to the right-ventricular centre identifies
@@ -1080,14 +1089,3 @@ patch. Within each segment, the mean and percentiles provide complementary
 regional summaries rather than relying on a single statistic. These summaries
 complement rather than replace the per-vertex maps.
 
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\linewidth]{fig_aha17_cut}
-	\vspace{2mm}
-	\caption[AHA-17 partition]{AHA-17 partitioning of the reconstructed LV
-	surface and corresponding bullseye representation.}
-	\label{fig:aha17-cut}
-\end{figure}
-
-The resulting surfaces, local thickness fields, and AHA-17 summaries provide
-the inputs to the evaluation presented in \cref{ch:results}.

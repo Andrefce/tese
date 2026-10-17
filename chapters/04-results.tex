@@ -350,25 +350,13 @@ remaining rows of \cref{fig:slice-ablation} illustrate the effect on one case.
 All three methods continue to produce closed, plausible surfaces with only three
 slices, so none fails outright under this reduction.
 
-\Cref{tab:slice-degradation} quantifies the change by comparing each
-reconstruction from a reduced stack with the surface produced by the same
-method from that patient's complete stack. These within-method deviations show
-how consistently each method reproduces its
-own complete-stack result and isolate the effect of missing slices from the
-differences between methods reported above.
-
 \begin{table}[H]
   \centering
-  \caption[Effect of removing slices from each reconstruction]{Deviation from each method's complete-stack reconstruction at
-    ED over the held-out test cohort. Distances are in millimetres and
-    DSC is dimensionless; $\Delta V_{\text{myo}}$ is the change in myocardial
-    volume relative to the complete-stack reconstruction. Each patient is
-    compared with its own complete stack and contributes to a level only when
-    its stack has strictly more slices than that level. All meshes are
-    watertight, and metrics use the untrimmed and unsmoothed surfaces. Bold
-    marks the smallest deviation among the three methods at each slice level:
-    the lowest distance, the highest DSC, and the smallest absolute
-    $\Delta V_{\text{myo}}$.}
+  \caption[Effect of removing slices from each reconstruction]{Deviation of
+  each method's reduced-slice reconstruction from its complete-stack
+  reconstruction at ED on the held-out test cohort. Metrics are computed on
+  untrimmed, unsmoothed watertight meshes. Bold marks the smallest deviation
+  at each slice level.}
   \label{tab:slice-degradation}
   \thesistablestyle
   \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l c c c c c c@{}}
@@ -394,6 +382,13 @@ differences between methods reported above.
     \bottomrule
   \end{tabular*}
 \end{table}
+
+\Cref{tab:slice-degradation} quantifies the change by comparing each
+reconstruction from a reduced stack with the surface produced by the same
+method from that patient's complete stack. These within-method deviations show
+how consistently each method reproduces its
+own complete-stack result and isolate the effect of missing slices from the
+differences between methods reported above.
 
 \subsection{Wall-Thickness Measurement}
 \label{subsec:wall-thickness-results}

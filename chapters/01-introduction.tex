@@ -135,6 +135,19 @@ supervised with surfaces fitted to the same contours and assessed only through
 fidelity to the observed slices and agreement with alternative
 reconstructions.
 
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.76\linewidth]{intro_pipeline_overview}
+	\vspace{2mm}
+	\caption[Overview of the proposed pipeline]{Overview of the proposed
+	pipeline. (a)~Segmented SAX slices at ED and ES. (b)~The slices placed along the LV long axis form a sparse stack of
+	contours, from which the proposed model reconstructs endocardial and
+	epicardial surfaces for (c)~ED and (d)~ES, coloured by local wall
+	thickness. (e)~Wall thickening from ED to ES on the surface, with AHA
+	17-segment boundaries, and (f)~its summary per segment.}
+	\label{fig:intro-overview}
+\end{figure}
+
 This thesis addresses the problem with a phase-conditioned INR, trained on
 synthetic LV geometries sampled from an SSM and on meshes derived from real
 cardiac MRI segmentations, as illustrated in \cref{fig:intro-overview}.
@@ -146,19 +159,6 @@ anywhere, not only at the acquired slices. Conditioning on cardiac phase lets
 one model represent both ED and ES, which differ markedly in cavity size and
 wall thickness, and defining the epicardium through a positive offset from the
 endocardium keeps the outer surface outside the inner one by construction.
-
-\begin{figure}[h]
-	\centering
-	\includegraphics[width=0.65\linewidth]{intro_pipeline_overview}
-	\vspace{2mm}
-	\caption[Overview of the proposed pipeline]{Overview of the proposed
-	pipeline. (a)~Segmented SAX slices at ED and ES. (b)~The slices placed along the LV long axis form a sparse stack of
-	contours, from which the proposed model reconstructs endocardial and
-	epicardial surfaces for (c)~ED and (d)~ES, coloured by local wall
-	thickness. (e)~Wall thickening from ED to ES on the surface, with AHA
-	17-segment boundaries in black, and (f)~its summary per segment.}
-	\label{fig:intro-overview}
-\end{figure}
 
 Because no independent reference exists, the evaluation is comparative. The
 reconstruction is assessed against the observed contours and against RBF and
