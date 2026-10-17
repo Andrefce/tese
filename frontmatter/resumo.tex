@@ -1,51 +1,62 @@
+
 % ============================================================
 % !TeX root = ../main.tex
-%  Resumo (Portuguese abstract — MANDATORY at ISCTE)
+% Resumo (Portuguese abstract — MANDATORY at ISCTE)
 % ============================================================
 \chapter*{Resumo}
 
 \selectlanguage{portuguese}
 \noindent
-A ressonância magnética cardíaca em eixo curto permite observar o ventrículo
-esquerdo através de cortes separados, pelo que é necessário reconstruir as
-regiões entre cortes para obter uma representação contínua da parede
-ventricular. Os algoritmos de interpolação permitem ligar os contornos
-disponíveis, mas não garantem que a forma obtida corresponda à anatomia do
-doente. Na prática clínica, a avaliação regional recorre ao modelo de 17
-segmentos da American Heart Association (AHA); contudo, a avaliação visual
-depende do observador e as medições da espessura em cortes selecionados não
-descrevem toda a parede ventricular.
+A análise da geometria e da espessura da parede do ventrículo esquerdo
+é relevante para a caracterização da estrutura e função cardíacas.
+Contudo, a ressonância magnética cardíaca em eixo curto fornece
+uma representação bidimensional através de cortes espacialmente
+separados, tornando necessária a reconstrução tridimensional da
+geometria entre os cortes disponíveis. Embora a interpolação permita
+estabelecer continuidade entre contornos, não garante a preservação
+da anatomia ventricular. Além disso, a avaliação clínica da espessura
+miocárdica baseia-se frequentemente em medições localizadas e na
+análise visual. Neste contexto, o modelo de 17 segmentos da American
+Heart Association (AHA) constitui uma referência para a avaliação
+regional do ventrículo esquerdo.
 
-Nesta dissertação, propõe-se uma abordagem de aprendizagem automática para
-reconstruir o ventrículo esquerdo a partir desses contornos. Uma representação
-neuronal implícita descreve de forma contínua as superfícies interna e externa
-da parede ventricular e tem em conta a fase cardíaca, o que permite reconstruir
-o ventrículo em telediástole e em telessístole. O modelo é primeiro treinado
-com formas ventriculares sintéticas e depois ajustado com dados obtidos a
-partir de segmentações clínicas. A espessura da parede é calculada em pontos
-locais da superfície reconstruída e sintetizada nos dezassete segmentos da AHA.
+Nesta dissertação, propõe-se uma abordagem baseada em aprendizagem
+automática para a reconstrução tridimensional do ventrículo esquerdo
+a partir de contornos de ressonância magnética cardíaca. Utiliza-se
+uma representação neuronal implícita para descrever continuamente
+as superfícies endocárdica e epicárdica nas fases de telediástole
+e telessístole. O modelo é inicialmente treinado com formas
+ventriculares sintéticas e posteriormente ajustado com segmentações
+clínicas. A espessura da parede miocárdica é estimada a partir da
+geometria reconstruída, permitindo a análise local e regional segundo
+os 17 segmentos da AHA.
 
-As reconstruções são comparadas com métodos baseados em funções de base radial
-e num modelo estatístico de forma. As superfícies reconstruídas acompanham os
-contornos observados, mas a concordância entre métodos é maior na cavidade do
-que na parede miocárdica. As medições da espessura dependem tanto da forma
-reconstruída como do algoritmo utilizado para as calcular, pelo que uma
-correlação elevada entre medições não significa que os valores sejam
-equivalentes. A análise por segmentos da AHA permite ainda observar o
-espessamento da parede entre as fases cardíacas.
+O desempenho da abordagem é avaliado por comparação com métodos
+baseados em funções de base radial e com um modelo estatístico
+de forma. Os resultados mostram que as superfícies reconstruídas
+acompanham os contornos observados, com maior concordância entre
+métodos na cavidade ventricular do que na parede miocárdica.
+Verifica-se também que as estimativas da espessura dependem da
+geometria reconstruída e do método de cálculo, pelo que uma correlação
+elevada não implica necessariamente concordância entre medições.
+A análise segmentar permite ainda caracterizar as variações regionais
+da espessura entre a telediástole e a telessístole.
 
-O trabalho relaciona a reconstrução contínua do ventrículo com medições
-objetivas da espessura da parede, baseadas na geometria, tanto ao nível local
-como ao nível dos segmentos da AHA. Na ausência de uma referência anatómica
-tridimensional independente, não é possível confirmar qual das reconstruções
-representa melhor a anatomia real. Ainda assim, os resultados mostram de que
-modo as opções tomadas para completar a geometria do ventrículo influenciam a
-análise da sua espessura.
+Este trabalho explora, assim, o potencial das representações neuronais
+implícitas na reconstrução tridimensional do ventrículo esquerdo e
+na quantificação da espessura miocárdica. Contudo, na ausência de
+uma referência anatómica tridimensional independente, não é possível
+determinar conclusivamente qual dos métodos produz a reconstrução
+mais próxima da anatomia real. Os resultados evidenciam, ainda assim,
+a influência das opções de modelação geométrica nas estimativas
+da espessura e a importância de considerar o método de reconstrução
+na interpretação das medições.
 
 \vspace{1em}
-\noindent\textbf{Palavras-chave:} Ressonância magnética cardíaca; ventrículo
-esquerdo; reconstrução tridimensional; representações neuronais implícitas;
-funções de distância com sinal; espessura da parede miocárdica.
+\noindent\textbf{Palavras-chave:} Ressonância magnética cardíaca;
+ventrículo esquerdo; reconstrução tridimensional; representações
+neuronais implícitas; funções de distância com sinal; espessura
+da parede miocárdica.
 
 \selectlanguage{english}
 \clearpage

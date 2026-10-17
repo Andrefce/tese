@@ -47,6 +47,7 @@
   \thesis@Gin@getbase{#1}%
   \let\IfFileExists\thesis@IfFileExists}
 \makeatother
+\usepackage{pdfpages}               % cover pages imported from capa.pdf
 \usepackage{float}
 \usepackage{placeins}
 \usepackage{needspace}
@@ -201,7 +202,7 @@
 \begin{document}
 
 \frontmatter
-\addtocontents{toc}{\setcounter{tocdepth}{2}}
+\addtocontents{toc}{\protect\setcounter{tocdepth}{2}}
 
 % frontmatter pieces open on the next page; only numbered chapters force a recto
 \makeatletter
