@@ -356,26 +356,17 @@ enclose the endocardium. The complete operations and parameters are listed in
 the two surfaces.
 
 
-Once the surfaces have been constructed, the remaining task is to prepare
-them for learning. The contours describe what the model will observe, while
-distances sampled from the surfaces describe what it should predict. Both
-must use the same coordinates for these predictions to be compared with their
-targets.
+Both meshes are centred and scaled using the same translation and scale
+factor. As for the synthetic cases, 2048 query points are sampled near the
+surfaces and throughout a surrounding box, and their signed distances to
+both surfaces are recorded.
 
-The two meshes of each case are centred and scaled with the same translation
-and scale factor, and 2048 query points are drawn near the surfaces and
-throughout a box that encloses them with a margin, with their signed distances
-recorded, exactly as for the synthetic stream.
-
-These RBF-fitted surfaces stand in for the three-dimensional reference
-geometry, which is unavailable. Their shape between the slices depends on the
-kernel, the off-surface constraints, the regularisation, and the extraction
-resolution just described. Agreement between the model and these targets
-shows that the model has learned to
-reproduce a particular, reasonable reconstruction of the rings, not that it has
-recovered the true anatomy between them. \Cref{ch:results} keeps this
-distinction explicit by also measuring every reconstruction against the
-observed rings themselves.
+These fitted surfaces are training targets, not independent anatomical
+references. Their shape between slices depends on the RBF kernel,
+off-surface constraints, regularisation, and extraction resolution. Agreement
+with them therefore measures reproduction of the fitted geometry, not
+recovery of the true anatomy. Evaluation in \cref{ch:results} also measures
+agreement with the observed contours.
 
 \subsection{Shared sample format, augmentation, and splits}
 \label{subsec:shared-dataset-assembly}
@@ -404,17 +395,12 @@ augmentation rule, and partitions defined at the level of patients.
 	\end{tabular}
 \end{table}
 
-Every case, synthetic or clinical, is stored as one item with the fields listed
-in \cref{tab:cache-schema}: the contour points with their tissue and phase
-labels, surface samples and query points derived from the target meshes, and
-the coordinate information that keeps observation and target in the same
-frame. The ED and ES items contain 10 SAX levels, 60 points per available ring,
-and 2048 query points per case. The format deliberately separates what the
-model observes from what it learns from. The encoder receives only the first
-three fields; the decoder is supervised by the remaining ones, which are never
-shown to the encoder. At inference time the model therefore needs nothing but
-the contours, and the architecture and loss described in the next two sections
-do not change when training moves from the synthetic to the clinical stream.
+Synthetic and clinical cases use the format in \cref{tab:cache-schema},
+with 10 SAX levels, 60 points per available ring, and 2048 query points per
+case. Only the contour coordinates and tissue and phase labels are supplied
+to the encoder. Surface samples and distance targets are used for training,
+not as reconstruction inputs. The architecture and loss remain unchanged
+between pre-training and fine-tuning.
 
 \begin{figure}[H]
 	\centering
@@ -427,23 +413,17 @@ do not change when training moves from the synthetic to the clinical stream.
 	\label{fig:contour-augmentation}
 \end{figure}
 
-The clinical dataset is small, and its contours vary in how they were drawn and
-acquired. To help the encoder handle this variation, small changes are made to
-the input contours during training while the targets remain unchanged. For each
-training sample, the data loader applies small independent in-plane shifts to
-each slice, moving the endocardial and epicardial rings of a slice together so
-that their relation is preserved, as well as small random displacements of
-individual points, a global change of scale, and random removal of contour
-points; with lower probability it also drops whole slices, always keeping at
-least three, or rotates the stack about the long axis. The target mesh, surface
-samples, query points, and tissue and phase labels stay fixed, so the encoder
-must recover the same target from different versions of the input contours
-(\cref{fig:contour-augmentation}). Changing the inputs while keeping their
-targets fixed is a standard way to help models handle variation when labelled
-data are limited
-\parencite{shorten2019augmentation,chlap2021augmentation}. Augmentation is
-applied to both data sources and only after the data have been split, so that
-no modified version of a test patient's contours is ever seen in training.
+During training, input contours are modified to represent variation in
+acquisition and annotation
+\parencite{shorten2019augmentation,chlap2021augmentation}. The modifications
+include small independent in-plane slice shifts, small random point
+displacements, global scaling, and point removal. Endocardial and epicardial
+rings from the same slice are shifted together. Less frequently, whole
+slices are removed while retaining at least three, or the stack is rotated
+about its long axis (\cref{fig:contour-augmentation}). Target meshes, surface
+samples, query points, and tissue and phase labels remain unchanged.
+Augmentation is applied to both data sources after the patient-level split,
+preventing modified test cases from entering training.
 
 Not every clinical patient yields a usable target. A study may contain only
 long-axis views or too few slices, or its segmentation may fail the
@@ -484,18 +464,13 @@ now be described without reference to the source of a sample.
 \section{Model Architecture}
 \label{sec:architecture}
 \noindent
-Three requirements shape the model. The input is a set of a few
-hundred points whose number varies from case to case and whose order carries
-no meaning, so the encoder must be indifferent to point count and order. Its
-output is a pair of surfaces that must be continuous between the slices and
-correctly nested everywhere, so the decoder must produce two related fields
-rather than one. Finally, the same model must represent diastolic and systolic
-hearts, so the phase must reach every stage that interprets the contours.
-\Cref{fig:model-architecture} shows the resulting design. A global encoder
-summarises the whole contour set in one vector, a local encoder records where
-in space the contours lie, and an implicit decoder, evaluated at any point,
-combines both with the coordinates of that point to return the endocardial
-signed distance and the positive offset that defines the epicardial field.
+The model combines a global contour encoder, a local feature grid, and an
+implicit decoder (\cref{fig:model-architecture}). The encoder summarises
+the overall ventricular shape, while the grid retains local contour
+information. The decoder uses both descriptions to predict the endocardial
+field and a positive offset defining the epicardial field. Tissue and
+cardiac-phase labels allow the same model to process both boundaries at
+ED and ES.
 
 \begin{figure}[p]
 	\centering
@@ -524,20 +499,9 @@ with Fourier features of the query coordinates
 \parencite{tancik2020fourierfeatures} and Eikonal regularisation during
 training \parencite{gropp2020igr}.
 
-None of these methods was designed for sparse cardiac contours or for two
-nested surfaces, so the contribution of this work lies in how they are adapted.
-Every contour point carries a tissue label and the cardiac phase, which allows
-one model to reconstruct both ED and ES. Endocardial and epicardial points are
-pooled separately, so each boundary keeps its own summary in the latent code.
-The local grid is kept coarse, at $16^3$ cells, to suit a few hundred contour
-points rather than a dense scan. The encoder predicts the latent code
-directly, removing the per-shape optimisation that DeepSDF performs at
-inference. Finally, the epicardial field is defined as the endocardial field
-minus a strictly positive offset, so the two surfaces cannot cross anywhere in
-the volume. Training also departs from the original methods: the model is
-pre-trained on synthetic SSM shapes and then fine-tuned on clinical ED and ES
-cases. \Cref{tab:model-components-origin} pairs each component with its origin
-and the corresponding modification.
+\Cref{tab:model-components-origin} summarises the adaptations made for
+sparse LV contours and paired-surface reconstruction. The following
+subsections define the inputs, encoder, and decoder.
 
 Compared with the recent cardiac implicit models reviewed in
 \cref{subsec:dl-reconstruction-review}, which reconstruct from image data
@@ -740,11 +704,9 @@ configuration of the model is listed in \cref{tab:model-hyperparameters} of
 \section{Training and Inference}
 \label{sec:training-inference}
 \noindent
-Training proceeds in two stages, pre-training on the synthetic SSM cases and
-fine-tuning on the clinical ED and ES cases, with the same architecture and the
-same loss throughout. This section describes the two stages and the loss, then
-how the trained fields are turned into meshes and an offset map, and finally
-the two alternative reconstructions against which the model is compared.
+The same architecture and loss are used for synthetic pre-training and
+clinical fine-tuning. The trained fields are then converted into meshes
+for reconstruction and thickness evaluation.
 
 \subsection{Two-stage training and loss}
 \label{subsec:training-data-mix}
@@ -855,12 +817,6 @@ step and GPU memory is the limiting resource. \Cref{tab:training-config} in
 \subsection{Inference, offset extraction, and comparators}
 \label{subsec:inference-offset-extraction}
 \noindent
-Usable surfaces are needed to inspect and measure the reconstruction. The
-decoder is evaluated throughout a grid, and a mesh
-is extracted for each boundary. Checking these meshes is a separate step from
-learning the fields, because thickness measurement requires usable surface
-geometry.
-
 At inference time, the encoder turns the contours into $z$ and $V$ once, and
 the decoder is evaluated on a regular $96^3$ grid of points. Marching cubes
 extracts the zero level sets of $f_{\mathrm{endo}}$ and $f_{\mathrm{epi}}$ from
@@ -908,14 +864,10 @@ provides ED
 modes only, this comparator exists at ED alone. Both pass through the same
 repair and smoothing as the model output.
 
-Since no independent three-dimensional geometry exists, none of the three
-reconstructions is treated as a reference. They are compared in two ways: by
-the distance from the observed rings to each surface, which measures how
-closely each method honours the data it was given, and by pairwise surface and
-volume agreement, which measures how much the choice of prior changes the
-result. Neither comparison isolates the contribution of individual model
-components. The reconstructed meshes now become the input to the measurement
-stage.
+None of the three reconstructions is treated as ground truth. Evaluation
+compares their distances from the input contours and their pairwise surface
+and volume agreement. These comparisons assess reconstruction consistency,
+not the contribution of individual model components.
 
 \section{Wall-Thickness Evaluation}
 \label{sec:wall-thickness-protocol}
