@@ -77,7 +77,7 @@ share one colour scale; surfaces are smoothed for display only.}
 \end{figure}
 
 The sections that follow develop each stage in turn.
-\Cref{sec:data-preparation} describes how the two supervision streams are
+\Cref{sec:data-preparation} describes how the two training-data sources are
 constructed and brought into a shared sample format; \cref{sec:architecture}
 and \cref{sec:training-inference} explain the model, its training, and surface
 extraction. \Cref{sec:wall-thickness-protocol} then describes the measurement
@@ -105,8 +105,8 @@ which 1300 synthetic ED cases were generated for pre-training. The clinical
 segmentations supply patient-specific anatomy in both cardiac phases, and were
 converted into closed surfaces by fitting smooth implicit functions to their
 contours, for fine-tuning. The two sources are described in turn, followed by
-the shared format, augmentation, and patient-level partitions through which
-they enter training.
+the shared format, augmentation, and division into training, validation, and
+test sets by patient.
 
 \subsection{Synthetic ED geometry from the statistical shape model}
 \label{subsec:missing-ground-truth}
@@ -427,9 +427,9 @@ do not change when training moves from the synthetic to the clinical stream.
 	\label{fig:contour-augmentation}
 \end{figure}
 
-The clinical stream is small, and its contours vary in how they were drawn and
-acquired. To make the encoder robust to such variation, the observed contours
-are perturbed during training while the targets are left untouched. For each
+The clinical dataset is small, and its contours vary in how they were drawn and
+acquired. To help the encoder handle this variation, small changes are made to
+the input contours during training while the targets remain unchanged. For each
 training sample, the data loader applies small independent in-plane shifts to
 each slice, moving the endocardial and epicardial rings of a slice together so
 that their relation is preserved, as well as small random displacements of
@@ -437,13 +437,13 @@ individual points, a global change of scale, and random removal of contour
 points; with lower probability it also drops whole slices, always keeping at
 least three, or rotates the stack about the long axis. The target mesh, surface
 samples, query points, and tissue and phase labels stay fixed, so the encoder
-must recover one fixed target from
-many plausible versions of its sparse observation
-(\cref{fig:contour-augmentation}). Such label-preserving perturbations are a
-standard way to improve robustness when labelled data are limited
+must recover the same target from different versions of the input contours
+(\cref{fig:contour-augmentation}). Changing the inputs while keeping their
+targets fixed is a standard way to help models handle variation when labelled
+data are limited
 \parencite{shorten2019augmentation,chlap2021augmentation}. Augmentation is
-applied to both streams and only after the data have been split, so that no
-augmented view of a test patient is ever seen in training.
+applied to both data sources and only after the data have been split, so that
+no modified version of a test patient's contours is ever seen in training.
 
 Not every clinical patient yields a usable target. A study may contain only
 long-axis views or too few slices, or its segmentation may fail the
@@ -926,7 +926,7 @@ pairing each point on one surface with a point on the other. On a curved,
 tapering wall, the result depends on the pairing rule: for example, it may use
 the nearest point, travel perpendicular to the surface, or follow a smooth
 path through the wall. These rules can give different thickness values on the
-same geometry. We therefore compare four established methods on the same
+same geometry. Four established methods are therefore compared on the same
 reconstructed surfaces. The segmentation volume supplies the contour rings
 and the orientation of the AHA coordinate system; thickness is measured only
 on the reconstructed surfaces. The method whose measurements are most

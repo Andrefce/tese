@@ -34,7 +34,7 @@ variations in ventricular shape and thickness have been associated with
 structural remodelling and cardiovascular risk at the population level
 \parencite{medrano2014lvshapevariation,demarvao2014atlas}.
 
-Cardiac magnetic resonance imaging (MRI) is the modality of choice for
+Cardiac magnetic resonance imaging (MRI) is the preferred imaging method for
 measuring these quantities. It is non-invasive, does not use ionising
 radiation, and offers good contrast between blood and myocardium, which is why
 it is regarded as the reference standard for ventricular volumes, mass, and
@@ -46,13 +46,15 @@ cycle so that both ED and ES are captured.
 
 The images themselves, however, do not yield clinical measurements directly.
 Volumes, mass, and wall thickness are computed only after the relevant
-boundaries have been delineated on every slice: the endocardium, the inner
+boundaries have been outlined on every slice: the endocardium, the inner
 boundary of the blood-filled cavity, and the epicardium, the outer boundary of
 the myocardium. This outlining, called segmentation, is therefore the step on
-which every subsequent measurement depends. Performed manually, it is
-time-consuming and subject to intra- and inter-observer variability
-\parencite{petitjean2011segmentationreview}, which limits both its
-reproducibility and its practicality as the number of examinations grows.
+which all later measurements depend. Drawing these outlines manually is
+time-consuming, and the outlines can differ between experts or when the same
+expert repeats the task
+\parencite{petitjean2011segmentationreview}. These differences limit
+reproducibility, while the time required makes manual segmentation less
+practical as the number of examinations grows.
 These limitations have motivated a sustained effort towards automated
 segmentation, driven by public benchmarks and challenges
 \parencite{suinesiaputra2014collaborative,bernard2018acdc,campello2021mnms}.
@@ -201,23 +203,24 @@ thickness retained?
 \section{Contributions}
 \label{sec:introduction-contributions}
 \noindent
-The thesis makes three contributions: a shared supervision pipeline, an
-adaptation of implicit reconstruction to paired LV surfaces, and an evaluation
-approach that distinguishes geometric and measurement consistency.
+The thesis makes three contributions: a shared process for preparing training
+data, an adaptation of implicit reconstruction to paired LV surfaces, and an
+evaluation approach that distinguishes geometric and measurement consistency.
 
 A shared data pipeline is developed for synthetic LV shapes sampled from an
 SSM and clinical ED and ES segmentations from ACDC
-and M\&Ms-2. Both sources are converted into contour inputs and surface-based
-supervision, allowing synthetic pre-training and clinical fine-tuning within
-the same representation. The clinical surfaces are fitted to the observed
-contours and used to train the model; they are not independent three-dimensional
-anatomical ground truth.
+and M\&Ms-2. Both sources are converted into input contours and target
+surfaces in the same format, allowing synthetic pre-training and clinical
+fine-tuning without changing how the data are represented. The clinical
+surfaces are fitted to the observed contours and used to train the model;
+they are not independent three-dimensional anatomical ground truth.
 
 The model adapts established point-set and implicit-representation methods by
 summarising endocardial and epicardial contour evidence separately and
-combining a global shape description with local contour information. Its
-phase conditioning and directly supervised positive-offset coupling allow
-these components to represent paired LV surfaces at ED and ES. The
+combining a global shape description with local contour information. A
+cardiac-phase input allows one model to represent both ED and ES, while a
+positive offset links the endocardial and epicardial fields. This offset is
+trained directly using the separation between the target surfaces. The
 contribution is this task-specific combination, not the underlying methods
 themselves.
 

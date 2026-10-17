@@ -388,34 +388,37 @@ The simplest approach uses nearest-neighbour distance: for each endocardial
 vertex, a $k$-d tree \parencite{bentley1975kdtree} identifies the closest
 epicardial point, yielding a measurement
 in $O(N \log M)$ time. Its runtime depends on mesh size and the implementation.
-Nearest-neighbour distance can provide a lower bound on the true transmural
-thickness because it ignores the anatomical direction of measurement --- the
+Nearest-neighbour distance can provide a lower bound on the true thickness
+across the wall, also called transmural thickness, because it ignores the
+anatomical direction of measurement --- the
 nearest point may lie tangentially rather than across the wall.
 
 Ray-based methods address this limitation by casting a ray from each endocardial
-vertex along its surface normal until it intersects the epicardium. The
+vertex along its surface normal, the direction perpendicular to the surface,
+until it intersects the epicardium. The
 intersection is computed via the M\"oller--Trumbore algorithm
 \parencite{moller1997raytriangle}, accelerated with a bounding volume hierarchy
 to $O(\log F)$ per query. Measuring along the
-surface normal better approximates a transmural direction but remains sensitive
-to normal noise: a slight rotation can produce a spurious long or short ray. The
-shape diameter function variant \parencite{shapira2008sdf} improves robustness by casting a cone of $K$
+surface normal better approximates the direction across the wall but remains
+sensitive to errors in the normal: a slight rotation can make the measured
+distance too long or too short. The
+shape diameter function variant \parencite{shapira2008sdf} reduces this sensitivity by casting a cone of $K$
 rays (typically $K = 7$) at a half-angle of $30^{\circ}$ around the normal and
 reporting the median intersection distance, effectively filtering outlier hits
 caused by local mesh irregularities.
 
-Volumetric methods operate on voxelised representations. The Euclidean Distance
+Volumetric methods operate on voxel grids. The Euclidean Distance
 Transform (EDT) computes, for each myocardial voxel, the distance to the nearest
 boundary, and the sum of the endocardial and epicardial distance fields
 approximates local thickness ($t = D_{\mathrm{endo}} + D_{\mathrm{epi}}$). The
 estimate is exact for planar parallel boundaries but can be biased in curved
 regions because the nearest-boundary directions do not necessarily follow a
-common transmural path. The method is computationally efficient ($O(V)$ via the
+common path across the wall. The method is computationally efficient ($O(V)$ via the
 Saito--Toriwaki algorithm \parencite{saito1994edt}) but limited by voxel
 resolution.
 
-Partial differential equation (PDE)-based methods are widely used for transmural
-thickness estimation. In a method developed for cortical rather than cardiac
+Partial differential equation (PDE)-based methods are widely used to estimate
+thickness across tissue layers. In a method developed for cortical rather than cardiac
 anatomy, \textcite{jones2000laplace} solved Laplace's equation between the two
 tissue boundaries and used the resulting non-intersecting field lines to
 establish corresponding paths. The same geometric principle can be transferred
@@ -425,13 +428,14 @@ the boundaries along these streamlines.
 fields spreading from both boundaries along the Laplacian field. Adding these
 distances gives the local tissue thickness.
 
-Finally, mesh-based regularised correspondence methods combine an initial
+Finally, mesh-based methods that match points between the surfaces and smooth
+the resulting measurements combine an initial
 geometric estimate (normal projection or nearest neighbour) with iterative
 Laplacian smoothing on the mesh connectivity graph. At each iteration, each
 vertex's thickness is updated as a weighted average of its neighbours, anchored
 to the initial estimate. Regularisation produces spatially smooth thickness maps
-suitable for bullseye visualisation, at the cost of potentially attenuating real
-local variation when the smoothing parameter is too aggressive.
+suitable for bullseye visualisation, but too much smoothing can reduce genuine
+local differences in thickness.
 
 Wall-thickness values depend on both the measurement method and the reconstructed
 surfaces. Smoothing may make a measurement more stable, but it can also change
