@@ -59,8 +59,9 @@ detailed in \cref{sec:architecture} and summarised in
 \Cref{fig:methodology-pipeline} summarises the whole pipeline. Panels~(a) and
 (b) show the two training stages, synthetic pre-training and clinical
 fine-tuning. Panels~(d)--(g) follow a clinical case from its segmented slices
-and contour stacks to the reconstructed surfaces, local thickness values, and
-their summary in the AHA 17-segment layout.
+and contour stacks to the reconstructed surfaces and local thickness values at
+ED and ES, and finally combine the two phases into systolic thickening, both on
+the surface and summarised in the AHA 17-segment layout.
 
 \begin{figure}[H]
 \centering
@@ -70,9 +71,11 @@ their summary in the AHA 17-segment layout.
 (a)~Pre-training on synthetic ED surfaces and their SAX contours.
 (b)~Fine-tuning on clinical ED and ES contours with fitted target surfaces.
 (c)~Phase-conditioned reconstruction of the endocardial and epicardial
-surfaces. (d)--(g)~Clinical inference from observed contours to reconstructed
-surfaces, local Laplace wall thickness, and AHA-17 regional values. ED and ES
-share one colour scale; surfaces are smoothed for display only.}
+surfaces. (d)--(f)~Clinical inference from observed contours to reconstructed
+surfaces and local Laplace wall thickness at ED and ES, which share one colour
+scale. (g)~Systolic thickening (ES minus ED) on the ES endocardium and the
+corresponding difference in AHA-17 segment means. Surfaces are smoothed for
+display only.}
 \label{fig:methodology-pipeline}
 \end{figure}
 

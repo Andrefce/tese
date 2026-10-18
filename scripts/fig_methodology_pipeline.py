@@ -9,8 +9,10 @@ Panels:
   (c) The model shared by both stages, ending in a long-axis section of the
       coupled surfaces it reconstructs for the ED case.
   (d)-(g) Inference on ACDC patient002 with the v2 checkpoint, at ED and ES:
-      observed SAX rings, reconstructed surfaces, Laplace-field wall thickness
-      on the endocardium, and AHA-17 segment means.
+      observed SAX rings, reconstructed surfaces and Laplace-field wall
+      thickness on the endocardium; (g) merges both phases into the systolic
+      thickening (ES minus ED), shown on the ES endocardium and as AHA-17
+      segment differences.
 
 The reconstruction, thickness and AHA steps call the cohort pipeline of
 ``scripts/eval_demo`` with the v2 loader, as ``run_cohort_v2.py`` does, so the
@@ -20,7 +22,9 @@ recompute everything or ``--rerender`` to redo only the renders. Display
 conventions match the Results renders: one display-only Taubin pass per
 surface, model surfaces trimmed at the most basal input ring, and per-vertex
 thickness smoothed over mesh neighbours for display only (segment means use
-the raw values).
+the raw values). The per-vertex thickening pairs each ES vertex with the ED
+vertex at the nearest normalised long-axis position and circumferential angle,
+as in ``fig_intro_overview.py``.
 
 Outputs: images/fig_methodology_pipeline.pdf and images/fig_methodology_pipeline.png
 
@@ -43,8 +47,9 @@ import nibabel as nib  # noqa: E402
 import numpy as np  # noqa: E402
 import pyvista as pv  # noqa: E402
 import trimesh  # noqa: E402
-from matplotlib import colors, patches, patheffects  # noqa: E402
+from matplotlib import colors, patches, patheffects, ticker  # noqa: E402
 from matplotlib.lines import Line2D  # noqa: E402
+from scipy.spatial import cKDTree  # noqa: E402
 
 THESIS = Path(__file__).resolve().parents[1]
 SCRIPTS = THESIS / "scripts"
@@ -75,7 +80,7 @@ THICKNESS_SMOOTHING = 40
 BASE_CUT_MM = 3.0
 
 # Figure geometry in inches; the thesis text block is 16 cm wide.
-FIG_W, FIG_H = 6.30, 7.00
+FIG_W, FIG_H = 6.30, 7.30
 RENDER_SIZE = (900, 1100)
 
 INK = "#1F2933"
@@ -90,6 +95,7 @@ ENDO_SURFACE = "#2B83C6"
 EPI_SURFACE = "#EFA273"
 PLANE = "#B9C2CC"
 THICKNESS_CMAP = "turbo"
+DELTA_CMAP = "RdBu_r"
 
 VIEW_DIR = np.array([1.0, -1.75, 0.55])
 VIEW_DIR /= np.linalg.norm(VIEW_DIR)
@@ -353,6 +359,47 @@ def thickness_norm(case: dict) -> colors.Normalize:
                             vmax=float(np.ceil(np.percentile(pooled, 97))))
 
 
+def wall_coordinates(case: dict, phase: str) -> np.ndarray:
+    """Normalised long-axis position and circumferential angle of the endo vertices.
+
+    The angle is taken about a per-level centre so that it follows the
+    ventricular axis rather than the global centroid.
+    """
+    verts = np.asarray(case[f"{phase}_endo_v"], np.float64)
+    base_z, apex_z = float(case[f"{phase}_base_z"]), float(case[f"{phase}_apex_z"])
+    t = np.clip((verts[:, 2] - base_z) / (apex_z - base_z), 0.0, 1.0)
+    n_bins = 20
+    bins = np.clip((t * n_bins).astype(int), 0, n_bins - 1)
+    centres = np.array([verts[bins == b, :2].mean(axis=0) if np.any(bins == b)
+                        else (np.nan, np.nan) for b in range(n_bins)])
+    valid = np.isfinite(centres[:, 0])
+    levels = (np.arange(n_bins) + 0.5) / n_bins
+    axis_x = np.interp(t, levels[valid], centres[valid, 0])
+    axis_y = np.interp(t, levels[valid], centres[valid, 1])
+    angle = np.arctan2(verts[:, 1] - axis_y, verts[:, 0] - axis_x)
+    return np.column_stack([np.cos(angle), np.sin(angle), 3.0 * t])
+
+
+def thickening_values(case: dict) -> np.ndarray:
+    """ES minus ED display thickness at matching wall positions, on the ES endo vertices."""
+    _, index = cKDTree(wall_coordinates(case, "ED")).query(wall_coordinates(case, "ES"))
+    delta = display_thickness(case, "ES") - display_thickness(case, "ED")[index]
+    return smooth_over_neighbours(delta, case["ES_endo_f"], 15)
+
+
+def segment_thickening(case: dict) -> np.ndarray:
+    return case["ES_segment_means"] - case["ED_segment_means"]
+
+
+def thickening_norm(case: dict) -> colors.Normalize:
+    """Symmetric scale about zero covering the vertex and segment thickening."""
+    delta = thickening_values(case)
+    limit = max(np.percentile(np.abs(delta), 97),
+                np.nanmax(np.abs(segment_thickening(case))))
+    limit = float(np.ceil(limit))
+    return colors.Normalize(vmin=-limit, vmax=limit)
+
+
 def display_case(case: dict) -> dict:
     """Model surfaces in a shared apex-down frame, smoothed and trimmed at the base."""
     flip = bool(case["ED_apex_z"] > case["ED_base_z"])
@@ -364,6 +411,8 @@ def display_case(case: dict) -> dict:
         z_base = max(loop[:, 2].mean() for loop, _ in rings)
         endo = smoothed(polydata(to_display(case[f"{phase}_endo_v"]), case[f"{phase}_endo_f"]))
         endo["thickness"] = display_thickness(case, phase).astype(np.float32)
+        if phase == "ES":
+            endo["thickening"] = thickening_values(case).astype(np.float32)
         epi = smoothed(polydata(to_display(case[f"{phase}_epi_v"]), case[f"{phase}_epi_f"]))
         endo, epi = open_base(endo, epi, z_base)
         shown[phase] = {"rings": rings, "endo": endo, "epi": epi}
@@ -500,11 +549,16 @@ def make_renders(case: dict, shown: dict, ssm: dict, rbf: dict) -> dict[str, np.
         images.append(render([(shown[phase]["endo"], dict(
             scalars="thickness", cmap=THICKNESS_CMAP, clim=(norm.vmin, norm.vmax),
             show_scalar_bar=False, **SURFACE_STYLE))], scale))
+    delta_norm = thickening_norm(case)
+    images.append(render([(shown["ES"]["endo"], dict(
+        scalars="thickening", cmap=DELTA_CMAP, clim=(delta_norm.vmin, delta_norm.vmax),
+        show_scalar_bar=False, **SURFACE_STYLE))], scale))
     images = crop_together(images)
     for k, phase in enumerate(PHASES):
         renders[f"contours_{phase}"] = images[k]
         renders[f"surfaces_{phase}"] = images[2 + k]
         renders[f"thickness_{phase}"] = images[4 + k]
+    renders["thickening"] = images[6]
     return renders
 
 
@@ -610,9 +664,10 @@ def draw_coupled_section(ax: plt.Axes, renders: dict):
     ax.set_axis_off()
 
 
-def draw_bullseye(ax: plt.Axes, values: np.ndarray, norm: colors.Normalize):
+def draw_bullseye(ax: plt.Axes, values: np.ndarray, norm: colors.Normalize,
+                  cmap_name: str = THICKNESS_CMAP):
     """AHA-17 bullseye in the standard layout: anterior at the top, septum left."""
-    cmap = plt.get_cmap(THICKNESS_CMAP)
+    cmap = plt.get_cmap(cmap_name)
     rings = [(0.70, 1.00, 6, 1, 60.0), (0.42, 0.70, 6, 7, 60.0), (0.16, 0.42, 4, 13, 45.0)]
     for inner, outer, count, first, start in rings:
         step = 360.0 / count
@@ -720,39 +775,66 @@ def compose(case: dict, renders: dict, sax: tuple) -> plt.Figure:
                    bbox_transform=c.front.transData, handlelength=1.6,
                    columnspacing=1.0, borderaxespad=0.0)
 
-    col_d, col_e, col_f, col_g = 0.38, 2.00, 3.36, 4.78
+    col_d, col_e, col_f, col_g = 0.38, 1.92, 3.30, 4.92
     col_w, bull_w = 1.20, 0.96
     head_y = inf_y + 0.47
     for x, w, title in ((col_d, col_w, "(d)  Contours"), (col_e, col_w, "(e)  Reconstruction"),
                         (col_f, col_w, "(f)  Wall thickness"),
-                        (col_g, bull_w, "(g)  AHA-17 regions")):
+                        (col_g, col_w, "(g)  Thickening, ES \u2212 ED")):
         c.text(x + w / 2, head_y, title, fontsize=7.0, fontweight="bold", ha="center",
                va="center")
 
     rows_y = head_y + 0.14
-    row_h = (inf_y + inf_h - 0.05 - rows_y) / 2.0
+    bar_strip = 0.34
+    row_h = (inf_y + inf_h - 0.05 - bar_strip - rows_y) / 2.0
+    mids = []
     for k, phase in enumerate(PHASES):
         y = rows_y + k * row_h
         if k:
-            c.front.plot([margin + 0.12, 5.80], [y, y], color=RULE, lw=0.6, zorder=1)
+            c.front.plot([margin + 0.12, col_f + col_w + 0.06], [y, y], color=RULE, lw=0.6,
+                         zorder=1)
         c.text(0.20, y + row_h / 2, {"ED": "End-diastole", "ES": "End-systole"}[phase],
                rotation=90, fontsize=6.8, fontweight="bold", ha="center", va="center")
         for x, key in ((col_d, "contours"), (col_e, "surfaces"), (col_f, "thickness")):
             c.image(renders[f"{key}_{phase}"], x, y + 0.05, col_w, row_h - 0.10)
-        draw_bullseye(c.axes(col_g, y + 0.10, bull_w, row_h - 0.20),
-                      case[f"{phase}_segment_means"], norm)
         mid = y + row_h / 2
+        mids.append(mid)
         c.arrow((col_d + col_w + 0.02, mid), (col_e - 0.02, mid), lw=1.0)
         c.text((col_d + col_w + col_e) / 2, mid - 0.06, "model", ha="center", va="bottom",
                **note)
         c.arrow((col_e + col_w + 0.01, mid), (col_f - 0.01, mid), lw=1.0)
-        c.arrow((col_f + col_w + 0.01, mid), (col_g + 0.02, mid), lw=1.0)
 
-    cbar_ax = c.axes(5.92, rows_y + 0.30, 0.07, 2 * row_h - 0.60)
-    bar = fig.colorbar(plt.cm.ScalarMappable(norm=norm, cmap=THICKNESS_CMAP), cax=cbar_ax)
-    bar.set_label("Wall thickness (mm)", fontsize=6.4, labelpad=2)
-    bar.ax.tick_params(labelsize=5.8, length=2, width=0.5)
-    bar.outline.set_linewidth(0.5)
+    # Both phases merge into one arrow that feeds the thickening column.
+    merge_x = col_f + col_w + 0.16
+    ed_mid, es_mid = mids
+    c.front.plot([col_f + col_w + 0.01, merge_x, merge_x, col_f + col_w + 0.01],
+                 [ed_mid, ed_mid, es_mid, es_mid], color=INK, lw=1.0, zorder=5,
+                 solid_joinstyle="miter")
+    c.arrow((merge_x, ed_mid), (col_g + 0.14, ed_mid), lw=1.0)
+
+    delta_norm = thickening_norm(case)
+    c.image(renders["thickening"], col_g, rows_y + 0.05, col_w, row_h - 0.10)
+    bull_x = col_g + (col_w - bull_w) / 2
+    draw_bullseye(c.axes(bull_x, rows_y + row_h + 0.12, bull_w, row_h - 0.20),
+                  segment_thickening(case), delta_norm, DELTA_CMAP)
+    c.arrow((col_g + col_w / 2, rows_y + row_h - 0.04),
+            (col_g + col_w / 2, rows_y + row_h + 0.11), lw=1.0)
+    c.text(col_g + col_w / 2 + 0.06, rows_y + row_h + 0.035, "AHA-17", ha="left",
+           va="center", **note)
+
+    bar_y = rows_y + 2 * row_h + 0.04
+    for x, cmap_name, bar_norm, label in (
+            (col_f, THICKNESS_CMAP, norm, "Wall thickness (mm)"),
+            (col_g, DELTA_CMAP, delta_norm, "Thickening, ES \u2212 ED (mm)")):
+        cbar_ax = c.axes(x + 0.12, bar_y, col_w - 0.24, 0.06)
+        bar = fig.colorbar(plt.cm.ScalarMappable(norm=bar_norm, cmap=cmap_name),
+                           cax=cbar_ax, orientation="horizontal")
+        bar.locator = ticker.MaxNLocator(nbins=5, integer=True)
+        bar.formatter = ticker.FuncFormatter(lambda v, _: f"{v:g}".replace("-", "\u2212"))
+        bar.update_ticks()
+        bar.set_label(label, fontsize=6.0, labelpad=1.5)
+        bar.ax.tick_params(labelsize=5.6, length=2, width=0.5, pad=1.5)
+        bar.outline.set_linewidth(0.5)
     return fig
 
 
