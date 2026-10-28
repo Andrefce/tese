@@ -30,60 +30,58 @@ agree with those obtained from an independent method on the same input.
 \subsection{Metrics}
 \label{subsec:metrics}
 \noindent
-Reconstruction geometry is characterised with complementary surface and volume
-quantities, following the metric
-framework of~\textcite{taha2015metrics} and the conventions used for cardiac
-segmentation~\parencite{bernard2018acdc} and for implicit-surface
-learning~\parencite{occupancynetworks2019}. These quantities are used in two
-roles: between a reconstruction and the
-contour rings that produced it, and between two reconstructions of the same
-rings. In the first role they measure fidelity to the observations; in the
-second they measure disagreement between methods, and are symmetric, so they
-belong to neither method as an error.
+Reconstruction geometry is described with surface and volume measures taken
+from the review of~\textcite{taha2015metrics} and from common practice in
+cardiac segmentation~\parencite{bernard2018acdc} and implicit-surface
+learning~\parencite{occupancynetworks2019}. They are used between a
+reconstruction and the contour rings it was built from, where they show how
+closely the surface follows the observations, and between two reconstructions
+of the same rings, where they show how much the methods differ without
+blaming either one.
 
-Chamfer distance is the average distance between two surfaces, taken
-in both directions. It is reported for the endocardium and the epicardium in
-millimetres. The \emph{contour distance} is the corresponding one-sided quantity
-from each observed ring point to the reconstructed surface, summarised by its
-mean and its 95th percentile.
+The \emph{contour distance} is the gap from each observed ring point to the
+nearest point of the reconstructed surface, summarised by its mean and upper
+percentile; it only checks the acquired slices, not the surface between them.
+The \emph{Chamfer distance}~\parencite{deepsdf2019} averages the nearest-point
+gaps between two surfaces in both directions, and \emph{HD95}, the Hausdorff
+distance taken at its upper percentile~\parencite{taha2015metrics}, reports
+the large gaps that this average hides. Both are given in millimetres for the
+endocardium and the epicardium.
 
-Dice similarity coefficient (DSC) measures the solid rather than the
-surface. After converting both surfaces to voxel grids, it is twice the shared
-volume divided by the sum of the two volumes. It is computed for the endocardial cavity and for the
-myocardium and lies between zero and one. Enclosed \emph{volumes} are reported
-in millilitres for each method separately. A volume ratio is deliberately not
-reported: it would require designating one reconstruction as correct, which the
-available data do not support.
+The \emph{Dice similarity coefficient} (DSC)~\parencite{taha2015metrics}
+compares volumes rather than surfaces: the cavity inside the endocardium and
+the myocardium between the two surfaces, each filled on a shared voxel grid.
+It is the shared volume relative to the total volume of both reconstructions,
+rising from no overlap to complete overlap; these volumes come from the
+reconstructed meshes, not from independent 3D annotations. Enclosed
+\emph{volumes} are also reported in millilitres for each method separately,
+the epicardial value including both cavity and wall, and the \emph{watertight
+rate}, the fraction of meshes closed without holes, is a requirement for these
+volumes to exist rather than a score. The average symmetric surface distance,
+intersection over union, F-score and normal consistency are left out because
+they repeat the Chamfer distance or the DSC, depend on a chosen tolerance, or
+measure orientation rather than position.
 
-The watertight rate is the
-fraction of reconstructions that form a closed surface without holes. It is stated
-in the text as a precondition rather than as a score, because a mesh that is not
-closed has no volume for the DSC to use.
+Wall thickness is summarised by the mean, SD, and lower and upper percentiles
+across the myocardial surface, in millimetres; the SD describes how much the
+thickness varies over one wall and the percentiles mark its thin and thick
+ends without relying on single extreme values. Between phases, the absolute
+thickening $\Delta_{\text{ES}-\text{ED}}$ is the ES minus the ED thickness and
+the relative thickening is that increase as a percentage of the ED value.
 
-HD95, the 95th-percentile Hausdorff distance, describes the tail of the
-distribution and is reported with the Chamfer distance. The average symmetric
-surface distance is omitted because it tracked the Chamfer distance to within
-$0.06$~mm throughout. The intersection over union is omitted because it is a
-direct transformation of the DSC; the F-score depends on one selected tolerance,
-and normal consistency measures orientation rather than positional agreement.
-
-Wall thickness is summarised by the mean, SD, and 5th and
-95th percentiles across the myocardial surface, all in millimetres. The
-percentiles describe the thin apical and thick basal extremes without being
-distorted by isolated outliers. When the two cardiac phases are compared, the
-absolute thickening $\Delta_{\text{ES}-\text{ED}}$ and the relative thickening as
-a percentage of the ED value are also reported. These are the standard
-descriptors of regional contractile function.
-
-The four wall-thickness methods are compared on the
-reconstructed geometry, using the agreement framework of~\textcite{blandaltman1986} instead of a comparison of mean values. The reported
-quantities are the \emph{Pearson correlation coefficient} $r$, the \emph{mean
-absolute error} (MAE) and \emph{root-mean-square error} (RMSE) in millimetres,
-and the Bland--Altman \emph{bias} with its \emph{95\% limits of agreement} (LoA)
-(bias~$\pm 1.96\,\sigma$). Absolute consistency is summarised by the two-way
-\emph{intraclass correlation coefficient} (ICC), read against the thresholds of~\textcite{koo2016icc}. These are reported together because correlation alone does
-not show agreement: two methods can rise and fall together and still differ by a
-constant amount, which only the bias reveals.
+Agreement between wall-thickness measurements follows~\textcite{blandaltman1986}
+and uses paired values, either patient means or measurements at the same
+surface points. The \emph{Pearson correlation coefficient} $r$ shows whether
+two methods rank the same patients or locations as thicker, not whether their
+values match. The \emph{mean absolute error} (MAE) is the average size of the
+difference in millimetres, and the \emph{root-mean-square error} (RMSE) gives
+more weight to large differences. The Bland--Altman \emph{bias} is the mean
+signed difference, showing whether one method reads consistently higher, and
+the \emph{limits of agreement} (LoA) give the range expected to contain most
+individual differences. The two-way \emph{intraclass correlation coefficient}
+(ICC) rates agreement against the spread of the paired values and, unlike
+$r$, penalises a constant offset; it is read against the thresholds
+of~\textcite{koo2016icc}.
 
 \subsection{Methods Used for Comparison}
 \label{subsec:baselines}
@@ -184,7 +182,8 @@ the complete ten-slice row, the three surfaces share the same overall
 ventricular shape. The reduced-slice rows are analysed in~\cref{subsec:slice-sensitivity}.
 
 \Cref{tab:contour-fidelity} reports the distance from each input contour ring to
-the reconstructed surface and the enclosed volumes.
+the reconstructed surface and the enclosed volumes, the endocardial value being
+the cavity alone and the epicardial value the cavity together with the wall.
 
 \begin{table}[H]
   \centering
@@ -228,14 +227,15 @@ $119$, $119$ and $127$~ml, respectively. Myocardial volumes, obtained as the
 epicardial minus the cavity volume, differ more, at $136$, $115$ and $88$~ml.
 
 \Cref{tab:reconstruction-agreement} compares the three reconstructions with one
-another.
+another, by the distance between their boundaries and by the overlap of the
+cavity and wall that those boundaries enclose.
 
 \begin{table}[H]
   \centering
   \caption[Pairwise agreement between the three reconstructions]    {Pairwise agreement between the three
       reconstructions of the same ED contour rings over the held-out test cohort
       (mean $\pm$ SD of per-patient values). Entries are symmetric disagreements,
-      not errors. Bold marks the closest pair.}
+      not errors against a reference. Bold marks the closest pair.}
   \label{tab:reconstruction-agreement}
   \thesistablestyle
   \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l l c c@{}}
@@ -311,8 +311,10 @@ when its complete stack has more slices than that level. The lower rows of~\cref
 
 \Cref{tab:slice-degradation} compares each reduced-stack reconstruction with
 the one the same method produces from the complete stack, so the values show
-the effect of removing slices rather than the differences between methods. All
-three methods still produce closed surfaces from three slices.
+the effect of removing slices rather than the differences between methods;
+$\Delta V_{\text{myo}}$ is the change in wall volume relative to that
+complete-stack result. All three methods still produce closed surfaces from
+three slices.
 
 With six slices, the reconstructions change very little: surface distances
 stay below $1$~mm and myocardial DSC is close to $0.89$ for every method. With
@@ -335,7 +337,8 @@ The four selected methods are applied to the proposed reconstruction, the RBF
 fit, and the SSM fit for every patient at ED.
 \Cref{tab:wall-thickness-results} reports, for each method and reconstruction,
 the cohort average of the per-patient mean, SD, and 5th and 95th
-percentiles.
+percentiles, the SD describing variation across each patient's wall rather
+than between patients.
 
 \begin{table}[H]
   \centering
@@ -376,7 +379,9 @@ also spreads more widely: on the proposed reconstruction, its per-patient SD is
 $4.87$~mm, against $1.64$ to $2.14$~mm for the other methods.
 
 \Cref{tab:wall-thickness-geometry-agreement} compares patient-level mean
-thickness on the proposed reconstruction with the two fitting baselines.
+thickness on the proposed reconstruction with the two fitting baselines, with
+the measurement algorithm held fixed so that differences reflect the geometry
+alone.
 
 \begin{table}[H]
   \centering
@@ -411,14 +416,16 @@ Per-patient means are strongly correlated between the model and the RBF fit
 the SSM fit ($r=0.72$, $0.77$, $0.67$, and $0.77$).
 
 \Cref{tab:wall-thickness-agreement} compares the three other methods with the
-Laplace field point by point over the myocardial surface.
+Laplace field at the same surface points on the proposed reconstruction, so
+that only the measurement algorithm changes.
 
 \begin{table}[H]
   \centering
-  \caption[Wall-thickness-method agreement with Laplace]{Each
+  \caption[Wall-thickness-method agreement with Laplace]{Agreement of each
   wall-thickness method with the Laplace field over the myocardial surface
-  points of the held-out test cohort. The Laplace field is
-  the reference for comparison, not ground truth.}
+  points of the held-out test cohort. Bias is the method value minus the
+  Laplace-field value. The Laplace field is the reference for comparison,
+  not ground truth.}
   \label{tab:wall-thickness-agreement}
   \thesistablestyle
   \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l c c c c c@{}}
@@ -459,20 +466,15 @@ thickness. The circumferential bands follow the spacing of the SAX slices.
 \subsection{Regional Analysis over the AHA 17-Segment Model}
 \label{subsec:aha17-results}
 \noindent
-To localise the measurements anatomically, the reconstructed surface is divided
-into the 17 standard AHA segments, as described in~\cref{subsec:aha17-mapping}.
-
-The local map in~\cref{fig:recon-thickness-3d} resolves thickness at every
-surface vertex, but at that resolution it also carries the circumferential
-banding introduced by the slice spacing, and it cannot be compared directly
-across patients because no two reconstructions share the same vertices. The
-AHA model replaces the per-vertex values with one mean per anatomically
-oriented patch. Each patch spans a fixed fraction of the long axis, so its mean
-averages over several slice bands, and each is located by its angle relative
-to the septum, so segment $k$ refers to the same region of the ventricle in
-every case and at both phases. The regional values therefore support the
-comparisons between phases and between diagnostic groups reported below, which
-the raw surface maps do not.
+To place the measurements anatomically, the reconstructed surface is divided
+into the standard AHA segments~\parencite{cerqueira2002segmentation} described
+in~\cref{subsec:aha17-mapping}: basal, mid-cavity and apical sectors oriented
+from the septum, plus the apical cap. Each mesh point falls into one segment
+and the thickness values within it are averaged, so the surface map becomes
+one mean per region that refers to the same part of the ventricle in every
+patient and phase. These means are Laplace-field
+thickness~\parencite{jones2000laplace} measured directly on the
+meshes, not the segmentation-scaled values of~\cref{fig:recon-thickness-3d}.
 
 \begin{figure}[H]
   \centering
@@ -485,21 +487,15 @@ the raw surface maps do not.
   \label{fig:aha17-bullseye}
 \end{figure}
 
-\Cref{fig:aha17-bullseye} shows the partition applied to the reconstructed
-geometry of the representative case together with a bullseye of the
-Laplace-derived wall thickness. Panel~(a) places the result on the
-reconstructed surface, where the ring boundaries and the septal orientation can
-be checked against the geometry, while panel~(b) unrolls the segment means onto
-the standard bullseye, with the basal ring outermost and the apical cap at the
-centre.
+\Cref{fig:aha17-bullseye} shows the partition on the representative case, with
+each patch coloured by its mean thickness in panel~(a) and the same means
+unrolled onto the standard bullseye in panel~(b), basal ring outermost and
+apical cap at the centre.
 
-
-All regional values are measured with the Laplace field, for the reasons given
-in~\cref{subsec:wall-thickness-results}. \Cref{tab:aha17-cohort} reports the
+\Cref{tab:aha17-cohort} reports the
 regional pattern over the $30$-patient ACDC pathology subset and its change
-between phases. Because the table reports cohort means, it describes the
-typical regional pattern of the subset rather than individual patients; the
-variation between patients is examined separately in~\cref{tab:aha17-group-effects}.
+between phases. Entries are segment means averaged across patients; variation
+between patients is examined in~\cref{tab:aha17-group-effects}.
 
 Over the ACDC pathology subset the reconstructed wall averages $9.21$~mm at ED
 and $13.87$~mm at ES, corresponding to $50.6\%$ relative thickening. At ED the
@@ -624,7 +620,13 @@ HCM thickness exceeds NOR thickness in every segment, with the largest differenc
 in the mid-cavity anteroseptal and inferoseptal segments, where the HCM group
 reaches $13.99$ and $13.43$~mm compared with $8.55$ and $8.57$~mm in the normal
 group. \Cref{tab:aha17-group-effects} evaluates this separation at the patient
-level rather than treating the 17 segments as independent observations.
+level rather than treating the segments as independent observations. Each
+patient contributes one value per outcome: the mean and the largest of the ED
+segment means, and the relative ED-to-ES increase, so group differences in
+thickening are in percentage points. The confidence intervals come from
+resampling patients within each group~\parencite{efron1979bootstrap}, and
+Hedges' $g$~\parencite{hedges1981effectsize} expresses the group difference
+relative to the patient-to-patient spread.
 
 \begin{table}[H]
   \centering
