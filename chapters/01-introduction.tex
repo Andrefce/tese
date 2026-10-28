@@ -8,8 +8,8 @@
 
 \noindent
 This chapter motivates the reconstruction of continuous left-ventricular
-geometry from sparse contours delineated on cardiac magnetic resonance images
-and defines the research problem. It then presents
+geometry from contours delineated on widely spaced cardiac magnetic resonance
+slices and defines the research problem. It then presents
 the research questions, the contributions of the thesis, and the organisation
 of the remaining chapters.
 
@@ -25,20 +25,18 @@ the cavity is smallest and the muscular wall, the myocardium, is at its
 thickest. The difference between these two states is what quantifies
 ventricular pumping function: cavity volumes at ED and ES give the stroke
 volume and ejection fraction, while the volume of the myocardium gives its
-mass \parencite{bernard2018acdc}. Beyond these global indices, the geometry of
+mass~\parencite{bernard2018acdc}. Beyond these global indices, the geometry of
 the ventricle carries diagnostic information of its own. Myocardial wall
-thickness is related to the diastolic behaviour of the ventricle
-\parencite{grossman1974wallthickness}, an abnormally thick wall is the defining
-feature of hypertrophic cardiomyopathy \parencite{ommen2020hcm}, and
+thickness is related to the diastolic behaviour of the ventricle~\parencite{grossman1974wallthickness}, an abnormally thick wall is the defining
+feature of hypertrophic cardiomyopathy~\parencite{ommen2020hcm}, and
 variations in ventricular shape and thickness have been associated with
-structural remodelling and cardiovascular risk at the population level
-\parencite{medrano2014lvshapevariation,demarvao2014atlas}.
+structural remodelling and cardiovascular risk at the population level~\parencite{medrano2014lvshapevariation,demarvao2014atlas}.
 
 Cardiac magnetic resonance imaging (MRI) is the preferred imaging method for
 measuring these quantities. It is non-invasive, does not use ionising
 radiation, and offers good contrast between blood and myocardium, which is why
 it is regarded as the reference standard for ventricular volumes, mass, and
-function \parencite{petitjean2011segmentationreview,bernard2018acdc}. In
+function~\parencite{petitjean2011segmentationreview,bernard2018acdc}. In
 routine cine acquisitions, the LV is imaged in short-axis (SAX) planes
 perpendicular to its long axis, stacked from the base, the wide end where the
 valves sit, towards the apex, the pointed tip, and repeated over the cardiac
@@ -51,26 +49,22 @@ boundary of the blood-filled cavity, and the epicardium, the outer boundary of
 the myocardium. This outlining, called segmentation, is therefore the step on
 which all later measurements depend. Drawing these outlines manually is
 time-consuming, and the outlines can differ between experts or when the same
-expert repeats the task
-\parencite{petitjean2011segmentationreview}. These differences limit
+expert repeats the task~\parencite{petitjean2011segmentationreview}. These differences limit
 reproducibility, while the time required makes manual segmentation less
 practical as the number of examinations grows.
 These limitations have motivated a sustained effort towards automated
-segmentation, driven by public benchmarks and challenges
-\parencite{suinesiaputra2014collaborative,bernard2018acdc,campello2021mnms}.
+segmentation, driven by public benchmarks and challenges~\parencite{suinesiaputra2014collaborative,bernard2018acdc,campello2021mnms}.
 The need is most evident in large cohorts such as the UK Biobank, where
-thousands of subjects must be analysed consistently
-\parencite{sudlow2015ukbiobank}, and where fully convolutional networks now
+thousands of subjects must be analysed consistently~\parencite{sudlow2015ukbiobank}, and where fully convolutional networks now
 produce segmentations whose derived measurements approach the agreement
-observed between human experts \parencite{bai2018automated}.
+observed between human experts~\parencite{bai2018automated}.
 
 Segmentation, however, answers a two-dimensional question. It produces a set of
 contours on separate planes, whereas the quantities of clinical interest
 describe a continuous three-dimensional organ. Regional analysis, such as
 reporting wall thickness according to the American Heart Association (AHA)
-17-segment model \parencite{cerqueira2002segmentation}, and the construction
-of population atlases that compare anatomy across subjects
-\parencite{bai2015biventricularatlas,demarvao2014atlas} both require a
+17-segment model~\parencite{cerqueira2002segmentation}, and the construction
+of population atlases that compare anatomy across subjects~\parencite{bai2015biventricularatlas,demarvao2014atlas} both require a
 description of the ventricle that extends beyond the individual slices. How
 that description is obtained from segmented contours is the problem addressed
 in this thesis.
@@ -81,29 +75,29 @@ in this thesis.
 Reconstructing the LV in three dimensions from segmented SAX contours is a
 long-standing problem in cardiac image analysis. A cine SAX stack typically
 resolves the ventricle at $1$--$2$~mm within each slice, but consecutive
-slices lie $6$--$10$~mm apart \parencite{petitjean2011segmentationreview}.
+slices lie $6$--$10$~mm apart~\parencite{petitjean2011segmentationreview}.
 Segmentation therefore delineates the myocardium accurately where it is
 imaged, yet leaves the geometry between slices, including the curvature of the
-apex and the closure of the base, unobserved. The contours alone cannot
+apex and the closure of the base, unobserved. In this thesis, contours of this
+kind are called sparse: they describe the ventricle in detail within each
+slice but only at widely spaced positions along its long axis. The contours alone cannot
 uniquely determine a continuous surface: many different
 surfaces can pass through the same contours, and the result depends on the
 assumptions used to fill the gaps.
 
 Several families of methods supply these assumptions. Contour lofting joins
 corresponding points on adjacent slices and passes exactly through the
-observations, but produces piecewise-linear geometry between them
-\parencite{petitjean2011segmentationreview}. Statistical shape models (SSMs)
-restrict the surface to the modes of variation of a training population
-\parencite{cootes1995asm,frangi2002cardiacssm,heimann2009ssmreview}, which
+observations, but produces piecewise-linear geometry between them~\parencite{petitjean2011segmentationreview}. Statistical shape models (SSMs)
+restrict the surface to the modes of variation of a training population~\parencite{cootes1995asm,frangi2002cardiacssm,heimann2009ssmreview}, which
 stabilises the reconstruction when observations are sparse but can draw
 atypical anatomy towards the population mean. Radial basis function (RBF)
 interpolation defines the surface as the zero level set of a smooth function
-fitted to the contour points \parencite{carr2001rbf}, trading regional detail
+fitted to the contour points~\parencite{carr2001rbf}, trading regional detail
 for smoothness. More recently, implicit neural representations (INRs), which
 encode a shape as the set of points where a function computed by a neural
-network is zero \parencite{deepsdf2019,occupancynetworks2019}, have been used
+network is zero~\parencite{deepsdf2019,occupancynetworks2019}, have been used
 to reconstruct cardiac surfaces from images with widely spaced slices and
-from sparse segmentations \parencite{bras2026anisotropy,muffoletto2025nihc}.
+from sparse segmentations~\parencite{bras2026anisotropy,muffoletto2025nihc}.
 Closed LV surfaces from sparse contours are therefore not new in themselves; the
 approaches differ in the prior that fills the unobserved geometry, and hence
 in how far a measurement on that geometry reflects the data rather than the
@@ -113,21 +107,19 @@ The difference matters most when the quantity of interest is myocardial wall
 thickness. Thickness is measured between two surfaces, so the endocardium and
 epicardium must be reconstructed as a consistent pair whose separation remains
 positive and spatially coherent; surfaces reconstructed independently may each
-be plausible and still intersect or collapse the wall between them
-\parencite{bras2026anisotropy}. Priors are also often tied to a single cardiac
+be plausible and still intersect or collapse the wall between them~\parencite{bras2026anisotropy}. Priors are also often tied to a single cardiac
 phase, and a shape model built from diastolic anatomy cannot describe the
 contracted ventricle at ES without imposing a diastolic shape space on systolic
 observations. Moreover, a discrepancy of one or two millimetres between two
 reconstructions of the same contours is small relative to the cavity but
 substantial relative to the wall. Surface-distance and overlap metrics, the
-usual criteria for reconstruction quality \parencite{taha2015metrics}, do not
+usual criteria for reconstruction quality~\parencite{taha2015metrics}, do not
 by themselves show how such discrepancies propagate into thickness
 measurements.
 
 Public data impose a further constraint. Benchmarks such as the Automated
 Cardiac Diagnosis Challenge (ACDC) and the second Multi-Centre, Multi-Vendor
-and Multi-Disease Cardiac Segmentation challenge (M\&Ms-2) provide images and segmentation masks for individual slices
-\parencite{bernard2018acdc,martinisla2023mnms2}, that is, label images in
+and Multi-Disease Cardiac Segmentation challenge (M\&Ms-2) provide images and segmentation masks for individual slices~\parencite{bernard2018acdc,martinisla2023mnms2}, that is, label images in
 which each pixel is marked as cavity, myocardium, or background, rather than
 complete three-dimensional LV meshes, surfaces made of connected triangles.
 Without an independent three-dimensional reference, a learned model must be
@@ -150,7 +142,7 @@ reconstructions.
 
 This thesis addresses the problem with a phase-conditioned INR, trained on
 synthetic LV geometries sampled from an SSM and on meshes derived from real
-cardiac MRI segmentations, as illustrated in \cref{fig:intro-overview}.
+cardiac MRI segmentations, as illustrated in~\cref{fig:intro-overview}.
 Rather than introducing a new representation, it adapts the implicit
 formulation to the constraints described above. The proposed model takes
 sparse contours as input and represents the endocardial and epicardial
@@ -162,8 +154,10 @@ endocardium keeps the outer surface outside the inner one by construction.
 
 Because no independent reference exists, the evaluation is comparative. The
 reconstruction is assessed against the observed contours and against RBF and
-SSM reconstructions of the same contours, including when slices are removed,
-and wall thickness is measured on each geometry with several methods. This
+SSM reconstructions of the same contours, and slices are removed from the
+input to measure how much each reconstruction changes when fewer slices are
+available (its sensitivity to slice removal). Wall thickness is then measured
+on each geometry with several methods. This
 design separates the effect of the reconstruction prior from that of the
 measurement method, and asks not only whether the proposed model produces
 continuous surfaces, but whether the resulting geometry preserves quantities
@@ -175,7 +169,7 @@ of sparse cardiac MRI.
 \section{Research Questions}
 \label{sec:research-questions}
 \noindent
-As \cref{sec:problem} shows, a closed LV surface can already be obtained from
+As~\cref{sec:problem} shows, a closed LV surface can already be obtained from
 sparse contours by RBF interpolation, SSM fitting, or an implicit neural model.
 The open questions concern what a learned prior contributes relative to these
 alternatives, whether it can satisfy the paired-surface and multi-phase
@@ -243,8 +237,7 @@ reconstruction and myocardial wall-thickness measurement, providing the
 context for the methodological choices. \Cref{ch:methodology} describes the
 data preparation, the proposed model, its training and inference, and the
 methods used to measure wall thickness. \Cref{ch:results} evaluates the
-reconstructed geometry, its sensitivity to sparse observations, and the
-resulting local and regional thickness measurements. Finally,
-\cref{ch:conclusions} answers the
+reconstructed geometry, how much it changes when slices are removed, and the
+resulting local and regional thickness measurements. Finally,~\cref{ch:conclusions} answers the
 research questions, summarises the contributions and limitations, and
 identifies directions for future work.
