@@ -2,7 +2,7 @@
 """Visualise contour-input augmentation on the ACDC patient002 ED stack.
 
 The figure deliberately derives every panel from the same labelled SAX stack.
-Panels (b)--(e) show separate representative augmentation draws; panel (f)
+Panels (b)--(d) show representative augmentation draws; panel (e)
 shows the derived 3D supervision target that remains fixed for all of them.
 """
 
@@ -108,11 +108,7 @@ def augment(contour: np.ndarray, slice_ids: np.ndarray, operation: str) -> np.nd
         # contour stack and retains more than the training minimum of three.
         drop = np.isin(slice_ids, [2, 7])
         out = out[~drop]
-    elif operation == "rotation_scale":
-        theta = np.deg2rad(12.0)
-        rotation = np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
-        centre = out[:, :2].mean(axis=0, keepdims=True)
-        out[:, :2] = (out[:, :2] - centre) @ rotation.T + centre
+    elif operation == "scaling":
         out[:, :3] *= 1.06
     elif operation == "point_dropout":
         keep = rng.random(len(out)) > 0.30
@@ -209,21 +205,21 @@ def main() -> None:
         ("(a)", original),
         ("(b)", augment(original, slice_ids, "translation_jitter")),
         ("(c)", augment(original, slice_ids, "slice_dropout")),
-        ("(d)", augment(original, slice_ids, "rotation_scale")),
-        ("(e)", augment(original, slice_ids, "point_dropout")),
+        ("(d)", augment(original, slice_ids, "point_dropout")),
     ]
 
     fig = plt.figure(figsize=(8.6, 5.8), dpi=700, facecolor="white")
-    grid = fig.add_gridspec(2, 3, left=0.04, right=0.98, bottom=0.04, top=0.97,
+    grid = fig.add_gridspec(2, 6, left=0.04, right=0.98, bottom=0.04, top=0.97,
                             wspace=0.30, hspace=0.24)
-    for index, (label, points) in enumerate(panels):
-        ax = fig.add_subplot(grid[divmod(index, 3)], projection="3d")
+    panel_positions = (grid[0, 0:2], grid[0, 2:4], grid[0, 4:6], grid[1, 1:3])
+    for (label, points), position in zip(panels, panel_positions):
+        ax = fig.add_subplot(position, projection="3d")
         draw_contours(ax, points)
         label_panel(ax, label)
 
-    target_ax = fig.add_subplot(grid[1, 2], projection="3d")
+    target_ax = fig.add_subplot(grid[1, 3:5], projection="3d")
     draw_target(target_ax, seg, spacing)
-    label_panel(target_ax, "(f)")
+    label_panel(target_ax, "(e)")
 
     fig.savefig(OUT_PATH, dpi=300, facecolor="white", bbox_inches="tight", pad_inches=0.05)
     print(f"Saved {OUT_PATH}")

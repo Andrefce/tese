@@ -189,7 +189,7 @@ def prepare_case(refresh: bool = False) -> dict:
 
 
 def prepare_ssm_sample(refresh: bool = False) -> dict:
-    """One accepted SSM shape with the synthetic epicardium of the SSM figure."""
+    """One accepted SSM shape with its endocardial and epicardial surfaces."""
     if SSM_CACHE.exists() and not refresh:
         with np.load(SSM_CACHE) as data:
             return {key: data[key] for key in data.files}
@@ -197,9 +197,10 @@ def prepare_ssm_sample(refresh: bool = False) -> dict:
     from scipy.stats import chi2  # noqa: PLC0415
 
     sys.path.insert(0, str(SCRIPTS))
-    from fig_ssm_explanation import load_ssm, make_epicardium  # noqa: PLC0415
+    from fig_ssm_explanation import load_ssm, split_surfaces, surface_pair  # noqa: PLC0415
 
     mean_pts, pc, sigmas, faces = load_ssm()
+    parts = split_surfaces(mean_pts, faces)
     rng = np.random.default_rng(SSM_SEED)
     threshold = chi2.ppf(0.99, SSM_ACTIVE_MODES)
     while True:
@@ -208,10 +209,10 @@ def prepare_ssm_sample(refresh: bool = False) -> dict:
         ratio = b[:SSM_ACTIVE_MODES] / sigmas[:SSM_ACTIVE_MODES]
         if np.all(np.abs(ratio) <= 3.0) and np.sum(ratio ** 2) <= threshold:
             break
-    endo = (mean_pts.flatten() + pc @ b).reshape(-1, 3)
-    epi = make_epicardium(endo, faces)
+    endo, epi = surface_pair((mean_pts.flatten() + pc @ b).reshape(-1, 3), parts)
     sample = {"endo_v": endo.astype(np.float32), "epi_v": epi.astype(np.float32),
-              "faces": np.asarray(faces, np.int64)}
+              "endo_f": np.asarray(parts["endo_faces"], np.int64),
+              "epi_f": np.asarray(parts["epi_faces"], np.int64)}
     np.savez_compressed(SSM_CACHE, **sample)
     return sample
 
@@ -314,10 +315,11 @@ def ring_list(points: np.ndarray, tissue: np.ndarray) -> list[tuple[np.ndarray, 
             if len(points[s:s + POINTS_PER_RING]) >= 3]
 
 
-def ssm_rings(endo: np.ndarray, epi: np.ndarray, faces: np.ndarray):
+def ssm_rings(endo: np.ndarray, epi: np.ndarray, endo_faces: np.ndarray,
+              epi_faces: np.ndarray):
     """Planar sections of the SSM pair at N_SAX_LEVELS evenly spaced levels."""
-    meshes = ((trimesh.Trimesh(endo, faces, process=False), 0.0),
-              (trimesh.Trimesh(epi, faces, process=False), 1.0))
+    meshes = ((trimesh.Trimesh(endo, endo_faces, process=False), 0.0),
+              (trimesh.Trimesh(epi, epi_faces, process=False), 1.0))
     z_min, z_max = endo[:, 2].min(), endo[:, 2].max()
     levels = np.linspace(z_min + 0.07 * (z_max - z_min), z_max - 0.07 * (z_max - z_min),
                          N_SAX_LEVELS)
@@ -325,7 +327,7 @@ def ssm_rings(endo: np.ndarray, epi: np.ndarray, faces: np.ndarray):
     for z in levels:
         for mesh, tissue in meshes:
             section = mesh.section(plane_origin=[0.0, 0.0, z], plane_normal=[0.0, 0.0, 1.0])
-            if section is not None:
+            if section is not None and len(section.discrete) > 0:
                 rings.append((np.asarray(max(section.discrete, key=len)), tissue))
     return rings
 
@@ -508,11 +510,11 @@ def make_renders(case: dict, shown: dict, ssm: dict, rbf: dict) -> dict[str, np.
     to_ssm = display_transform(ssm["endo_v"])
     ssm_endo, ssm_epi = to_ssm(ssm["endo_v"]), to_ssm(ssm["epi_v"])
     scale = half_height_for(ssm_epi)
-    rings = ssm_rings(ssm_endo, ssm_epi, ssm["faces"])
+    rings = ssm_rings(ssm_endo, ssm_epi, ssm["endo_f"], ssm["epi_f"])
     top_ring = max(loop[:, 2].mean() for loop, _ in rings)
     renders["ssm_pair"], renders["ssm_rings"] = crop_together([
-        render(pair_actors(*open_base(polydata(ssm_endo, ssm["faces"]),
-                                      polydata(ssm_epi, ssm["faces"]),
+        render(pair_actors(*open_base(polydata(ssm_endo, ssm["endo_f"]),
+                                      polydata(ssm_epi, ssm["epi_f"]),
                                       top_ring + BASE_CUT_MM)), scale),
         render(ring_actors(rings, 0.65), scale),
     ])

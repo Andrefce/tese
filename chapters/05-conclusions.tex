@@ -16,19 +16,27 @@ out the work that should follow.
 \noindent
 Sparse SAX cardiac MRI presents a geometric limitation.
 Each slice observes the LV finely, at an in-plane pixel size
-below $2$~mm, but the slices lie several millimetres apart, so the
+below 2~mm, but the slices lie several millimetres
+apart~\parencite{bernard2018acdc,kramer2020cmrprotocols}, so the
 three-dimensional wall on which clinical measurement depends is never observed
 directly and has to be inferred. That inference was treated as the learning of a
-continuous signed-distance representation. A phase-conditioned implicit model
-was pre-trained on synthetic shapes sampled from an SSM and fine-tuned on ED and ES surfaces fitted
-to ACDC and M\&Ms-2 segmentations. The model reads the sparse contour rings
-through a global PointNet pathway and a local feature grid, predicts the
+continuous signed-distance representation~\parencite{deepsdf2019}. A
+phase-conditioned implicit model was pre-trained on synthetic shapes sampled
+from an SSM~\parencite{bai2015biventricularatlas} and fine-tuned on ED and ES
+surfaces fitted to ACDC~\parencite{bernard2018acdc} and
+M\&Ms-2~\parencite{martinisla2023mnms2} segmentations. The model reads the
+sparse contour rings through a global PointNet
+pathway~\parencite{qi2017pointnet} and a local feature
+grid~\parencite{peng2020convonet}, predicts the
 endocardial signed-distance field, and defines the epicardial field as that
 field minus a strictly positive, directly supervised offset, so the two surfaces
 cannot cross. Its output was compared with an RBF
-implicit fit and an SSM fit of the same rings, and myocardial wall thickness was
-measured on all three geometries with four local methods, summarised across
-the AHA 17 segments, and compared between normal and HCM patients.
+implicit fit~\parencite{carr2001rbf} and an SSM fit of the same rings, and
+myocardial wall thickness was measured on all three geometries with four
+local
+methods~\parencite{saito1994edt,jones2000laplace,yezzi2003thickness,shapira2008sdf},
+summarised across the AHA 17 segments~\parencite{cerqueira2002segmentation},
+and compared between normal and HCM~\parencite{ommen2020hcm} patients.
 
 \section{Answers to the Research Questions}
 \label{sec:conclusion-research-questions}
@@ -36,7 +44,7 @@ the AHA 17 segments, and compared between normal and HCM patients.
 \textbf{RQ1} asked how a reconstruction learned from synthetic and clinical
 geometry compares with RBF and SSM reconstructions of the same sparse contours.
 The model follows its input contours to within about one in-plane pixel
-($1.50$~mm on the endocardium and $1.96$~mm on the epicardium), lies closer to
+(1.50~mm on the endocardium and 1.96~mm on the epicardium), lies closer to
 the RBF fit than to the SSM fit, and, unlike the SSM fit, keeps a similar
 contour distance on normal and HCM cases. The three methods agree on the cavity
 but not on the wall, and removing slices degrades all three by similar amounts.
@@ -49,7 +57,7 @@ paired endocardial and epicardial surfaces at ED and ES while maintaining a
 positive wall thickness. The answer is a qualified yes. One network
 reconstructs both phases, the epicardial field cannot cross the endocardial
 field by construction, and the reconstructed wall thickens in every AHA
-segment, from $9.21$~mm at ED to $13.87$~mm at ES. Pointwise separation on the
+segment, from 9.21~mm at ED to 13.87~mm at ES. Pointwise separation on the
 extracted meshes and accuracy at ES were not verified.
 
 \textbf{RQ3} asked how strongly wall thickness depends on the reconstruction
@@ -59,7 +67,7 @@ absolute scale while largely preserving the ranking of patients, and a
 straight-ray measurement departs strongly from methods that follow the curved
 wall. Absolute thickness values are therefore comparable only within the same
 reconstruction and measurement pipeline. The reconstructed geometry does retain
-group differences: the HCM group is $3.67$~mm thicker than the normal group in
+group differences: the HCM group is 3.67~mm thicker than the normal group in
 patient-level mean ED thickness, whereas relative systolic thickening does not
 separate the groups. With ten HCM patients, this is a descriptive result rather
 than a diagnostic one.
@@ -100,8 +108,11 @@ anatomical reference. Higher-resolution volumetric acquisitions, or expert
 three-dimensional surface and wall-thickness annotations on a larger external
 cohort, would turn the agreement figures reported here into accuracy figures
 and would show which of the three priors lies closest to the true wall. The
-second is a wider and fully matched comparison, adding spline lofting, Poisson
-reconstruction and learned alternatives under the same patients, physical
+second is a wider and fully matched comparison, adding spline
+lofting~\parencite{fuchs1977contours}, Poisson
+reconstruction~\parencite{kazhdan2006poisson} and learned
+alternatives~\parencite{occupancynetworks2019,muffoletto2025nihc} under the
+same patients, physical
 spacing, repair procedure and metrics, with error maps showing where
 reconstructions disagree at the apex, the base and the most curved parts of
 the wall. The

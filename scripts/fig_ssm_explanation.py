@@ -95,31 +95,37 @@ def load_legacy_vtk_polydata(vtk_path: Path):
     return pts, np.asarray(faces, dtype=np.int32)
 
 
-def vertex_normals(verts: np.ndarray, faces: np.ndarray) -> np.ndarray:
-    tri = verts[faces]
-    fn = np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0])
-    fn /= np.maximum(np.linalg.norm(fn, axis=1, keepdims=True), 1e-8)
-    normals = np.zeros_like(verts)
-    for c in range(3):
-        np.add.at(normals, faces[:, c], fn)
-    normals /= np.maximum(np.linalg.norm(normals, axis=1, keepdims=True), 1e-8)
-    if np.mean(np.sum(normals * verts, axis=1)) < 0:
-        normals *= -1
-    return normals
+def split_surfaces(verts: np.ndarray, faces: np.ndarray) -> dict:
+    """Vertex indices and re-indexed faces of the two SSM surface components.
+
+    The LV mesh stores the endocardium and the epicardium as two disconnected
+    shells over one vertex array; the epicardium is the shell with the larger
+    lateral extent. Every SSM sample shares this connectivity.
+    """
+    from scipy.sparse import coo_matrix
+    from scipy.sparse.csgraph import connected_components
+
+    edges = np.vstack([faces[:, [0, 1]], faces[:, [1, 2]], faces[:, [2, 0]]])
+    graph = coo_matrix((np.ones(len(edges)), (edges[:, 0], edges[:, 1])),
+                       shape=(len(verts), len(verts)))
+    n_comp, labels = connected_components(graph, directed=False)
+    if n_comp != 2:
+        raise ValueError(f"expected two SSM surface components, found {n_comp}")
+    extent = [np.ptp(verts[labels == k, :2], axis=0).sum() for k in range(2)]
+    epi_label = int(np.argmax(extent))
+    parts = {}
+    for name, label in (("endo", 1 - epi_label), ("epi", epi_label)):
+        idx = np.flatnonzero(labels == label)
+        remap = -np.ones(len(verts), dtype=np.int64)
+        remap[idx] = np.arange(len(idx))
+        keep = labels[faces[:, 0]] == label
+        parts[f"{name}_idx"] = idx
+        parts[f"{name}_faces"] = remap[faces[keep]].astype(np.int32)
+    return parts
 
 
-def epicardium_thickness_field(endo: np.ndarray) -> np.ndarray:
-    """Per-vertex synthetic offset used to build the epicardium (\\cref{eq:synthetic-epi-offset})."""
-    z_norm = (endo[:, 2] - endo[:, 2].min()) / max(np.ptp(endo[:, 2]), 1e-8)
-    angles = np.arctan2(endo[:, 1], endo[:, 0])
-    thickness = 5.5 + 4.2 * z_norm + 1.1 * np.sin(2.0 * angles + 0.6) * (0.4 + 0.6 * z_norm)
-    return np.clip(thickness, 4.5, 11.5)
-
-
-def make_epicardium(endo: np.ndarray, faces: np.ndarray) -> np.ndarray:
-    normals = vertex_normals(endo, faces)
-    thickness = epicardium_thickness_field(endo)
-    return endo + normals * thickness[:, None]
+def surface_pair(verts: np.ndarray, parts: dict) -> tuple[np.ndarray, np.ndarray]:
+    return verts[parts["endo_idx"]], verts[parts["epi_idx"]]
 
 
 def mesh_volume(verts: np.ndarray, faces: np.ndarray) -> float:
@@ -184,9 +190,23 @@ def draw_mesh(ax, verts, faces, color=C_ENDO, values=None, cmap="turbo",
 # Figure 1 — Mean shape + 4 modes of variation
 # ---------------------------------------------------------------------------
 
+def draw_pair(ax, verts, parts, stride=4, endo_alpha=0.90, epi_alpha=0.32, **kwargs):
+    """Draw the SSM epicardium translucently around its endocardium."""
+    endo, epi = surface_pair(verts, parts)
+    draw_mesh(ax, epi, parts["epi_faces"], color=C_EPI, stride=stride, alpha=epi_alpha, **kwargs)
+    draw_mesh(ax, endo, parts["endo_faces"], color=C_ENDO, stride=stride,
+              alpha=endo_alpha, **kwargs)
+    # Fit both shells; draw_mesh limits the axes to the last mesh drawn.
+    mn, mx = epi.min(0), epi.max(0)
+    c, hr = (mn + mx) / 2, np.max(mx - mn) / 2 * 1.05
+    ax.set_xlim(c[0] - hr, c[0] + hr)
+    ax.set_ylim(c[1] - hr, c[1] + hr)
+    ax.set_zlim(c[2] - hr, c[2] + hr)
+
+
 def fig_ssm_mean_modes():
     mean_pts, pc, sigmas, faces = load_ssm()
-    epi_mean = make_epicardium(mean_pts, faces)
+    parts = split_surfaces(mean_pts, faces)
 
     n_modes = 3          # modes 0,1,2 shown ±3σ
     sigma_val = 3.0
@@ -200,8 +220,7 @@ def fig_ssm_mean_modes():
 
     # ---- mean shape (large, centred) ----
     ax_mean = fig.add_axes([0.02, 0.08, 0.18, 0.84], projection="3d")
-    draw_mesh(ax_mean, epi_mean, faces, color=C_EPI, stride=3, alpha=0.45)
-    draw_mesh(ax_mean, mean_pts, faces, color=C_ENDO, stride=3, alpha=0.90)
+    draw_pair(ax_mean, mean_pts, parts, stride=3, epi_alpha=0.45)
     ax_mean.set_title("Mean\nshape $\\bar{X}$", fontsize=7.5, pad=2)
 
     # vertical arrow annotation
@@ -221,8 +240,8 @@ def fig_ssm_mean_modes():
         ax_pos = fig.add_axes([x0, 0.52, 0.22, 0.40], projection="3d")
         ax_neg = fig.add_axes([x0, 0.08, 0.22, 0.40], projection="3d")
 
-        draw_mesh(ax_pos, pts_pos, faces, color=C_ENDO, stride=4, alpha=0.88)
-        draw_mesh(ax_neg, pts_neg, faces, color=C_ENDO, stride=4, alpha=0.88)
+        draw_pair(ax_pos, pts_pos, parts, stride=4, endo_alpha=0.88)
+        draw_pair(ax_neg, pts_neg, parts, stride=4, endo_alpha=0.88)
 
         ax_pos.set_title(f"{mode_labels[col]}\n$+{sigma_val:.0f}\\sigma$", fontsize=6.5, pad=1)
         ax_neg.set_title(f"$-{sigma_val:.0f}\\sigma$", fontsize=6.5, pad=1)
@@ -230,7 +249,7 @@ def fig_ssm_mean_modes():
     # legend
     legend_handles = [
         mpatches.Patch(color=C_ENDO, label="Endocardium"),
-        mpatches.Patch(color=C_EPI, label="Epicardium (mean only)"),
+        mpatches.Patch(color=C_EPI, label="Epicardium"),
     ]
     fig.legend(handles=legend_handles, loc="lower center",
                bbox_to_anchor=(0.50, 0.00), ncol=2,
@@ -336,7 +355,7 @@ def draw_variance_explained(ax, sigmas, d_active=D_ACTIVE_MODES):
     ax.axhline(cumulative[d_active - 1], color="#888888", linewidth=0.8, linestyle=":")
     ax.scatter([d_active], [cumulative[d_active - 1]], s=14, color="#CC3333", zorder=5)
     ax.text(d_active + 3, cumulative[d_active - 1] - 10,
-            f"$k={d_active}$\n{cumulative[d_active - 1]:.1f}\\%",
+            f"$k={d_active}$\n{cumulative[d_active - 1]:.1f}%",
             fontsize=5.6, color="#444444")
 
     ax.set_xlim(1, len(sigmas))
@@ -349,28 +368,31 @@ def draw_variance_explained(ax, sigmas, d_active=D_ACTIVE_MODES):
     ax.set_title("Explained shape\nvariance", fontsize=7, pad=2)
 
 
-def draw_thickness_distribution(ax, mean_pts, faces):
-    """Distribution of the synthetic per-vertex epicardial offset
-    (\\cref{eq:synthetic-epi-offset})."""
-    thickness = epicardium_thickness_field(mean_pts)
-    ax.hist(thickness, bins=28, color=C_EPI, alpha=0.75, edgecolor="white", linewidth=0.3)
-    mean_t = float(thickness.mean())
-    ax.axvline(mean_t, color=C_DARK, linewidth=1.0, linestyle="--")
-    ax.text(mean_t, ax.get_ylim()[1] * 0.94, f"  mean={mean_t:.1f} mm",
+def draw_thickness_distribution(ax, mean_pts, parts):
+    """Distance from each mean-shape endocardial vertex to the SSM epicardium."""
+    import trimesh
+
+    endo, epi = surface_pair(mean_pts, parts)
+    epi_mesh = trimesh.Trimesh(epi, parts["epi_faces"], process=False)
+    _, distance, _ = trimesh.proximity.closest_point(epi_mesh, endo)
+    ax.hist(distance, bins=28, color=C_EPI, alpha=0.75, edgecolor="white", linewidth=0.3)
+    median_d = float(np.median(distance))
+    ax.axvline(median_d, color=C_DARK, linewidth=1.0, linestyle="--")
+    ax.text(median_d, ax.get_ylim()[1] * 0.94, f"  median={median_d:.1f} mm",
             fontsize=5.6, color=C_DARK, ha="left", va="top")
 
-    ax.set_xlabel(r"$d_i$ (mm)", fontsize=7, labelpad=1)
+    ax.set_xlabel("Endo-to-epi distance (mm)", fontsize=7, labelpad=1)
     ax.set_ylabel("Vertex count", fontsize=7, labelpad=1)
     ax.tick_params(labelsize=5.5)
     for spine in ax.spines.values():
         spine.set_linewidth(0.6)
-    ax.set_title("Synthetic wall-offset\ndistribution", fontsize=7, pad=2)
+    ax.set_title("Mean-shape wall\nseparation", fontsize=7, pad=2)
 
 
-def draw_quality_gate(ax_top, ax_bot, mean_pts, pc, sigmas, faces, rng=None):
+def draw_quality_gate(ax_top, ax_bot, mean_pts, pc, sigmas, parts, rng=None):
     """Accepted and rejected meshes drawn in two separate stacked axes so
-    their (very different) extents never overlap, each annotated with its
-    actual enclosed volume."""
+    their (very different) extents never overlap, each annotated with the
+    enclosed volume of its endocardial surface."""
     if rng is None:
         rng = np.random.default_rng(7)
     # accepted sample
@@ -383,11 +405,18 @@ def draw_quality_gate(ax_top, ax_bot, mean_pts, pc, sigmas, faces, rng=None):
     pts_bad = (mean_pts.flatten() + pc @ b_bad).reshape(-1, 3)
     pts_bad -= pts_bad.mean(0)
 
-    vol_ok = mesh_volume(pts_ok, faces)
-    vol_bad = mesh_volume(pts_bad, faces)
+    vol_ok = mesh_volume(surface_pair(pts_ok, parts)[0], parts["endo_faces"])
+    vol_bad = mesh_volume(surface_pair(pts_bad, parts)[0], parts["endo_faces"])
 
-    draw_mesh(ax_top, pts_ok, faces, color=C_ENDO, stride=5, alpha=0.90)
-    draw_mesh(ax_bot, pts_bad, faces, color="#CC3333", stride=5, alpha=0.65)
+    draw_pair(ax_top, pts_ok, parts, stride=5)
+    endo_bad, epi_bad = surface_pair(pts_bad, parts)
+    draw_mesh(ax_bot, epi_bad, parts["epi_faces"], color="#CC3333", stride=5, alpha=0.25)
+    draw_mesh(ax_bot, endo_bad, parts["endo_faces"], color="#CC3333", stride=5, alpha=0.65)
+    mn, mx = epi_bad.min(0), epi_bad.max(0)
+    c, hr = (mn + mx) / 2, np.max(mx - mn) / 2 * 1.05
+    ax_bot.set_xlim(c[0] - hr, c[0] + hr)
+    ax_bot.set_ylim(c[1] - hr, c[1] + hr)
+    ax_bot.set_zlim(c[2] - hr, c[2] + hr)
 
     ax_top.text2D(0.02, 0.06, f"Accepted: $V\\approx{vol_ok:.0f}$ mL",
                   transform=ax_top.transAxes, fontsize=5.4, color=C_ENDO)
@@ -399,22 +428,15 @@ def draw_quality_gate(ax_top, ax_bot, mean_pts, pc, sigmas, faces, rng=None):
                       color="#CC3333")
 
 
-def draw_epi_offset(ax, mean_pts, faces):
-    """Endo + synthetic epi shown together."""
-    epi = make_epicardium(mean_pts, faces)
-    draw_mesh(ax, epi, faces, color=C_EPI, stride=4, alpha=0.40)
-    draw_mesh(ax, mean_pts, faces, color=C_ENDO, stride=4, alpha=0.90)
-    ax.set_title("Synthetic epi\n(normal offset)", fontsize=7, pad=2)
-
-
-def draw_contour_rings(ax, mean_pts, faces, n_slices=10):
+def draw_contour_rings(ax, mean_pts, parts, n_slices=10):
     """Draw one endo/epi contour loop per SAX slice."""
-    z_min, z_max = mean_pts[:, 2].min(), mean_pts[:, 2].max()
+    endo, epi = surface_pair(mean_pts, parts)
+    z_min, z_max = endo[:, 2].min(), endo[:, 2].max()
     z_vals = np.linspace(z_min + 0.07 * (z_max - z_min), z_max - 0.07 * (z_max - z_min), n_slices)
-    epi = make_epicardium(mean_pts, faces)
 
     # Very faint anatomical context in the background.
-    draw_mesh(ax, mean_pts, faces, color=C_ENDO, stride=10, alpha=0.05, elev=24, azim=-58)
+    draw_mesh(ax, endo, parts["endo_faces"], color=C_ENDO, stride=10, alpha=0.05,
+              elev=24, azim=-58)
 
     # Match the slice-stack style used in other methodology figures:
     # light SAX plane outlines with contours drawn on each plane.
@@ -425,8 +447,11 @@ def draw_contour_rings(ax, mean_pts, faces, n_slices=10):
     x0, x1 = x_min - pad_x, x_max + pad_x
     y0, y1 = y_min - pad_y, y_max + pad_y
 
-    slab = np.ptp(mean_pts[:, 2]) / (n_slices * 3.0)
-    min_gap = 3.0  # mm; keeps the epicardial circle visibly outside the endocardium
+    slab_meshes = []
+    import trimesh
+    for verts, tri, col, lw in ((endo, parts["endo_faces"], C_ENDO, 1.0),
+                                (epi, parts["epi_faces"], C_EPI, 0.95)):
+        slab_meshes.append((trimesh.Trimesh(verts, tri, process=False), col, lw))
     for i, z in enumerate(z_vals, start=1):
         ax.plot(
             [x0, x1, x1, x0, x0],
@@ -436,25 +461,12 @@ def draw_contour_rings(ax, mean_pts, faces, n_slices=10):
             linewidth=0.42,
             alpha=0.86,
         )
-        idx = np.abs(mean_pts[:, 2] - z) < slab
-        if idx.sum() < 16:
-            continue
-        # Endo and epi share the same vertex indices, so use one common centre
-        # and enforce rad_epi > rad_endo to prevent the offset epi ring from
-        # crossing inside the endo ring near the apex/base.
-        ring_endo = mean_pts[idx]
-        ring_epi = epi[idx]
-        ctr = ring_endo.mean(axis=0)
-        rad_endo = np.median(np.linalg.norm(ring_endo[:, :2] - ctr[:2], axis=1))
-        rad_epi = np.median(np.linalg.norm(ring_epi[:, :2] - ctr[:2], axis=1))
-        rad_epi = max(rad_epi, rad_endo + min_gap)
-        theta = np.linspace(0.0, 2.0 * np.pi, 120)
-
-        for rad, col, lw in [(rad_endo, C_ENDO, 1.0), (rad_epi, C_EPI, 0.95)]:
-            rx = ctr[0] + rad * np.cos(theta)
-            ry = ctr[1] + rad * np.sin(theta)
-            rz = np.full(len(rx), z)
-            ax.plot(rx, ry, rz, color=col, linewidth=lw, alpha=0.98)
+        for mesh, col, lw in slab_meshes:
+            section = mesh.section(plane_origin=[0.0, 0.0, z], plane_normal=[0.0, 0.0, 1.0])
+            if section is None or not section.discrete:
+                continue
+            loop = max(section.discrete, key=len)
+            ax.plot(loop[:, 0], loop[:, 1], loop[:, 2], color=col, linewidth=lw, alpha=0.98)
 
         # Label only representative slices to reduce clutter.
         if i in (1, n_slices // 2, n_slices):
@@ -494,18 +506,18 @@ def draw_contour_rings(ax, mean_pts, faces, n_slices=10):
     ax.set_title("SAX contour stack\n(one endo + one epi loop/slice)", fontsize=7, pad=2)
 
 
-def draw_query_cache(ax, mean_pts, faces, n_near=300, n_vol=200, rng=None):
+def draw_query_cache(ax, mean_pts, parts, n_near=300, n_vol=200, rng=None):
     """Scatter of near-surface and volumetric query points."""
     if rng is None:
         rng = np.random.default_rng(0)
-    # near-surface points
+    # near-surface points around both surfaces
     idx = rng.choice(len(mean_pts), n_near, replace=False)
     near = mean_pts[idx] + rng.standard_normal((n_near, 3)) * 2.5
     # volumetric points
     mn, mx = mean_pts.min(0), mean_pts.max(0)
     vol = rng.uniform(mn - 5, mx + 5, (n_vol, 3))
 
-    draw_mesh(ax, mean_pts, faces, color=C_ENDO, stride=6, alpha=0.18)
+    draw_pair(ax, mean_pts, parts, stride=6, endo_alpha=0.18, epi_alpha=0.10)
     ax.scatter(*near.T, s=3.5, color=C_ENDO, alpha=0.65, zorder=5)
     ax.scatter(*vol.T, s=2.0, color="#888888", alpha=0.40, zorder=4)
 
@@ -575,6 +587,7 @@ def draw_pathology_shapes(ax, mean_pts, pc, sigmas, faces):
 
 def fig_ssm_sampling_pipeline():
     mean_pts, pc, sigmas, faces = load_ssm()
+    parts = split_surfaces(mean_pts, faces)
     rng = np.random.default_rng(42)
 
     top_labels = ["(a)", "(b)", "(c)", "(d)"]
@@ -592,7 +605,7 @@ def fig_ssm_sampling_pipeline():
     draw_chi2_distribution(top_axes[0])
     draw_variance_explained(top_axes[1], sigmas)
     draw_latent_scatter(top_axes[2], pc, sigmas, rng=rng)
-    draw_thickness_distribution(top_axes[3], mean_pts, faces)
+    draw_thickness_distribution(top_axes[3], mean_pts, parts)
 
     # Row 2 — geometric pipeline built from the sampled coefficients.
     # Panel (f) uses two stacked axes (accepted / rejected) instead of one,
@@ -609,11 +622,11 @@ def fig_ssm_sampling_pipeline():
     bot_axes.append(fig.add_axes(bot_positions[2], projection="3d"))
     bot_axes.append(fig.add_axes(bot_positions[3], projection="3d"))
 
-    draw_mesh(bot_axes[0], mean_pts, faces, color=C_ENDO, stride=4, alpha=0.90)
+    draw_pair(bot_axes[0], mean_pts, parts, stride=4)
     bot_axes[0].set_title("Mesh synthesis\n$X(b)=\\bar{X}+\\Phi b$", fontsize=7, pad=2)
-    draw_quality_gate(f_top_ax, f_bot_ax, mean_pts, pc, sigmas, faces, rng=rng)
-    draw_contour_rings(bot_axes[2], mean_pts, faces)
-    draw_query_cache(bot_axes[3], mean_pts, faces, rng=rng)
+    draw_quality_gate(f_top_ax, f_bot_ax, mean_pts, pc, sigmas, parts, rng=rng)
+    draw_contour_rings(bot_axes[2], mean_pts, parts)
+    draw_query_cache(bot_axes[3], mean_pts, parts, rng=rng)
 
     for ax, lbl in zip(top_axes + bot_axes, top_labels + bot_labels):
         ax.set_title(f"{lbl} {ax.get_title()}", fontsize=7)

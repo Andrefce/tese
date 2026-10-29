@@ -16,8 +16,8 @@ SSM meshes and then fine-tuned on the real ED and ES data, as described in~\cref
 and patient-level splits are reported in~\cref{subsec:shared-dataset-assembly}.
 General reconstruction and wall-thickness evaluations use the held-out test
 patients from both ACDC and M\&Ms-2. The analysis by disease group
-uses a separate ACDC subset of $30$ test patients, comprising $20$ normal (NOR)
-and $10$ HCM cases. The HCM group is included so
+uses a separate ACDC subset of 30 test patients, comprising 20 normal (NOR)
+and 10 HCM cases. The HCM group is included so
 that the model can be examined on abnormal as well as normal LV geometry. No
 independent 3D ground truth is available, so the following results describe
 contour fidelity and agreement between methods rather than reconstruction
@@ -115,26 +115,26 @@ geometry, and their absolute millimetre values should be read with care.
 \label{sec:training}
 \noindent
 Training proceeds in two stages. The first pre-trains
-the signed-distance decoder for roughly $200$ epochs on the synthetic SSM
+the signed-distance decoder for roughly 200 epochs on the synthetic SSM
 meshes. This stage provides a geometric prior, and its checkpoint initialises
 the second stage. The reported model is then fine-tuned on the real
 ED and ES data described in~\cref{ch:methodology}. The
 available training history records the fine-tuning stage; no numerical claim is
 made about the pre-training loss because its per-epoch log was not retained.
 
-Fine-tuning runs for $776$ epochs with the AdamW optimiser (learning rate
+Fine-tuning runs for 776 epochs with the AdamW optimiser (learning rate
 $2\times10^{-5}$, weight decay $5\times10^{-4}$) under a cosine-annealing
 schedule with warm restarts, mixed-precision arithmetic, and an effective batch
-size of $32$. The composite objective is the five-term loss of~\cref{eq:training-objective}, combining surface, dense SDF, Eikonal,
+size of 32. The composite objective is the five-term loss of~\cref{eq:training-objective}, combining surface, dense SDF, Eikonal,
 off-surface, and wall-thickness supervision. \Cref{fig:training-curves} plots
 the total loss and its principal components together with two optimisation
 diagnostics. The total
-training loss decreases from $10.07$ at the first fine-tuning epoch to $0.91$,
-and the validation loss settles at $0.70$, with the best checkpoint selected at
-epoch $695$ before mild over-fitting appears. The surface and Eikonal terms fall
+training loss decreases from 10.07 at the first fine-tuning epoch to 0.91,
+and the validation loss settles at 0.70, with the best checkpoint selected at
+epoch 695 before mild over-fitting appears. The surface and Eikonal terms fall
 by more than an order of magnitude, indicating successful optimisation of the
 surface-fitting and Eikonal objectives. Consistently, the mean gradient norm
-$\lVert\nabla f\rVert$ stabilises at $0.996$, close to the unit value encouraged
+$\lVert\nabla f\rVert$ stabilises at 0.996, close to the unit value encouraged
 by the Eikonal term.
 
 \begin{figure}[H]
@@ -189,7 +189,7 @@ the cavity alone and the epicardial value the cavity together with the wall.
   \centering
   \caption[Fidelity of each reconstruction to its input contours]    {Distance from the input SAX contour rings to
       each reconstructed surface, and enclosed volumes, at ED over the held-out
-      test cohort (mean $\pm$ SD of per-patient values; $p_{95}$: mean
+      test cohort (mean~\textpm{} SD of per-patient values; $p_{95}$: mean
       per-patient 95th percentile). Bold marks the lowest distance.}
   \label{tab:contour-fidelity}
   \thesistablestyle
@@ -198,33 +198,33 @@ the cavity alone and the epicardial value the cavity together with the wall.
     \textbf{Method} & \textbf{Surface} & \textbf{Contour distance (mm)}
       & \textbf{$p_{95}$ (mm)} & \textbf{Volume (ml)} \\
     \midrule
-    Proposed model  & Endocardium & $1.50 \pm 0.23$ & $3.56$ & $119.3 \pm 31.3$ \\
-                    & Epicardium  & $1.96 \pm 0.28$ & $5.23$ & $255.3 \pm 76.7$ \\
+    Proposed model  & Endocardium & 1.50~\textpm{} 0.23 & 3.56 & 119.3~\textpm{} 31.3 \\
+                    & Epicardium  & 1.96~\textpm{} 0.28 & 5.23 & 255.3~\textpm{} 76.7 \\
     \addlinespace
-    RBF fit         & Endocardium & \textbf{\boldmath $0.13 \pm 0.01$} & \textbf{\boldmath $0.30$} & $118.6 \pm 30.2$ \\
-                    & Epicardium  & \textbf{\boldmath $0.11 \pm 0.01$} & \textbf{\boldmath $0.26$} & $233.5 \pm 71.4$ \\
+    RBF fit         & Endocardium & \textbf{0.13~\textpm{} 0.01} & \textbf{0.30} & 118.6~\textpm{} 30.2 \\
+                    & Epicardium  & \textbf{0.11~\textpm{} 0.01} & \textbf{0.26} & 233.5~\textpm{} 71.4 \\
     \addlinespace
-    SSM fit         & Endocardium & $1.82 \pm 0.67$ & $5.51$ & $126.9 \pm 32.2$ \\
-                    & Epicardium  & $1.91 \pm 0.76$ & $6.23$ & $215.2 \pm 56.3$ \\
+    SSM fit         & Endocardium & 1.82~\textpm{} 0.67 & 5.51 & 126.9~\textpm{} 32.2 \\
+                    & Epicardium  & 1.91~\textpm{} 0.76 & 6.23 & 215.2~\textpm{} 56.3 \\
     \bottomrule
   \end{tabular*}
 \end{table}
 
-The RBF fit follows the rings almost exactly, at $0.13$~mm on the endocardium
-and $0.11$~mm on the epicardium, because it passes through the contour points
-by construction. The model lies $1.50$ and $1.96$~mm from the same rings,
-which is close to the in-plane pixel size of $1.37$ to $1.88$~mm. The SSM fit
-has similar mean distances, $1.82$ and $1.91$~mm, but a wider spread between
-patients: its per-patient endocardial distance ranges from $0.92$ to
-$3.44$~mm, against $1.20$ to $2.14$~mm for the model.
+The RBF fit follows the rings almost exactly, at 0.13~mm on the endocardium
+and 0.11~mm on the epicardium, because it passes through the contour points
+by construction. The model lies 1.50 and 1.96~mm from the same rings,
+which is close to the in-plane pixel size of 1.37 to 1.88~mm. The SSM fit
+has similar mean distances, 1.82 and 1.91~mm, but a wider spread between
+patients: its per-patient endocardial distance ranges from 0.92 to
+3.44~mm, against 1.20 to 2.14~mm for the model.
 
-In the $30$-patient ACDC pathology subset, the mean contour distance of the SSM
-fit is $1.42$~mm for normal cases and $2.63$~mm for HCM cases. The
-corresponding model distances are $1.45$ and $1.60$~mm.
+In the 30-patient ACDC pathology subset, the mean contour distance of the SSM
+fit is 1.42~mm for normal cases and 2.63~mm for HCM cases. The
+corresponding model distances are 1.45 and 1.60~mm.
 
 Cavity volumes are similar for the model, the RBF fit and the SSM fit, at
-$119$, $119$ and $127$~ml, respectively. Myocardial volumes, obtained as the
-epicardial minus the cavity volume, differ more, at $136$, $115$ and $88$~ml.
+119, 119 and 127~ml, respectively. Myocardial volumes, obtained as the
+epicardial minus the cavity volume, differ more, at 136, 115 and 88~ml.
 
 \Cref{tab:reconstruction-agreement} compares the three reconstructions with one
 another, by the distance between their boundaries and by the overlap of the
@@ -234,7 +234,7 @@ cavity and wall that those boundaries enclose.
   \centering
   \caption[Pairwise agreement between the three reconstructions]    {Pairwise agreement between the three
       reconstructions of the same ED contour rings over the held-out test cohort
-      (mean $\pm$ SD of per-patient values). Entries are symmetric disagreements,
+      (mean~\textpm{} SD of per-patient values). Entries are symmetric disagreements,
       not errors against a reference. Bold marks the closest pair.}
   \label{tab:reconstruction-agreement}
   \thesistablestyle
@@ -243,29 +243,29 @@ cavity and wall that those boundaries enclose.
     \textbf{Pair} & \textbf{Metric} & \textbf{Endocardium/cavity}
       & \textbf{Epicardium/myocardium} \\
     \midrule
-    Model vs.\ RBF fit   & Chamfer (mm) & \textbf{\boldmath $1.57 \pm 0.18$} & \textbf{\boldmath $1.90 \pm 0.24$} \\
-                          & HD95 (mm)     & \textbf{\boldmath $4.24 \pm 0.86$} & \textbf{\boldmath $6.07 \pm 0.94$} \\
-                          & DSC           & \textbf{\boldmath $0.91 \pm 0.02$} & \textbf{\boldmath $0.77 \pm 0.05$} \\
+    Model vs.\ RBF fit   & Chamfer (mm) & \textbf{1.57~\textpm{} 0.18} & \textbf{1.90~\textpm{} 0.24} \\
+                          & HD95 (mm)     & \textbf{4.24~\textpm{} 0.86} & \textbf{6.07~\textpm{} 0.94} \\
+                          & DSC           & \textbf{0.91~\textpm{} 0.02} & \textbf{0.77~\textpm{} 0.05} \\
     \addlinespace
-    Model vs.\ SSM fit   & Chamfer (mm) & $2.08 \pm 0.51$ & $2.59 \pm 0.73$ \\
-                          & HD95 (mm)     & $5.88 \pm 1.91$ & $6.72 \pm 2.32$ \\
-                          & DSC           & $0.88 \pm 0.03$ & $0.69 \pm 0.04$ \\
+    Model vs.\ SSM fit   & Chamfer (mm) & 2.08~\textpm{} 0.51 & 2.59~\textpm{} 0.73 \\
+                          & HD95 (mm)     & 5.88~\textpm{} 1.91 & 6.72~\textpm{} 2.32 \\
+                          & DSC           & 0.88~\textpm{} 0.03 & 0.69~\textpm{} 0.04 \\
     \addlinespace
-    RBF fit vs.\ SSM fit & Chamfer (mm) & $2.01 \pm 0.67$ & $2.05 \pm 0.64$ \\
-                          & HD95 (mm)     & $5.88 \pm 2.95$ & $6.62 \pm 2.67$ \\
-                          & DSC           & $0.89 \pm 0.04$ & $0.76 \pm 0.06$ \\
+    RBF fit vs.\ SSM fit & Chamfer (mm) & 2.01~\textpm{} 0.67 & 2.05~\textpm{} 0.64 \\
+                          & HD95 (mm)     & 5.88~\textpm{} 2.95 & 6.62~\textpm{} 2.67 \\
+                          & DSC           & 0.89~\textpm{} 0.04 & 0.76~\textpm{} 0.06 \\
     \bottomrule
   \end{tabular*}
 \end{table}
 
 The model and the RBF fit form the closest pair on every metric and surface,
-with Chamfer distances of $1.57$~mm on the endocardium and $1.90$~mm on the
-epicardium and a myocardial DSC of $0.77$. Both pairs involving the SSM fit are
-further apart, at $2.08$ and $2.01$~mm on the endocardium.
+with Chamfer distances of 1.57~mm on the endocardium and 1.90~mm on the
+epicardium and a myocardial DSC of 0.77. Both pairs involving the SSM fit are
+further apart, at 2.08 and 2.01~mm on the endocardium.
 
-Across the three pairs, the endocardial Chamfer distance ranges from $1.6$ to
-$2.1$~mm. Cavity DSC is uniformly high, at $0.88$ to $0.91$, whereas
-myocardial DSC is lower, at $0.69$ to $0.77$, and falls to $0.58$ for the
+Across the three pairs, the endocardial Chamfer distance ranges from 1.6 to
+2.1~mm. Cavity DSC is uniformly high, at 0.88 to 0.91, whereas
+myocardial DSC is lower, at 0.69 to 0.77, and falls to 0.58 for the
 worst patient in a comparison involving the SSM fit.
 
 \subsection{Slice Sensitivity}
@@ -294,17 +294,17 @@ when its complete stack has more slices than that level. The lower rows of~\cref
       & \textbf{Cavity} & \textbf{Myoc.}
       & \textbf{$\Delta V_{\text{myo}}$ (\%)} \\
     \midrule
-    Proposed model & 6 & \textbf{\boldmath $0.79$} & $0.87$ & \textbf{\boldmath $0.971$} & \textbf{\boldmath $0.891$} & $-0.4$ \\
-                   & 4 & $1.27$ & $1.48$ & $0.953$ & $0.819$ & $-2.1$ \\
-                   & 3 & $1.83$ & $2.17$ & $0.934$ & $0.782$ & $-3.8$ \\
+    Proposed model & 6 & \textbf{0.79} & 0.87 & \textbf{0.971} & \textbf{0.891} & \textminus{}0.4 \\
+                   & 4 & 1.27 & 1.48 & 0.953 & 0.819 & \textminus{}2.1 \\
+                   & 3 & 1.83 & 2.17 & 0.934 & 0.782 & \textminus{}3.8 \\
     \addlinespace
-    RBF fit        & 6 & $0.83$ & \textbf{\boldmath $0.83$} & $0.968$ & $0.887$ & \textbf{\boldmath $0.0$} \\
-                   & 4 & \textbf{\boldmath $1.15$} & \textbf{\boldmath $0.88$} & \textbf{\boldmath $0.959$} & \textbf{\boldmath $0.858$} & \textbf{\boldmath $-1.8$} \\
-                   & 3 & \textbf{\boldmath $1.45$} & \textbf{\boldmath $1.32$} & \textbf{\boldmath $0.947$} & \textbf{\boldmath $0.805$} & $-6.2$ \\
+    RBF fit        & 6 & 0.83 & \textbf{0.83} & 0.968 & 0.887 & \textbf{0.0} \\
+                   & 4 & \textbf{1.15} & \textbf{0.88} & \textbf{0.959} & \textbf{0.858} & \textbf{\textminus{}1.8} \\
+                   & 3 & \textbf{1.45} & \textbf{1.32} & \textbf{0.947} & \textbf{0.805} & \textminus{}6.2 \\
     \addlinespace
-    SSM fit        & 6 & $0.89$ & $0.95$ & $0.968$ & $0.883$ & $-1.8$ \\
-                   & 4 & $1.46$ & $1.39$ & $0.942$ & $0.812$ & $-3.8$ \\
-    & 3 & $1.94$ & $1.92$ & $0.921$ & $0.775$ & \textbf{\boldmath $+2.6$} \\
+    SSM fit        & 6 & 0.89 & 0.95 & 0.968 & 0.883 & \textminus{}1.8 \\
+                   & 4 & 1.46 & 1.39 & 0.942 & 0.812 & \textminus{}3.8 \\
+    & 3 & 1.94 & 1.92 & 0.921 & 0.775 & \textbf{+2.6} \\
     \bottomrule
   \end{tabular*}
 \end{table}
@@ -317,16 +317,16 @@ complete-stack result. All three methods still produce closed surfaces from
 three slices.
 
 With six slices, the reconstructions change very little: surface distances
-stay below $1$~mm and myocardial DSC is close to $0.89$ for every method. With
+stay below 1~mm and myocardial DSC is close to 0.89 for every method. With
 fewer slices, the RBF fit changes least, while the model and the SSM fit
 change by similar amounts. The difference is clearest on the epicardium, where
-the Chamfer distance at three slices reaches $2.17$~mm for the model,
-$1.92$~mm for the SSM fit and $1.32$~mm for the RBF fit. Cavity DSC stays
-above $0.92$ throughout, and myocardial DSC at three slices lies between
-$0.775$ and $0.805$.
+the Chamfer distance at three slices reaches 2.17~mm for the model,
+1.92~mm for the SSM fit and 1.32~mm for the RBF fit. Cavity DSC stays
+above 0.92 throughout, and myocardial DSC at three slices lies between
+0.775 and 0.805.
 
 Myocardial volume changes by only a few percent. At three slices, the model
-and the RBF fit lose $3.8\%$ and $6.2\%$, whereas the SSM fit gains $2.6\%$
+and the RBF fit lose 3.8\% and 6.2\%, whereas the SSM fit gains 2.6\%
 after losing volume with six and four slices, so its small change at that
 level does not mean that it follows the complete-stack volume more closely.
 
@@ -372,11 +372,11 @@ than between patients.
 \end{table}
 
 The three non-ray methods agree closely on each reconstruction, with mean
-thicknesses of $9.18$ to $10.01$~mm on the proposed reconstruction, $8.36$ to
-$8.86$~mm on the RBF fit and $6.48$ to $7.10$~mm on the SSM fit. The SDF
-cone-ray method stands apart on the first two, at $12.47$ and $9.38$~mm, and
+thicknesses of 9.18 to 10.01~mm on the proposed reconstruction, 8.36 to
+8.86~mm on the RBF fit and 6.48 to 7.10~mm on the SSM fit. The SDF
+cone-ray method stands apart on the first two, at 12.47 and 9.38~mm, and
 also spreads more widely: on the proposed reconstruction, its per-patient SD is
-$4.87$~mm, against $1.64$ to $2.14$~mm for the other methods.
+4.87~mm, against 1.64 to 2.14~mm for the other methods.
 
 \Cref{tab:wall-thickness-geometry-agreement} compares patient-level mean
 thickness on the proposed reconstruction with the two fitting baselines, with
@@ -399,21 +399,21 @@ alone.
     \textbf{Method} & \textbf{Bias (mm)} & \textbf{RMSE (mm)} & \textbf{$r$}
       & \textbf{Bias (mm)} & \textbf{RMSE (mm)} & \textbf{$r$} \\
     \midrule
-    Laplace field    & \textbf{\boldmath $+0.82$} & \textbf{\boldmath $0.86$} & \textbf{\boldmath $0.99$} & $+2.70$ & 3.13 & 0.72 \\
-    Yezzi--Prince    & $+1.16$ & 1.23 & \textbf{\boldmath $0.99$} & $+2.91$ & 3.49 & \textbf{\boldmath $0.77$} \\
-    SDF cone rays    & $+3.10$ & 3.81 & 0.95 & $+5.36$ & 6.64 & 0.67 \\
-    EDT boundary sum & $+1.03$ & 1.10 & \textbf{\boldmath $0.99$} & \textbf{\boldmath $+2.53$} & \textbf{\boldmath $3.04$} & \textbf{\boldmath $0.77$} \\
+    Laplace field    & \textbf{+0.82} & \textbf{0.86} & \textbf{0.99} & +2.70 & 3.13 & 0.72 \\
+    Yezzi--Prince    & +1.16 & 1.23 & \textbf{0.99} & +2.91 & 3.49 & \textbf{0.77} \\
+    SDF cone rays    & +3.10 & 3.81 & 0.95 & +5.36 & 6.64 & 0.67 \\
+    EDT boundary sum & +1.03 & 1.10 & \textbf{0.99} & \textbf{+2.53} & \textbf{3.04} & \textbf{0.77} \\
     \bottomrule
   \end{tabular*}
 \end{table}
 
 With the same measurement method on each geometry, the RBF fit is thinner than
-the model by $0.82$~mm for the Laplace field, $1.16$~mm for Yezzi--Prince,
-$3.10$~mm for SDF cone rays, and $1.03$~mm for the EDT boundary sum. The SSM
-fit is thinner by $2.70$, $2.91$, $5.36$, and $2.53$~mm, respectively.
+the model by 0.82~mm for the Laplace field, 1.16~mm for Yezzi--Prince,
+3.10~mm for SDF cone rays, and 1.03~mm for the EDT boundary sum. The SSM
+fit is thinner by 2.70, 2.91, 5.36, and 2.53~mm, respectively.
 Per-patient means are strongly correlated between the model and the RBF fit
-($r=0.99$, $0.99$, $0.95$, and $0.99$) and less strongly between the model and
-the SSM fit ($r=0.72$, $0.77$, $0.67$, and $0.77$).
+($r=0.99$, 0.99, 0.95, and 0.99) and less strongly between the model and
+the SSM fit ($r=0.72$, 0.77, 0.67, and 0.77).
 
 \Cref{tab:wall-thickness-agreement} compares the three other methods with the
 Laplace field at the same surface points on the proposed reconstruction, so
@@ -433,20 +433,20 @@ that only the measurement algorithm changes.
     \textbf{Method} & \textbf{$r$} & \textbf{MAE (mm)}
       & \textbf{RMSE (mm)} & \textbf{Bias (95\% LoA) (mm)} & \textbf{ICC} \\
     \midrule
-    Yezzi--Prince    & \textbf{\boldmath $0.80$} & 0.89 & 2.14 & $+0.83\ (\pm 3.86)$ & \textbf{\boldmath $0.77$} \\
-    SDF cone rays    & 0.44 & 3.38 & 7.29 & $+3.31\ (\pm 12.74)$ & 0.28 \\
+    Yezzi--Prince    & \textbf{0.80} & 0.89 & 2.14 & +0.83 (\textpm{}3.86) & \textbf{0.77} \\
+    SDF cone rays    & 0.44 & 3.38 & 7.29 & +3.31 (\textpm{}12.74) & 0.28 \\
     \addlinespace
-    EDT boundary sum & 0.78 & \textbf{\boldmath $0.81$} & \textbf{\boldmath $2.07$} & \textbf{\boldmath $+0.37$} $(\pm 3.99)$ & \textbf{\boldmath $0.77$} \\
+    EDT boundary sum & 0.78 & \textbf{0.81} & \textbf{2.07} & \textbf{+0.37} (\textpm{}3.99) & \textbf{0.77} \\
     \bottomrule
   \end{tabular*}
 \end{table}
 
-The EDT boundary sum differs from the Laplace field by $0.81$~mm on average,
-with a bias of $+0.37$~mm, and Yezzi--Prince by $0.89$~mm, with a bias of
-$+0.83$~mm; both reach $\text{ICC} = 0.77$, which corresponds to moderate to
+The EDT boundary sum differs from the Laplace field by 0.81~mm on average,
+with a bias of +0.37~mm, and Yezzi--Prince by 0.89~mm, with a bias of
++0.83~mm; both reach $\text{ICC} = 0.77$, which corresponds to moderate to
 good agreement under the thresholds of~\textcite{koo2016icc}. The cone-ray
-method differs by $3.38$~mm on average, with a bias of $+3.31$~mm, LoA of
-$\pm 12.74$~mm and $\text{ICC} = 0.28$, which corresponds to poor agreement.
+method differs by 3.38~mm on average, with a bias of +3.31~mm, LoA of
+\textpm{}12.74~mm and $\text{ICC} = 0.28$, which corresponds to poor agreement.
 
 \begin{figure}[H]
   \centering
@@ -493,23 +493,23 @@ unrolled onto the standard bullseye in panel~(b), basal ring outermost and
 apical cap at the centre.
 
 \Cref{tab:aha17-cohort} reports the
-regional pattern over the $30$-patient ACDC pathology subset and its change
+regional pattern over the 30-patient ACDC pathology subset and its change
 between phases. Entries are segment means averaged across patients; variation
 between patients is examined in~\cref{tab:aha17-group-effects}.
 
-Over the ACDC pathology subset the reconstructed wall averages $9.21$~mm at ED
-and $13.87$~mm at ES, corresponding to $50.6\%$ relative thickening. At ED the
+Over the ACDC pathology subset the reconstructed wall averages 9.21~mm at ED
+and 13.87~mm at ES, corresponding to 50.6\% relative thickening. At ED the
 septal mid-cavity segments are the thickest, while the apical cap is the
-thinnest at $7.76$~mm. Every segment thickens between phases; the smallest
-relative change is $32.1\%$ in the basal anteroseptal segment and the largest
-is $64.6\%$ in the mid inferolateral segment. No fitting baseline is available
+thinnest at 7.76~mm. Every segment thickens between phases; the smallest
+relative change is 32.1\% in the basal anteroseptal segment and the largest
+is 64.6\% in the mid inferolateral segment. No fitting baseline is available
 at ES, so these phase values describe the model output only.
 
 \begin{table}[H]
   \centering
   \caption[AHA 17-segment thickness over the ACDC pathology subset]{Regional AHA
     17-segment wall thickness on the reconstructed geometry over the
-    $30$-patient ACDC pathology subset.}
+    30-patient ACDC pathology subset.}
   \label{tab:aha17-cohort}
   \thesistablestyle
   \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}r l r r r@{}}
@@ -518,36 +518,36 @@ at ES, so these phase values describe the model output only.
       & \multicolumn{1}{c}{\textbf{ED (mm)}} & \multicolumn{1}{c}{\textbf{ES (mm)}}
       & \multicolumn{1}{c}{\textbf{$\Delta$ (\%)}} \\
     \midrule
-    1  & Basal anterior       &  9.99 & 13.71 & $+37.1$ \\
-    2  & Basal anteroseptal   & 10.15 & 13.40 & $+32.1$ \\
-    3  & Basal inferoseptal   &  9.89 & 13.43 & $+35.7$ \\
-    4  & Basal inferior       &  9.09 & 13.81 & $+51.9$ \\
-    5  & Basal inferolateral  &  8.93 & 14.27 & $+59.8$ \\
-    6  & Basal anterolateral  &  9.53 & 13.87 & $+45.5$ \\
+    1  & Basal anterior       &  9.99 & 13.71 & +37.1 \\
+    2  & Basal anteroseptal   & 10.15 & 13.40 & +32.1 \\
+    3  & Basal inferoseptal   &  9.89 & 13.43 & +35.7 \\
+    4  & Basal inferior       &  9.09 & 13.81 & +51.9 \\
+    5  & Basal inferolateral  &  8.93 & 14.27 & +59.8 \\
+    6  & Basal anterolateral  &  9.53 & 13.87 & +45.5 \\
     \addlinespace
-    7  & Mid anterior         &  9.19 & 13.79 & $+50.0$ \\
-    8  & Mid anteroseptal     & 10.37 & 14.68 & $+41.6$ \\
-    9  & Mid inferoseptal     & 10.19 & 15.05 & $+47.6$ \\
-    10 & Mid inferior         &  9.25 & 14.41 & $+55.8$ \\
-    11 & Mid inferolateral    &  9.09 & 14.96 & $+64.6$ \\
-    12 & Mid anterolateral    &  8.99 & 14.17 & $+57.6$ \\
+    7  & Mid anterior         &  9.19 & 13.79 & +50.0 \\
+    8  & Mid anteroseptal     & 10.37 & 14.68 & +41.6 \\
+    9  & Mid inferoseptal     & 10.19 & 15.05 & +47.6 \\
+    10 & Mid inferior         &  9.25 & 14.41 & +55.8 \\
+    11 & Mid inferolateral    &  9.09 & 14.96 & +64.6 \\
+    12 & Mid anterolateral    &  8.99 & 14.17 & +57.6 \\
     \addlinespace
-    13 & Apical anterior      &  8.50 & 13.63 & $+60.3$ \\
-    14 & Apical septal        &  8.77 & 13.86 & $+58.1$ \\
-    15 & Apical inferior      &  8.44 & 13.29 & $+57.5$ \\
-    16 & Apical lateral       &  8.43 & 13.78 & $+63.6$ \\
+    13 & Apical anterior      &  8.50 & 13.63 & +60.3 \\
+    14 & Apical septal        &  8.77 & 13.86 & +58.1 \\
+    15 & Apical inferior      &  8.44 & 13.29 & +57.5 \\
+    16 & Apical lateral       &  8.43 & 13.78 & +63.6 \\
     \addlinespace
-    17 & Apex                 &  7.76 & 11.69 & $+50.7$ \\
+    17 & Apex                 &  7.76 & 11.69 & +50.7 \\
     \midrule
     \multicolumn{2}{@{}l}{\textbf{Overall}} & \textbf{9.21} & \textbf{13.87}
-      & \textbf{\boldmath $+50.6$} \\
+      & \textbf{+50.6} \\
     \bottomrule
   \end{tabular*}
   \vspace{0.8em}
 
   \begin{minipage}{\textwidth}
     \footnotesize\singlespacing
-    \textit{Note.} Values are means for the $30$ ACDC test patients used in the
+    \textit{Note.} Values are means for the 30 ACDC test patients used in the
     pathology analysis, measured with the Laplace field. $\Delta$ is the relative
     thickening from ED to ES.
   \end{minipage}
@@ -555,13 +555,13 @@ at ES, so these phase values describe the model output only.
 
 \Cref{tab:aha17-thickening} separates the normal and HCM patients, and both
 groups show an internally coherent regional pattern. In the normal cases the ED thickness varies little around the base and the
-mid-cavity, from $7.92$ to $8.81$~mm, and tapers towards the apex, where the
-apical cap at $6.80$~mm is the thinnest region. Every segment thickens from
+mid-cavity, from 7.92 to 8.81~mm, and tapers towards the apex, where the
+apical cap at 6.80~mm is the thinnest region. Every segment thickens from
 ED to ES, and the thickening is graded along the long axis:
-the apical segments thicken by $52\%$ to $64\%$, the mid-cavity segments by
-$51\%$ to $64\%$ and the basal segments by $37\%$ to $61\%$. Over the normal
-group the mean thickness rises from $7.99$~mm to $12.21$~mm, a thickening of
-$52.9\%$.
+the apical segments thicken by 52\% to 64\%, the mid-cavity segments by
+51\% to 64\% and the basal segments by 37\% to 61\%. Over the normal
+group the mean thickness rises from 7.99~mm to 12.21~mm, a thickening of
+52.9\%.
 
 \begin{table}[H]
   \centering
@@ -580,29 +580,29 @@ $52.9\%$.
     & & \multicolumn{2}{c}{\textbf{(mm)}} & \multicolumn{1}{c}{\textbf{(\%)}}
       & \multicolumn{2}{c}{\textbf{(mm)}} & \multicolumn{1}{c}{\textbf{(\%)}} \\
     \midrule
-    1  & Basal anterior       &  8.72 & 12.25 & $+40.4$ & 12.54 & 16.62 & $+32.6$ \\
-    2  & Basal anteroseptal   &  8.81 & 12.10 & $+37.4$ & 12.83 & 16.02 & $+24.9$ \\
-    3  & Basal inferoseptal   &  8.68 & 11.96 & $+37.8$ & 12.32 & 16.35 & $+32.8$ \\
-    4  & Basal inferior       &  8.16 & 12.53 & $+53.6$ & 10.96 & 16.37 & $+49.4$ \\
-    5  & Basal inferolateral  &  7.94 & 12.81 & $+61.3$ & 10.91 & 17.19 & $+57.5$ \\
-    6  & Basal anterolateral  &  8.38 & 12.12 & $+44.6$ & 11.83 & 17.37 & $+46.9$ \\
+    1  & Basal anterior       &  8.72 & 12.25 & +40.4 & 12.54 & 16.62 & +32.6 \\
+    2  & Basal anteroseptal   &  8.81 & 12.10 & +37.4 & 12.83 & 16.02 & +24.9 \\
+    3  & Basal inferoseptal   &  8.68 & 11.96 & +37.8 & 12.32 & 16.35 & +32.8 \\
+    4  & Basal inferior       &  8.16 & 12.53 & +53.6 & 10.96 & 16.37 & +49.4 \\
+    5  & Basal inferolateral  &  7.94 & 12.81 & +61.3 & 10.91 & 17.19 & +57.5 \\
+    6  & Basal anterolateral  &  8.38 & 12.12 & +44.6 & 11.83 & 17.37 & +46.9 \\
     \addlinespace
-    7  & Mid anterior         &  7.94 & 12.10 & $+52.5$ & 11.70 & 17.16 & $+46.6$ \\
-    8  & Mid anteroseptal     &  8.55 & 12.98 & $+51.7$ & 13.99 & 18.10 & $+29.4$ \\
-    9  & Mid inferoseptal     &  8.57 & 12.98 & $+51.4$ & 13.43 & 19.17 & $+42.8$ \\
-    10 & Mid inferior         &  7.93 & 12.46 & $+57.1$ & 11.89 & 18.32 & $+54.1$ \\
-    11 & Mid inferolateral    &  7.96 & 13.02 & $+63.5$ & 11.35 & 18.84 & $+66.0$ \\
-    12 & Mid anterolateral    &  7.92 & 12.39 & $+56.4$ & 11.13 & 17.73 & $+59.3$ \\
+    7  & Mid anterior         &  7.94 & 12.10 & +52.5 & 11.70 & 17.16 & +46.6 \\
+    8  & Mid anteroseptal     &  8.55 & 12.98 & +51.7 & 13.99 & 18.10 & +29.4 \\
+    9  & Mid inferoseptal     &  8.57 & 12.98 & +51.4 & 13.43 & 19.17 & +42.8 \\
+    10 & Mid inferior         &  7.93 & 12.46 & +57.1 & 11.89 & 18.32 & +54.1 \\
+    11 & Mid inferolateral    &  7.96 & 13.02 & +63.5 & 11.35 & 18.84 & +66.0 \\
+    12 & Mid anterolateral    &  7.92 & 12.39 & +56.4 & 11.13 & 17.73 & +59.3 \\
     \addlinespace
-    13 & Apical anterior      &  7.28 & 11.75 & $+61.4$ & 10.96 & 17.40 & $+58.7$ \\
-    14 & Apical septal        &  7.49 & 12.00 & $+60.2$ & 11.33 & 17.59 & $+55.3$ \\
-    15 & Apical inferior      &  7.28 & 11.72 & $+61.1$ & 10.76 & 16.43 & $+52.6$ \\
-    16 & Apical lateral       &  7.33 & 12.03 & $+64.0$ & 10.61 & 17.28 & $+62.9$ \\
+    13 & Apical anterior      &  7.28 & 11.75 & +61.4 & 10.96 & 17.40 & +58.7 \\
+    14 & Apical septal        &  7.49 & 12.00 & +60.2 & 11.33 & 17.59 & +55.3 \\
+    15 & Apical inferior      &  7.28 & 11.72 & +61.1 & 10.76 & 16.43 & +52.6 \\
+    16 & Apical lateral       &  7.33 & 12.03 & +64.0 & 10.61 & 17.28 & +62.9 \\
     \addlinespace
-    17 & Apex                 &  6.80 & 10.32 & $+51.8$ &  9.67 & 14.71 & $+52.1$ \\
+    17 & Apex                 &  6.80 & 10.32 & +51.8 &  9.67 & 14.71 & +52.1 \\
     \midrule
-    \multicolumn{2}{@{}l}{\textbf{Overall}} & \textbf{7.99} & \textbf{12.21} & \textbf{\boldmath $+52.9$}
-      & \textbf{11.68} & \textbf{17.23} & \textbf{\boldmath $+47.5$} \\
+    \multicolumn{2}{@{}l}{\textbf{Overall}} & \textbf{7.99} & \textbf{12.21} & \textbf{+52.9}
+      & \textbf{11.68} & \textbf{17.23} & \textbf{+47.5} \\
     \bottomrule
   \end{tabular*}
   \vspace{0.8em}
@@ -618,7 +618,7 @@ $52.9\%$.
  
 HCM thickness exceeds NOR thickness in every segment, with the largest differences
 in the mid-cavity anteroseptal and inferoseptal segments, where the HCM group
-reaches $13.99$ and $13.43$~mm compared with $8.55$ and $8.57$~mm in the normal
+reaches 13.99 and 13.43~mm compared with 8.55 and 8.57~mm in the normal
 group. \Cref{tab:aha17-group-effects} evaluates this separation at the patient
 level rather than treating the segments as independent observations. Each
 patient contributes one value per outcome: the mean and the largest of the ED
@@ -631,7 +631,7 @@ relative to the patient-to-patient spread.
 \begin{table}[H]
   \centering
   \caption[Patient-level NOR--HCM wall-thickness differences]  {Patient-level comparisons between the
-      normal and HCM groups (mean $\pm$ SD). Differences are HCM minus NOR with
+      normal and HCM groups (mean~\textpm{} SD). Differences are HCM minus NOR with
       95\% percentile-bootstrap CIs from 10\,000 resamples~\parencite{efron1979bootstrap}; positive Hedges' $g$~\parencite{hedges1981effectsize} indicates a larger HCM value. Bold CIs
       exclude zero.}
   \label{tab:aha17-group-effects}
@@ -642,11 +642,11 @@ relative to the patient-to-patient spread.
       & \textbf{Difference (95\% CI)} & \textbf{Hedges' $g$} \\
     \midrule
     Mean ED AHA-17 thickness (mm)
-      & $7.99 \pm 0.88$ & $11.66 \pm 1.66$ & \textbf{\boldmath $+3.67\ [2.54,\ 4.67]$} & $3.01$ \\
+      & 7.99~\textpm{} 0.88 & 11.66~\textpm{} 1.66 & \textbf{+3.67 [2.54, 4.67]} & 3.01 \\
     Maximum ED segment (mm)
-      & $9.07 \pm 0.98$ & $14.44 \pm 1.94$ & \textbf{\boldmath $+5.37\ [4.11,\ 6.56]$} & $3.82$ \\
+      & 9.07~\textpm{} 0.98 & 14.44~\textpm{} 1.94 & \textbf{+5.37 [4.11, 6.56]} & 3.82 \\
     Systolic thickening (percentage points)
-      & $53.2 \pm 11.6$ & $47.9 \pm 11.5$ & $-5.3\ [-13.9,\ 3.0]$ & $-0.45$ \\
+      & 53.2~\textpm{} 11.6 & 47.9~\textpm{} 11.5 & \textminus{}5.3 [\textminus{}13.9, 3.0] & \textminus{}0.45 \\
     \bottomrule
   \end{tabular*}
 \end{table}
@@ -654,7 +654,7 @@ relative to the patient-to-patient spread.
 Both ED confidence intervals exclude zero, and both effect sizes are large. The
 interval for relative systolic thickening includes zero, so this cohort shows
 no clear group difference in proportional thickening. None of the normal cases
-and three of the ten HCM cases have a maximum segment mean above the $15$~mm
+and three of the ten HCM cases have a maximum segment mean above the 15~mm
 clinical reference line~\parencite{ommen2020hcm}.
 
 \Cref{fig:group-thickness-distributions} shows the patient-level distributions
@@ -688,7 +688,7 @@ between slices.
 
 The model follows its input rings to within about one in-plane pixel~(\cref{tab:contour-fidelity}). Exact agreement with the rings is not the aim.
 Expert contours contain annotation errors and are restricted to the pixel grid,
-so a surface that matches them to $0.13$~mm, as the RBF fit does by
+so a surface that matches them to 0.13~mm, as the RBF fit does by
 construction, also reproduces those errors. A consistent deviation of about one
 pixel is compatible with a surface that smooths this noise rather than one that
 misses the observations. The SSM fit has a similar mean distance but a much
@@ -700,7 +700,7 @@ partly outside it. The model, which is conditioned directly on the contours,
 appears less tied to an average shape.
 
 The pairwise comparison shows where the three reconstructions disagree~(\cref{tab:reconstruction-agreement}). On the endocardium they differ by about
-one in-plane pixel, far less than the $10$~mm slice spacing, and cavity DSC is
+one in-plane pixel, far less than the 10~mm slice spacing, and cavity DSC is
 high for every pair. Myocardial agreement is clearly lower, and myocardial
 volume varies by several tens of millilitres between methods. The cause lies in
 what the data constrain. The contours fix the cavity outline at each slice, but
@@ -752,8 +752,8 @@ biased and highly variable. The most likely cause is geometric. A straight ray
 leaves the myocardium too early or too late wherever the wall curves, whereas
 the Laplace and Yezzi--Prince paths follow the curvature of the wall and the
 EDT boundary sum does not depend on a single direction. The two effects are of
-similar size: the cone-ray bias of $+3.31$~mm is close to the $2.53$ to
-$2.91$~mm offset between the model and SSM geometries with the non-ray methods.
+similar size: the cone-ray bias of +3.31~mm is close to the 2.53 to
+2.91~mm offset between the model and SSM geometries with the non-ray methods.
 Thickness values are therefore comparable only when both the reconstruction and
 the measurement method are the same.
 
@@ -787,7 +787,7 @@ but cannot establish that it can replace clinical measurement methods.
 Several further factors limit how widely these results can be applied, and the whole
 evaluation should be read as preliminary. The general evaluation uses held-out
 patients from ACDC and M\&Ms-2, whereas the regional analysis by disease group
-is limited to $30$ ACDC test patients: $20$ normal and $10$ with
+is limited to 30 ACDC test patients: 20 normal and 10 with
 HCM. This subset is far too small to support claims of
 clinical or pathological generalisation, and the HCM subgroup in
 particular can only suggest a pattern rather than support broad conclusions. The regional

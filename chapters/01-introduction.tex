@@ -74,8 +74,8 @@ in this thesis.
 \noindent
 Reconstructing the LV in three dimensions from segmented SAX contours is a
 long-standing problem in cardiac image analysis. A cine SAX stack typically
-resolves the ventricle at $1$--$2$~mm within each slice, but consecutive
-slices lie $6$--$10$~mm apart~\parencite{petitjean2011segmentationreview}.
+resolves the ventricle at 1--2~mm within each slice, but consecutive
+slices lie 6--10~mm apart~\parencite{petitjean2011segmentationreview}.
 Segmentation therefore delineates the myocardium accurately where it is
 imaged, yet leaves the geometry between slices, including the curvature of the
 apex and the closure of the base, unobserved. In this thesis, contours of this
@@ -119,7 +119,7 @@ measurements.
 
 Public data impose a further constraint. Benchmarks such as the Automated
 Cardiac Diagnosis Challenge (ACDC) and the second Multi-Centre, Multi-Vendor
-and Multi-Disease Cardiac Segmentation challenge (M\&Ms-2) provide images and segmentation masks for individual slices~\parencite{bernard2018acdc,martinisla2023mnms2}, that is, label images in
+and Multi-Disease Cardiac Image Segmentation Challenge (M\&Ms-2) provide images and segmentation masks for individual slices~\parencite{bernard2018acdc,martinisla2023mnms2}, that is, label images in
 which each pixel is marked as cavity, myocardium, or background, rather than
 complete three-dimensional LV meshes, surfaces made of connected triangles.
 Without an independent three-dimensional reference, a learned model must be
