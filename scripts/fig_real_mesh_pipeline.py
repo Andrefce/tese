@@ -25,8 +25,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
 from matplotlib.colors import to_rgb
-from mpl_toolkits.mplot3d import Axes3D
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+from mpl_toolkits.mplot3d.art3d import Line3DCollection, Poly3DCollection
 import nibabel as nib
 from scipy.interpolate import RBFInterpolator
 import trimesh
@@ -59,56 +58,82 @@ RBF_PARAMETERS = {
 C_ENDO = "#0072B2"   # blue
 C_EPI  = "#D55E00"   # orange
 C_RV   = "#009E73"   # green
-C_BG   = "#0e0e12"   # near-black panel background for masks
+C_TEXT = "#2B2B2B"
+C_MUTED = "#6B7280"
+C_CARD = "#F4F5F7"
+C_CARD_EDGE = "#DADDE2"
+
+ELEV, AZIM = 18, -65
+_e, _a = np.radians(ELEV), np.radians(AZIM)
+EYE = np.array([np.cos(_e) * np.cos(_a), np.cos(_e) * np.sin(_a), np.sin(_e)])
+EYE_H = np.array([EYE[0], EYE[1], 0.0]) / np.linalg.norm(EYE[:2])
+
+plt.rcParams.update({"font.family": "DejaVu Sans"})
 
 
-def phong_colors(verts, faces, base_hex, ambient=0.38, diffuse=0.62):
-    base = np.array(to_rgb(base_hex))
-    mesh_t = trimesh.Trimesh(vertices=verts, faces=faces, process=False)
-    normals = np.asarray(mesh_t.vertex_normals)[faces].mean(axis=1)
-    fn = normals / np.maximum(np.linalg.norm(normals, axis=1, keepdims=True), 1e-9)
-    key  = np.array([-0.4, -0.3,  0.9]); key  /= np.linalg.norm(key)
-    fill = np.array([ 0.6,  0.4, -0.2]); fill /= np.linalg.norm(fill)
-    light = ambient + diffuse * (0.7 * np.maximum(0, fn @ key)
-                                + 0.3 * np.maximum(0, fn @ fill))
-    return np.clip(base[None] * np.clip(light, 0, 1)[:, None], 0, 1)
+def _unit(v):
+    return v / np.maximum(np.linalg.norm(v, axis=-1, keepdims=True), 1e-9)
 
 
-def set_3d_view(ax, verts, z_boost=1.0):
-    ax.view_init(elev=18, azim=-65, roll=0)
+def _lighten(hex_color, amount):
+    base = np.array(to_rgb(hex_color))
+    if amount < 0:
+        return base * (1.0 + amount)
+    return base + (1.0 - base) * amount
+
+
+def shaded_faces(verts, faces, base_hex, lighten=0.22):
+    """Blinn-Phong face colours with outward normals and a soft rim light."""
+    mesh = trimesh.Trimesh(vertices=verts, faces=faces, process=False)
+    fn = _unit(np.asarray(mesh.vertex_normals)[faces].mean(axis=1))
+    outward = verts[faces].mean(axis=1) - verts.mean(axis=0)
+    if np.mean(np.sum(fn * outward, axis=1)) < 0:
+        fn = -fn  # the display z-flip mirrors the winding
+    key = _unit(EYE + np.array([-0.45, 0.25, 0.55]))
+    fill = _unit(np.array([0.7, 0.5, -0.1]))
+    half = _unit(key + EYE)
+    lambert = np.clip(fn @ key, 0, 1)
+    fill_l = np.clip(fn @ fill, 0, 1)
+    spec = np.clip(fn @ half, 0, 1) ** 18
+    rim = (1.0 - np.abs(fn @ EYE)) ** 3
+    base = _lighten(base_hex, lighten)
+    col = base[None] * (0.42 + 0.50 * lambert + 0.12 * fill_l)[:, None]
+    col += 0.12 * spec[:, None] + 0.10 * rim[:, None]
+    return np.clip(col, 0, 1), fn
+
+
+def set_3d_view(ax, verts):
+    ax.view_init(elev=ELEV, azim=AZIM, roll=0)
     r = [np.ptp(verts[:, i]) for i in range(3)]
-    rmax = max(r) if max(r) > 0 else 1.0
-    ax.set_box_aspect((r[0]/rmax, r[1]/rmax, r[2]/rmax * z_boost))
+    rmax = max(r)
+    ax.set_box_aspect((r[0] / rmax, r[1] / rmax, r[2] / rmax))
     ax.set_xlim(verts[:, 0].min(), verts[:, 0].max())
     ax.set_ylim(verts[:, 1].min(), verts[:, 1].max())
     ax.set_zlim(verts[:, 2].min(), verts[:, 2].max())
     ax.axis("off")
-    ax.set_facecolor("white")
+    ax.set_facecolor("none")
+    ax.patch.set_alpha(0.0)
 
 
 def panel_label(ax, text, is_3d=False):
     """Place label text BELOW the axis."""
     y = -0.10 if is_3d else -0.08
+    kw = dict(ha="center", va="top", fontsize=9.5, fontweight="bold", color=C_TEXT)
     if is_3d:
-        ax.text2D(0.5, y, text, transform=ax.transAxes,
-                  ha='center', va='top', fontsize=9.5, fontweight='bold',
-                  color='#222222')
+        ax.text2D(0.5, y, text, transform=ax.transAxes, **kw)
     else:
-        ax.annotate(text, xy=(0.5, y), xycoords='axes fraction',
-                    ha='center', va='top', fontsize=9.5, fontweight='bold',
-                    color='#222222')
+        ax.annotate(text, xy=(0.5, y), xycoords="axes fraction", **kw)
 
 
 def add_figspace_arrow(fig, posA, posB, color, lw=1.6, rad=0.0):
-    arr = FancyArrowPatch(
+    fig.add_artist(FancyArrowPatch(
         posA, posB,
         transform=fig.transFigure,
-        arrowstyle='-|>', mutation_scale=15,
+        arrowstyle='-|>', mutation_scale=14,
         color=color, linewidth=lw,
         connectionstyle=f'arc3,rad={rad}',
         zorder=12, capstyle='round',
-    )
-    fig.add_artist(arr)
+    ))
 
 
 # ── Panel content ────────────────────────────────────────────
@@ -130,6 +155,8 @@ def panel_mri_with_contours(ax, volume, segmentation):
     col_min = max(0, int(columns.min()) - padding)
     col_max = min(volume.shape[1], int(columns.max()) + padding)
 
+    image = volume[:, :, z].T
+    lo, hi = np.percentile(image[col_min:col_max, row_min:row_max], [1, 99.5])
     plane = segmentation[:, :, z].T
     # The epicardium bounds cavity + myocardium; the myocardium label alone is an annulus.
     boundaries = (
@@ -137,78 +164,67 @@ def panel_mri_with_contours(ax, volume, segmentation):
         (np.isin(plane, [2, 3]), C_EPI),
         (plane == 1, C_RV),
     )
-    ax.imshow(volume[:, :, z].T, cmap="gray", origin="lower", aspect="equal")
+    ax.imshow(image, cmap="gray", origin="lower", aspect="equal", vmin=lo, vmax=hi)
     for label_mask, color in boundaries:
         if label_mask.any():
-            ax.contour(label_mask, levels=[0.5], colors=[color], linewidths=2.0,
+            ax.contour(label_mask, levels=[0.5], colors=["white"], linewidths=3.2,
+                       origin="lower", alpha=0.55)
+            ax.contour(label_mask, levels=[0.5], colors=[color], linewidths=1.9,
                        origin="lower")
     ax.set_xlim(row_min, row_max)
     ax.set_ylim(col_min, col_max)
-    ax.axis("off")
+    ax.set_xticks([])
+    ax.set_yticks([])
+    for spine in ax.spines.values():
+        spine.set_edgecolor(C_CARD_EDGE)
+        spine.set_linewidth(1.0)
     patches = [
         mpatches.Patch(color=C_ENDO, label="Endocardium"),
         mpatches.Patch(color=C_EPI, label="Epicardium"),
         mpatches.Patch(color=C_RV, label="RV"),
     ]
-    ax.legend(handles=patches, loc="lower center", bbox_to_anchor=(0.5, -0.22),
+    ax.legend(handles=patches, loc="lower center", bbox_to_anchor=(0.5, -0.24),
               ncol=3, fontsize=7.5, framealpha=0.0, handlelength=1.0,
-              columnspacing=0.8, handletextpad=0.4)
+              columnspacing=0.8, handletextpad=0.4, labelcolor=C_TEXT)
 
 
 def _ring_at(points, z):
-    return points[np.isclose(points[:, 2], z)]
-
-
-def _draw_filled_ring(ax, endo, epi, y_offset=0.0, alpha=1.0):
-    centre = np.vstack([endo, epi])[:, :2].mean(axis=0)
-    endo_xy = endo[:, :2] - centre
-    epi_xy = epi[:, :2] - centre
-    endo_xy[:, 1] += y_offset
-    epi_xy[:, 1] += y_offset
-    ax.fill(epi_xy[:, 0], epi_xy[:, 1], color=C_EPI, alpha=alpha, linewidth=0)
-    ax.fill(endo_xy[:, 0], endo_xy[:, 1], color=C_ENDO, alpha=alpha, linewidth=0)
-
-
-def panel_mid_sax_labels(ax, surface_points):
-    levels = np.unique(surface_points["endo"][:, 2])
-    z = levels[len(levels) // 2]
-    _draw_filled_ring(
-        ax,
-        _ring_at(surface_points["endo"], z),
-        _ring_at(surface_points["epi"], z),
-    )
-    ax.set_aspect("equal")
-    ax.axis("off")
-    patches = [
-        mpatches.Patch(color=C_ENDO, label="Endocardium"),
-        mpatches.Patch(color=C_EPI, label="Epicardium"),
-    ]
-    ax.legend(handles=patches, loc="lower center", bbox_to_anchor=(0.5, -0.22),
-              ncol=2, fontsize=7.5, framealpha=0.0, handlelength=1.0,
-              columnspacing=1.0, handletextpad=0.4)
+    ring = points[np.isclose(points[:, 2], z)]
+    c = ring.mean(axis=0)
+    return ring[np.argsort(np.arctan2(ring[:, 1] - c[1], ring[:, 0] - c[0]))]
 
 
 def panel_stacked_labels(ax, surface_points):
     levels = np.unique(surface_points["endo"][:, 2])
     selected = levels[np.linspace(0, len(levels) - 1, 3).round().astype(int)]
     span = np.ptp(np.vstack(list(surface_points.values()))[:, 1])
-    names = ("Basal", "Mid", "Apical")
-    for index, (name, z) in enumerate(zip(names, selected)):
-        offset = (1 - index) * span * 1.35
-        _draw_filled_ring(
-            ax,
-            _ring_at(surface_points["endo"], z),
-            _ring_at(surface_points["epi"], z),
-            y_offset=offset,
-        )
-        ax.text(-0.55 * span, offset + 0.35 * span, name, color="white",
-                fontsize=7.5, fontweight="bold", ha="left", va="top")
-    ax.set_facecolor(C_BG)
+    names = ("Basal", "Mid-cavity", "Apical")
+    offsets = [(1 - i) * span * 1.35 for i in range(3)]
+
+    ax.add_patch(FancyBboxPatch((0, 0), 1, 1, transform=ax.transAxes,
+                                boxstyle="round,pad=0,rounding_size=0.05",
+                                facecolor=C_CARD, edgecolor=C_CARD_EDGE,
+                                linewidth=1.0, zorder=0, clip_on=False))
+    for name, z, off in zip(names, selected, offsets):
+        endo = _ring_at(surface_points["endo"], z)
+        epi = _ring_at(surface_points["epi"], z)
+        c = np.vstack([endo, epi])[:, :2].mean(axis=0)
+        e_xy = endo[:, :2] - c
+        p_xy = epi[:, :2] - c
+        e_xy[:, 1] += off
+        p_xy[:, 1] += off
+        ax.fill(p_xy[:, 0], p_xy[:, 1], color=_lighten(C_EPI, 0.55), zorder=2,
+                linewidth=0)
+        ax.fill(e_xy[:, 0], e_xy[:, 1], color=_lighten(C_ENDO, 0.55), zorder=3,
+                linewidth=0)
+        ax.plot(*np.vstack([p_xy, p_xy[:1]]).T, color=C_EPI, lw=1.8, zorder=4)
+        ax.plot(*np.vstack([e_xy, e_xy[:1]]).T, color=C_ENDO, lw=1.8, zorder=4)
+        ax.text(0, off + 0.62 * span, name, color=C_MUTED, fontsize=8,
+                fontweight="bold", ha="center", va="bottom", zorder=5)
+    ax.set_xlim(-0.85 * span, 0.85 * span)
+    ax.set_ylim(offsets[-1] - 0.85 * span, offsets[0] + 0.95 * span)
     ax.set_aspect("equal")
-    ax.set_xticks([])
-    ax.set_yticks([])
-    for spine in ax.spines.values():
-        spine.set_visible(False)
+    ax.axis("off")
 
 
 def _rings_of(points):
@@ -335,24 +351,54 @@ def _display_points(points, centre):
     return displayed
 
 
+def draw_rings(ax, points, centre, color, back_alpha=0.28, lw=1.1, dots=True,
+               front_z=3, back_z=1):
+    """Closed contour rings; the half facing away from the viewer is faded."""
+    rgb = np.array(to_rgb(color))
+    front_segs, back_segs, front_pts, back_pts = [], [], [], []
+    displayed = _display_points(points, centre)
+    for z in np.unique(displayed[:, 2]):
+        ring = _ring_at(displayed, z)
+        depth = (ring - ring.mean(axis=0)) @ EYE_H
+        for i, j in enumerate(np.roll(np.arange(len(ring)), -1)):
+            target = front_segs if depth[i] + depth[j] >= 0 else back_segs
+            target.append([ring[i], ring[j]])
+        front_pts.append(ring[depth >= 0])
+        back_pts.append(ring[depth < 0])
+    ax.add_collection3d(Line3DCollection(back_segs, colors=[(*rgb, back_alpha)],
+                                         linewidths=lw * 0.8, zorder=back_z))
+    ax.add_collection3d(Line3DCollection(front_segs, colors=[(*rgb, 1.0)],
+                                         linewidths=lw, zorder=front_z))
+    if dots:
+        fp, bp = np.vstack(front_pts), np.vstack(back_pts)
+        ax.scatter(*bp.T, s=1.6, color=rgb, alpha=back_alpha, depthshade=False,
+                   linewidths=0, zorder=back_z)
+        ax.scatter(*fp.T, s=3.2, color=rgb, alpha=1.0, depthshade=False,
+                   edgecolors="white", linewidths=0.25, zorder=front_z + 0.1)
+
+
 def panel_sax_stack(ax, points, centre, color):
     ax.set_proj_type('ortho')
-    pts = _display_points(points, centre)
-    ax.scatter(pts[:, 0], pts[:, 1], pts[:, 2], c=color, s=1.0, alpha=0.6)
-    set_3d_view(ax, pts)
+    draw_rings(ax, points, centre, color)
+    set_3d_view(ax, _display_points(points, centre))
 
 
-def panel_mesh(ax, mesh, centre, color, alpha=0.95, contour_points=None):
+def panel_mesh(ax, mesh, centre, color, translucent=False, contour_points=None):
     ax.set_proj_type('ortho')
     verts = _display_points(mesh.vertices, centre)
     faces = np.asarray(mesh.faces)
-    fc = phong_colors(verts, faces, color)
-    ax.add_collection3d(Poly3DCollection(verts[faces], facecolors=fc,
-                                         edgecolors="none", alpha=alpha))
+    fc, fn = shaded_faces(verts, faces, color)
+    if translucent:
+        keep = fn @ EYE > 0  # front shell only, so overlapping layers do not muddy
+        poly = Poly3DCollection(verts[faces[keep]], facecolors=fc[keep],
+                                edgecolors="none", alpha=0.42, zorder=2)
+    else:
+        poly = Poly3DCollection(verts[faces], facecolors=fc, edgecolors="none",
+                                alpha=1.0, zorder=2)
+    ax.add_collection3d(poly)
     if contour_points is not None:
-        points = _display_points(contour_points, centre)
-        ax.scatter(points[:, 0], points[:, 1], points[:, 2], c=color,
-                   s=1.8, alpha=0.9, depthshade=False)
+        draw_rings(ax, contour_points, centre, _lighten(color, -0.35),
+                   back_alpha=0.18, lw=0.9, dots=False)
     set_3d_view(ax, verts)
 
 
@@ -400,11 +446,11 @@ panel_label(ax_mri,   "(a)  SAX MRI with contours")
 panel_label(ax_masks, "(b)  Basal-to-apical labels")
 
 # ── Endocardial flow (top row)
-ax_ec = fig.add_subplot(gs[0, 2], projection='3d')
-ax_er = fig.add_subplot(gs[0, 3], projection='3d')
-ax_es = fig.add_subplot(gs[0, 4], projection='3d')
+ax_ec = fig.add_subplot(gs[0, 2], projection='3d', computed_zorder=False)
+ax_er = fig.add_subplot(gs[0, 3], projection='3d', computed_zorder=False)
+ax_es = fig.add_subplot(gs[0, 4], projection='3d', computed_zorder=False)
 panel_sax_stack(ax_ec, surface_points["endo"], centre, C_ENDO)
-panel_mesh(ax_er, rbf_stages["endo"][0], centre, C_ENDO, alpha=0.55,
+panel_mesh(ax_er, rbf_stages["endo"][0], centre, C_ENDO, translucent=True,
            contour_points=surface_points["endo"])
 panel_mesh(ax_es, rbf_stages["endo"][1], centre, C_ENDO)
 panel_label(ax_ec, "(c)\u2009 SAX contours",        is_3d=True)
@@ -412,11 +458,11 @@ panel_label(ax_er, "(d)\u2009 RBF fit to contours",  is_3d=True)
 panel_label(ax_es, "(e)\u2009 Final RBF surface",    is_3d=True)
 
 # ── Epicardial flow (bottom row)
-ax_pc = fig.add_subplot(gs[1, 2], projection='3d')
-ax_pr = fig.add_subplot(gs[1, 3], projection='3d')
-ax_ps = fig.add_subplot(gs[1, 4], projection='3d')
+ax_pc = fig.add_subplot(gs[1, 2], projection='3d', computed_zorder=False)
+ax_pr = fig.add_subplot(gs[1, 3], projection='3d', computed_zorder=False)
+ax_ps = fig.add_subplot(gs[1, 4], projection='3d', computed_zorder=False)
 panel_sax_stack(ax_pc, surface_points["epi"], centre, C_EPI)
-panel_mesh(ax_pr, rbf_stages["epi"][0], centre, C_EPI, alpha=0.55,
+panel_mesh(ax_pr, rbf_stages["epi"][0], centre, C_EPI, translucent=True,
            contour_points=surface_points["epi"])
 panel_mesh(ax_ps, rbf_stages["epi"][1], centre, C_EPI)
 panel_label(ax_pc, "(c\u2019)\u2009 SAX contours",         is_3d=True)
@@ -443,8 +489,8 @@ def row_band(axes, color):
     rect = FancyBboxPatch(
         (x0, y0), x1 - x0, y1 - y0,
         boxstyle="round,pad=0.002,rounding_size=0.012",
-        transform=fig.transFigure, facecolor=color, edgecolor='none',
-        alpha=0.06, zorder=0,
+        transform=fig.transFigure, facecolor=_lighten(color, 0.93),
+        edgecolor=_lighten(color, 0.70), linewidth=0.9, zorder=0,
     )
     fig.add_artist(rect)
 
@@ -454,7 +500,7 @@ row_band([ax_pc, ax_pr, ax_ps], C_EPI)
 # ── Row titles (coloured) above the first pipeline panel of each row
 def row_title(ax, text, color):
     bb = ax.get_position()
-    fig.text(bb.x0, bb.y1 + 0.015, text, ha='left', va='bottom',
+    fig.text(bb.x0, bb.y1 + 0.016, text, ha='left', va='bottom',
              fontsize=10.5, fontweight='bold', color=color)
 
 row_title(ax_ec, "Endocardium", C_ENDO)
