@@ -6,53 +6,37 @@
 
 \selectlanguage{english}
 \noindent
-The analysis of left ventricular geometry and myocardial wall thickness
-is relevant to the characterisation of cardiac structure and function.
-However, short-axis cardiac magnetic resonance imaging provides
-a two-dimensional representation through spatially separated slices,
-making three-dimensional reconstruction necessary to recover the
-geometry between available slices. Although interpolation methods
-establish continuity between contours, they do not guarantee the
-preservation of ventricular anatomy. Furthermore, clinical assessment
-of myocardial wall thickness often relies on local measurements and
-visual analysis. In this context, the 17-segment model of the American
-Heart Association (AHA) provides a reference for regional assessment
-of the left ventricle.
+Short-axis cardiac magnetic resonance imaging provides detailed observations
+of the left ventricle on spatially separated slices, leaving the geometry
+between them unknown. Reconstructing both ventricular boundaries is necessary
+to estimate myocardial wall thickness beyond the acquired planes, but
+interpolation alone does not guarantee anatomical accuracy.
 
 This dissertation proposes a machine learning approach for three-dimensional
-left ventricular reconstruction from cardiac magnetic resonance
-contours. An implicit neural representation is used to continuously
-describe the endocardial and epicardial surfaces at end-diastole
-and end-systole. The model is initially trained on synthetic
-ventricular shapes and subsequently fine-tuned using clinical
-segmentations. Myocardial wall thickness is estimated from the
-reconstructed geometry, enabling local and regional analysis
-according to the 17 AHA segments.
+left ventricular reconstruction from magnetic resonance contours. An implicit
+neural representation describes the endocardial and epicardial surfaces at
+end-diastole and end-systole. The model is trained on synthetic ventricular
+shapes and subsequently fine-tuned using surfaces fitted to clinical
+segmentations. The resulting geometry supports local thickness maps and
+regional analysis using the 17-segment model of the American Heart Association
+(AHA).
 
-The proposed approach is evaluated against radial basis function
-methods and a statistical shape model. The results show that the
-reconstructed surfaces follow the observed contours, with greater
-agreement between methods in the ventricular cavity than in the
-myocardial wall. Thickness estimates are also found to depend on
-both the reconstructed geometry and the calculation method, meaning
-that high correlation does not necessarily imply agreement between
-measurements. Segmental analysis further characterises regional
-variations in wall thickness between end-diastole and end-systole.
+Comparisons with radial basis function reconstructions and a statistical
+shape model show greater agreement in the ventricular cavity than in the
+myocardial wall. Thickness estimates depend on both the reconstructed geometry
+and the measurement method, so high correlation does not necessarily imply
+agreement between values. Regional analysis also characterises changes in
+thickness between the two cardiac phases.
 
-This work explores the potential of implicit neural representations
-for three-dimensional left ventricular reconstruction and myocardial
-wall thickness quantification. However, in the absence of an
-independent three-dimensional anatomical reference, it is not possible
-to conclusively determine which method produces the reconstruction
-closest to the true anatomy. Nevertheless, the results highlight
-the influence of geometric modelling choices on thickness estimates
-and the importance of considering the reconstruction method when
-interpreting the resulting measurements.
+Without an independent three-dimensional anatomical reference, the evaluation
+cannot determine which approach reconstructs the true anatomy most accurately.
+The findings highlight the importance of considering reconstruction and
+measurement choices when interpreting myocardial wall thickness.
 
 \vspace{1em}
-\noindent\textbf{Keywords:} Cardiac magnetic resonance imaging;
-left ventricle; three-dimensional reconstruction; implicit neural
-representations; signed distance functions; myocardial wall thickness.
+\noindent\textbf{Keywords:} Medical machine learning; cardiac magnetic
+resonance; three-dimensional reconstruction; myocardial wall thickness;
+implicit neural representations; cardiac modelling.
 
 \selectlanguage{portuguese}
 \clearpage

@@ -91,8 +91,10 @@ it. For sourcing or summarising papers, delegate to the
 
 ## Writing Style
 
-- Formal academic English; first-person plural (“we”) for the author's
-  contributions, third person for prior work.
+- Formal academic English with impersonal language throughout thesis prose.
+  Do not use first-person pronouns such as "we", "our", "us", "I", or "my".
+  Describe contributions impersonally, for example "A method was developed"
+  or "The proposed model was evaluated".
 - Each chapter starts with a 1–2 sentence overview paragraph (already present
   as a placeholder in every chapter file).
 - No emojis, no informal contractions, no marketing language in `.tex` files.

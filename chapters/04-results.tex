@@ -11,17 +11,17 @@ described in~\cref{ch:methodology}.
 \section{Experimental Setup}
 \label{sec:setup}
 \noindent
-The evaluation uses the final model, which was pre-trained on the synthetic
+The evaluation uses the final version of the proposed model, which was pre-trained on the synthetic
 SSM meshes and then fine-tuned on the real ED and ES data, as described in~\cref{ch:methodology}. Datasets
 and patient-level splits are reported in~\cref{subsec:shared-dataset-assembly}.
 General reconstruction and wall-thickness evaluations use the held-out test
 patients from both ACDC and M\&Ms-2. The analysis by disease group
 uses a separate ACDC subset of 30 test patients, comprising 20 normal (NOR)
 and 10 HCM cases. The HCM group is included so
-that the model can be examined on abnormal as well as normal LV geometry. No
+that the proposed model can be examined on abnormal as well as normal LV geometry. No
 independent 3D ground truth is available, so the following results describe
 contour fidelity and agreement between methods rather than reconstruction
-accuracy. Three questions guide the evaluation: how faithfully the model
+accuracy. Three questions guide the evaluation: how faithfully the proposed model
 follows the observed LV contours and how far it agrees with alternative
 reconstructions of them, whether it represents the ED--ES change while
 maintaining a valid wall, and how closely the resulting thickness measurements
@@ -91,22 +91,21 @@ alternative reconstructions of the same input contour rings: a
 radial-basis-function implicit fit, which interpolates the rings through a
 smooth field, and a fit of the public SSM, which
 keeps the reconstructed shape within the variation represented by the
-population model. These methods make different assumptions about the shape
-between slices, so differences between their results show how strongly those
-assumptions affect the reconstructed geometry. Both
-use the same rings as the model and undergo the same mesh repair and
+SSM. Differences between their results show how assumptions about shape
+between slices affect the reconstructed geometry. Both
+use the same rings as the proposed model and undergo the same mesh repair and
 measurement steps, as described in~\cref{subsec:inference-offset-extraction}, so their numbers are directly
 comparable. They are evaluated only at ED: the public SSM is distributed with
 ED modes only.
 
 The RBF fit is used for comparison, not as ground truth. It belongs
 to the same family as the surfaces fitted to the contours for training, so close
-agreement with the model is partly expected and is not independent
+agreement with the proposed model is partly expected and is not independent
 confirmation. By contrast, the SSM fit is independent of the training targets, but
 some patients have shapes outside the variation represented by its training
 population. Wall
 thickness is compared between
-the model, the RBF fit, and the SSM fit with the four algorithms selected in~\cref{subsec:thickness-methods}: the Laplace field method, the Yezzi--Prince
+the proposed model, the RBF fit, and the SSM fit with the four algorithms selected in~\cref{subsec:thickness-methods}: the Laplace field method, the Yezzi--Prince
 method, the SDF cone-ray method, and the EDT boundary sum. Because the SAX stacks are sparse relative to their in-plane
 resolution, all three reconstruction methods must infer the through-plane
 geometry, and their absolute millimetre values should be read with care.
@@ -117,7 +116,7 @@ geometry, and their absolute millimetre values should be read with care.
 Training proceeds in two stages. The first pre-trains
 the signed-distance decoder for roughly 200 epochs on the synthetic SSM
 meshes. This stage provides a geometric prior, and its checkpoint initialises
-the second stage. The reported model is then fine-tuned on the real
+the second stage. The proposed model is then fine-tuned on the real
 ED and ES data described in~\cref{ch:methodology}. The
 available training history records the fine-tuning stage; no numerical claim is
 made about the pre-training loss because its per-epoch log was not retained.
@@ -125,17 +124,7 @@ made about the pre-training loss because its per-epoch log was not retained.
 Fine-tuning runs for 776 epochs with the AdamW optimiser (learning rate
 $2\times10^{-5}$, weight decay $5\times10^{-4}$) under a cosine-annealing
 schedule with warm restarts, mixed-precision arithmetic, and an effective batch
-size of 32. The composite objective is the five-term loss of~\cref{eq:training-objective}, combining surface, dense SDF, Eikonal,
-off-surface, and wall-thickness supervision. \Cref{fig:training-curves} plots
-the total loss and its principal components together with two optimisation
-diagnostics. The total
-training loss decreases from 10.07 at the first fine-tuning epoch to 0.91,
-and the validation loss settles at 0.70, with the best checkpoint selected at
-epoch 695 before mild over-fitting appears. The surface and Eikonal terms fall
-by more than an order of magnitude, indicating successful optimisation of the
-surface-fitting and Eikonal objectives. Consistently, the mean gradient norm
-$\lVert\nabla f\rVert$ stabilises at 0.996, close to the unit value encouraged
-by the Eikonal term.
+size of 32. 
 
 \begin{figure}[H]
   \centering
@@ -148,6 +137,18 @@ by the Eikonal term.
   \label{fig:training-curves}
 \end{figure}
 
+The composite objective is the five-term loss of~\cref{eq:training-objective}, combining surface, dense SDF, Eikonal,
+off-surface, and wall-thickness supervision. \Cref{fig:training-curves} plots
+the total loss and its principal components together with two optimisation
+diagnostics. The total
+training loss decreases from 10.07 at the first fine-tuning epoch to 0.91,
+and the validation loss settles at 0.70, with the best checkpoint selected at
+epoch 695 before mild over-fitting appears. The surface and Eikonal terms fall
+by more than an order of magnitude, indicating successful optimisation of the
+surface-fitting and Eikonal objectives. Consistently, the mean gradient norm
+$\lVert\nabla f\rVert$ stabilises at 0.996, close to the unit value encouraged
+by the Eikonal term.
+
 \section{Results}
 \label{sec:results}
 \noindent
@@ -157,17 +158,14 @@ and regional analysis with the AHA 17-segment model.
 \subsection{Reconstruction Consistency}
 \label{subsec:reconstruction-quality}
 \noindent
-Contour fidelity measures how closely each surface follows its input rings, and
-pairwise agreement measures how much the three reconstructions differ from one
-another. All values below are at ED and cover the held-out ACDC and M\&Ms-2
-test cohort. Every surface from every method is watertight after the shared
-repair stage.
+All values below are from the held-out ACDC and M\&Ms-2
+test cohort.
 
 \vspace{-2mm}
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.75\textwidth]{results_slice_ablation}
+  \includegraphics[width=0.60\textwidth]{results_slice_ablation}
   \caption[LV surfaces recovered from progressively sparser SAX stacks]  {Left-ventricular surfaces of one ACDC case
       reconstructed from an ED SAX stack with ten, six, four, and three retained
       slices (rows) by the proposed model, RBF fit, and SSM fit (columns). Red:
@@ -212,17 +210,17 @@ the cavity alone and the epicardial value the cavity together with the wall.
 
 The RBF fit follows the rings almost exactly, at 0.13~mm on the endocardium
 and 0.11~mm on the epicardium, because it passes through the contour points
-by construction. The model lies 1.50 and 1.96~mm from the same rings,
+by construction. The proposed model lies 1.50 and 1.96~mm from the same rings,
 which is close to the in-plane pixel size of 1.37 to 1.88~mm. The SSM fit
 has similar mean distances, 1.82 and 1.91~mm, but a wider spread between
 patients: its per-patient endocardial distance ranges from 0.92 to
-3.44~mm, against 1.20 to 2.14~mm for the model.
+3.44~mm, against 1.20 to 2.14~mm for the proposed model.
 
 In the 30-patient ACDC pathology subset, the mean contour distance of the SSM
 fit is 1.42~mm for normal cases and 2.63~mm for HCM cases. The
-corresponding model distances are 1.45 and 1.60~mm.
+corresponding distances for the proposed model are 1.45 and 1.60~mm.
 
-Cavity volumes are similar for the model, the RBF fit and the SSM fit, at
+Cavity volumes are similar for the proposed model, the RBF fit and the SSM fit, at
 119, 119 and 127~ml, respectively. Myocardial volumes, obtained as the
 epicardial minus the cavity volume, differ more, at 136, 115 and 88~ml.
 
@@ -243,11 +241,11 @@ cavity and wall that those boundaries enclose.
     \textbf{Pair} & \textbf{Metric} & \textbf{Endocardium/cavity}
       & \textbf{Epicardium/myocardium} \\
     \midrule
-    Model vs.\ RBF fit   & Chamfer (mm) & \textbf{1.57~\textpm{} 0.18} & \textbf{1.90~\textpm{} 0.24} \\
+    Proposed model vs.\ RBF fit & Chamfer (mm) & \textbf{1.57~\textpm{} 0.18} & \textbf{1.90~\textpm{} 0.24} \\
                           & HD95 (mm)     & \textbf{4.24~\textpm{} 0.86} & \textbf{6.07~\textpm{} 0.94} \\
                           & DSC           & \textbf{0.91~\textpm{} 0.02} & \textbf{0.77~\textpm{} 0.05} \\
     \addlinespace
-    Model vs.\ SSM fit   & Chamfer (mm) & 2.08~\textpm{} 0.51 & 2.59~\textpm{} 0.73 \\
+    Proposed model vs.\ SSM fit & Chamfer (mm) & 2.08~\textpm{} 0.51 & 2.59~\textpm{} 0.73 \\
                           & HD95 (mm)     & 5.88~\textpm{} 1.91 & 6.72~\textpm{} 2.32 \\
                           & DSC           & 0.88~\textpm{} 0.03 & 0.69~\textpm{} 0.04 \\
     \addlinespace
@@ -258,7 +256,7 @@ cavity and wall that those boundaries enclose.
   \end{tabular*}
 \end{table}
 
-The model and the RBF fit form the closest pair on every metric and surface,
+The proposed model and the RBF fit form the closest pair on every metric and surface,
 with Chamfer distances of 1.57~mm on the endocardium and 1.90~mm on the
 epicardium and a myocardial DSC of 0.77. Both pairs involving the SSM fit are
 further apart, at 2.08 and 2.01~mm on the endocardium.
@@ -318,14 +316,14 @@ three slices.
 
 With six slices, the reconstructions change very little: surface distances
 stay below 1~mm and myocardial DSC is close to 0.89 for every method. With
-fewer slices, the RBF fit changes least, while the model and the SSM fit
+fewer slices, the RBF fit changes least, while the proposed model and the SSM fit
 change by similar amounts. The difference is clearest on the epicardium, where
-the Chamfer distance at three slices reaches 2.17~mm for the model,
+the Chamfer distance at three slices reaches 2.17~mm for the proposed model,
 1.92~mm for the SSM fit and 1.32~mm for the RBF fit. Cavity DSC stays
 above 0.92 throughout, and myocardial DSC at three slices lies between
 0.775 and 0.805.
 
-Myocardial volume changes by only a few percent. At three slices, the model
+Myocardial volume changes by only a few percent. At three slices, the proposed model
 and the RBF fit lose 3.8\% and 6.2\%, whereas the SSM fit gains 2.6\%
 after losing volume with six and four slices, so its small change at that
 level does not mean that it follows the complete-stack volume more closely.
@@ -352,19 +350,19 @@ than between patients.
     \textbf{Method} & \textbf{Geometry} & \textbf{Mean (mm)}
       & \textbf{SD (mm)} & \textbf{$p_{5}$ (mm)} & \textbf{$p_{95}$ (mm)} \\
     \midrule
-      Laplace field    & Model &  9.18 & 2.14 & 4.75 & 12.20 \\
+      Laplace field    & Proposed model &  9.18 & 2.14 & 4.75 & 12.20 \\
                        & RBF fit &  8.36 & 2.21 & 5.03 & 12.29 \\
                        & SSM fit &  6.48 & 1.38 & 3.87 &  8.43 \\
       \addlinespace
-      Yezzi--Prince    & Model & 10.01 & 1.64 & 7.41 & 12.74 \\
+      Yezzi--Prince    & Proposed model & 10.01 & 1.64 & 7.41 & 12.74 \\
                & RBF fit &  8.86 & 2.15 & 5.57 & 12.71 \\
                & SSM fit &  7.10 & 1.23 & 4.75 &  8.88 \\
       \addlinespace
-      SDF cone rays    & Model & 12.47 & 4.87 & 8.01 & 20.68 \\
+      SDF cone rays    & Proposed model & 12.47 & 4.87 & 8.01 & 20.68 \\
                        & RBF fit &  9.38 & 2.49 & 5.63 & 13.80 \\
                        & SSM fit &  7.11 & 1.50 & 4.12 &  9.13 \\
       \addlinespace
-      EDT boundary sum & Model &  9.55 & 1.66 & 6.62 & 12.17 \\
+      EDT boundary sum & Proposed model &  9.55 & 1.66 & 6.62 & 12.17 \\
                        & RBF fit &  8.51 & 2.00 & 5.42 & 12.05 \\
                        & SSM fit &  7.02 & 1.22 & 4.65 &  8.77 \\
     \bottomrule
@@ -387,14 +385,14 @@ alone.
   \centering
   \caption[Wall-thickness agreement between reconstructions]  {Patient-level agreement between wall
       thickness on the proposed reconstruction and on each fitting baseline at
-      ED. Bias is the model value minus the baseline value. Bold marks the
+      ED. Bias is the proposed-model value minus the baseline value. Bold marks the
       closest agreement in each column.}
   \label{tab:wall-thickness-geometry-agreement}
   \thesistablestyle
   \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}l c c c c c c@{}}
     \toprule
-    & \multicolumn{3}{c}{\textbf{Model vs. RBF fit}}
-      & \multicolumn{3}{c}{\textbf{Model vs. SSM fit}} \\
+    & \multicolumn{3}{c}{\textbf{Proposed model vs. RBF fit}}
+      & \multicolumn{3}{c}{\textbf{Proposed model vs. SSM fit}} \\
     \cmidrule(lr){2-4} \cmidrule(lr){5-7}
     \textbf{Method} & \textbf{Bias (mm)} & \textbf{RMSE (mm)} & \textbf{$r$}
       & \textbf{Bias (mm)} & \textbf{RMSE (mm)} & \textbf{$r$} \\
@@ -407,13 +405,9 @@ alone.
   \end{tabular*}
 \end{table}
 
-With the same measurement method on each geometry, the RBF fit is thinner than
-the model by 0.82~mm for the Laplace field, 1.16~mm for Yezzi--Prince,
-3.10~mm for SDF cone rays, and 1.03~mm for the EDT boundary sum. The SSM
-fit is thinner by 2.70, 2.91, 5.36, and 2.53~mm, respectively.
-Per-patient means are strongly correlated between the model and the RBF fit
-($r=0.99$, 0.99, 0.95, and 0.99) and less strongly between the model and
-the SSM fit ($r=0.72$, 0.77, 0.67, and 0.77).
+For every measurement method, patient-level mean thickness is lower on the
+RBF and SSM fits than on the proposed reconstruction, with larger offsets for
+the SSM. Patient rankings agree more closely with the RBF fit.
 
 \Cref{tab:wall-thickness-agreement} compares the three other methods with the
 Laplace field at the same surface points on the proposed reconstruction, so
@@ -463,18 +457,19 @@ on the reconstructed surface. The values are scaled to the input segmentation,
 so the map shows where the wall is thicker or thinner rather than its absolute
 thickness. The circumferential bands follow the spacing of the SAX slices.
 
+\begingroup
+\raggedbottom
+\setlength{\LTpre}{10pt}
+\setlength{\LTpost}{10pt}
+
 \subsection{Regional Analysis over the AHA 17-Segment Model}
 \label{subsec:aha17-results}
 \noindent
-To place the measurements anatomically, the reconstructed surface is divided
-into the standard AHA segments~\parencite{cerqueira2002segmentation} described
-in~\cref{subsec:aha17-mapping}: basal, mid-cavity and apical sectors oriented
-from the septum, plus the apical cap. Each mesh point falls into one segment
-and the thickness values within it are averaged, so the surface map becomes
-one mean per region that refers to the same part of the ventricle in every
-patient and phase. These means are Laplace-field
-thickness~\parencite{jones2000laplace} measured directly on the
-meshes, not the segmentation-scaled values of~\cref{fig:recon-thickness-3d}.
+Regional results are mean Laplace-field thicknesses~\parencite{jones2000laplace}
+measured directly on the meshes within the AHA
+segments~\parencite{cerqueira2002segmentation}, using the mapping described
+in~\cref{subsec:aha17-mapping}. They are not the segmentation-scaled values
+of~\cref{fig:recon-thickness-3d}.
 
 \begin{figure}[H]
   \centering
@@ -487,10 +482,8 @@ meshes, not the segmentation-scaled values of~\cref{fig:recon-thickness-3d}.
   \label{fig:aha17-bullseye}
 \end{figure}
 
-\Cref{fig:aha17-bullseye} shows the partition on the representative case, with
-each patch coloured by its mean thickness in panel~(a) and the same means
-unrolled onto the standard bullseye in panel~(b), basal ring outermost and
-apical cap at the centre.
+\Cref{fig:aha17-bullseye} shows these regional means on the reconstructed
+surface and the corresponding bullseye for the representative case.
 
 \Cref{tab:aha17-cohort} reports the
 regional pattern over the 30-patient ACDC pathology subset and its change
@@ -505,19 +498,31 @@ relative change is 32.1\% in the basal anteroseptal segment and the largest
 is 64.6\% in the mid inferolateral segment. No fitting baseline is available
 at ES, so these phase values describe the model output only.
 
-\begin{table}[H]
-  \centering
-  \caption[AHA 17-segment thickness over the ACDC pathology subset]{Regional AHA
-    17-segment wall thickness on the reconstructed geometry over the
-    30-patient ACDC pathology subset.}
-  \label{tab:aha17-cohort}
+\begingroup
   \thesistablestyle
-  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}r l r r r@{}}
+  \begin{longtable}{@{\extracolsep{\fill}}r l r r r@{}}
+    \caption[AHA 17-segment thickness over the ACDC pathology subset]{Regional AHA
+      17-segment wall thickness on the reconstructed geometry over the
+      30-patient ACDC pathology subset.}
+    \label{tab:aha17-cohort} \\
     \toprule
     \multicolumn{1}{c}{\textbf{\#}} & \textbf{Segment}
-      & \multicolumn{1}{c}{\textbf{ED (mm)}} & \multicolumn{1}{c}{\textbf{ES (mm)}}
-      & \multicolumn{1}{c}{\textbf{$\Delta$ (\%)}} \\
+      & \multicolumn{1}{r}{\textbf{ED (mm)}} & \multicolumn{1}{r}{\textbf{ES (mm)}}
+      & \multicolumn{1}{r@{}}{\textbf{$\Delta$ (\%)}} \\
     \midrule
+    \endfirsthead
+    \caption[]{AHA 17-segment thickness over the ACDC pathology subset
+      \textit{(continued).}} \\
+    \toprule
+    \multicolumn{1}{c}{\textbf{\#}} & \textbf{Segment}
+      & \multicolumn{1}{r}{\textbf{ED (mm)}} & \multicolumn{1}{r}{\textbf{ES (mm)}}
+      & \multicolumn{1}{r@{}}{\textbf{$\Delta$ (\%)}} \\
+    \midrule
+    \endhead
+    \midrule
+    \multicolumn{5}{r@{}}{\footnotesize\textit{Continued on next page.}} \\
+    \endfoot
+    \endlastfoot
     1  & Basal anterior       &  9.99 & 13.71 & +37.1 \\
     2  & Basal anteroseptal   & 10.15 & 13.40 & +32.1 \\
     3  & Basal inferoseptal   &  9.89 & 13.43 & +35.7 \\
@@ -537,21 +542,19 @@ at ES, so these phase values describe the model output only.
     15 & Apical inferior      &  8.44 & 13.29 & +57.5 \\
     16 & Apical lateral       &  8.43 & 13.78 & +63.6 \\
     \addlinespace
-    17 & Apex                 &  7.76 & 11.69 & +50.7 \\
+    17 & Apex                 &  7.76 & 11.69 & +50.7 \\*
     \midrule
     \multicolumn{2}{@{}l}{\textbf{Overall}} & \textbf{9.21} & \textbf{13.87}
-      & \textbf{+50.6} \\
+      & \textbf{+50.6} \\*
     \bottomrule
-  \end{tabular*}
-  \vspace{0.8em}
-
-  \begin{minipage}{\textwidth}
-    \footnotesize\singlespacing
-    \textit{Note.} Values are means for the 30 ACDC test patients used in the
-    pathology analysis, measured with the Laplace field. $\Delta$ is the relative
-    thickening from ED to ES.
-  \end{minipage}
-\end{table}
+    \addlinespace[0.8em]
+    \caption*{%
+      \footnotesize
+      \textit{Note.} Values are means for the 30 ACDC test patients used in the
+      pathology analysis, measured with the Laplace field. $\Delta$ is the relative
+      thickening from ED to ES.} \\
+  \end{longtable}
+\endgroup
 
 \Cref{tab:aha17-thickening} separates the normal and HCM patients, and both
 groups show an internally coherent regional pattern. In the normal cases the ED thickness varies little around the base and the
@@ -563,23 +566,36 @@ the apical segments thicken by 52\% to 64\%, the mid-cavity segments by
 group the mean thickness rises from 7.99~mm to 12.21~mm, a thickening of
 52.9\%.
 
-\begin{table}[H]
-  \centering
-  \caption[AHA 17-segment thickness: NOR versus HCM]{Regional AHA 17-segment wall thickness on the reconstructed geometry for
-    the normal and HCM groups.}
-  \label{tab:aha17-thickening}
+\begingroup
   \thesistablestyle
-  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}r l r r r r r r@{}}
+  \begin{longtable}{@{\extracolsep{\fill}}r l r r r r r r@{}}
+    \caption[AHA 17-segment thickness: NOR versus HCM]{Regional AHA 17-segment wall thickness on the reconstructed geometry for
+      the normal and HCM groups.}
+    \label{tab:aha17-thickening} \\
     \toprule
     & & \multicolumn{3}{c}{\textbf{Normal (NOR, $n=20$)}}
       & \multicolumn{3}{c}{\textbf{Hypertrophic (HCM, $n=10$)}} \\
     \cmidrule(lr){3-5} \cmidrule(lr){6-8}
     \multicolumn{1}{c}{\textbf{\#}} & \textbf{Segment}
-      & \multicolumn{1}{c}{\textbf{ED}} & \multicolumn{1}{c}{\textbf{ES}} & \multicolumn{1}{c}{\textbf{$\Delta$}}
-      & \multicolumn{1}{c}{\textbf{ED}} & \multicolumn{1}{c}{\textbf{ES}} & \multicolumn{1}{c}{\textbf{$\Delta$}} \\
-    & & \multicolumn{2}{c}{\textbf{(mm)}} & \multicolumn{1}{c}{\textbf{(\%)}}
-      & \multicolumn{2}{c}{\textbf{(mm)}} & \multicolumn{1}{c}{\textbf{(\%)}} \\
+      & \multicolumn{1}{r}{\textbf{ED (mm)}} & \multicolumn{1}{r}{\textbf{ES (mm)}} & \multicolumn{1}{r}{\textbf{$\Delta$ (\%)}}
+      & \multicolumn{1}{r}{\textbf{ED (mm)}} & \multicolumn{1}{r}{\textbf{ES (mm)}} & \multicolumn{1}{r@{}}{\textbf{$\Delta$ (\%)}} \\
     \midrule
+    \endfirsthead
+    \caption[]{AHA 17-segment thickness: NOR versus HCM
+      \textit{(continued).}} \\
+    \toprule
+    & & \multicolumn{3}{c}{\textbf{Normal (NOR, $n=20$)}}
+      & \multicolumn{3}{c}{\textbf{Hypertrophic (HCM, $n=10$)}} \\
+    \cmidrule(lr){3-5} \cmidrule(lr){6-8}
+    \multicolumn{1}{c}{\textbf{\#}} & \textbf{Segment}
+      & \multicolumn{1}{r}{\textbf{ED (mm)}} & \multicolumn{1}{r}{\textbf{ES (mm)}} & \multicolumn{1}{r}{\textbf{$\Delta$ (\%)}}
+      & \multicolumn{1}{r}{\textbf{ED (mm)}} & \multicolumn{1}{r}{\textbf{ES (mm)}} & \multicolumn{1}{r@{}}{\textbf{$\Delta$ (\%)}} \\
+    \midrule
+    \endhead
+    \midrule
+    \multicolumn{8}{r@{}}{\footnotesize\textit{Continued on next page.}} \\
+    \endfoot
+    \endlastfoot
     1  & Basal anterior       &  8.72 & 12.25 & +40.4 & 12.54 & 16.62 & +32.6 \\
     2  & Basal anteroseptal   &  8.81 & 12.10 & +37.4 & 12.83 & 16.02 & +24.9 \\
     3  & Basal inferoseptal   &  8.68 & 11.96 & +37.8 & 12.32 & 16.35 & +32.8 \\
@@ -599,22 +615,20 @@ group the mean thickness rises from 7.99~mm to 12.21~mm, a thickening of
     15 & Apical inferior      &  7.28 & 11.72 & +61.1 & 10.76 & 16.43 & +52.6 \\
     16 & Apical lateral       &  7.33 & 12.03 & +64.0 & 10.61 & 17.28 & +62.9 \\
     \addlinespace
-    17 & Apex                 &  6.80 & 10.32 & +51.8 &  9.67 & 14.71 & +52.1 \\
+    17 & Apex                 &  6.80 & 10.32 & +51.8 &  9.67 & 14.71 & +52.1 \\*
     \midrule
     \multicolumn{2}{@{}l}{\textbf{Overall}} & \textbf{7.99} & \textbf{12.21} & \textbf{+52.9}
-      & \textbf{11.68} & \textbf{17.23} & \textbf{+47.5} \\
+      & \textbf{11.68} & \textbf{17.23} & \textbf{+47.5} \\*
     \bottomrule
-  \end{tabular*}
-  \vspace{0.8em}
-
-  \begin{minipage}{0.92\textwidth}
-    \footnotesize\singlespacing
-    \textit{Note.} Values are group means measured with the     Laplace field. $\Delta$ is the
-        relative thickening from ED to ES. These measurements summarise the model
-    output reconstructed from sparse SAX contours and are not an independent
-    anatomical reference.
-  \end{minipage}
-\end{table}
+    \addlinespace[0.8em]
+    \caption*{%
+      \footnotesize
+      \textit{Note.} Values are group means measured with the Laplace field. $\Delta$ is the
+      relative thickening from ED to ES. These measurements summarise the proposed model
+      output reconstructed from sparse SAX contours and are not an independent
+      anatomical reference.} \\
+  \end{longtable}
+\endgroup
  
 HCM thickness exceeds NOR thickness in every segment, with the largest differences
 in the mid-cavity anteroseptal and inferoseptal segments, where the HCM group
@@ -671,55 +685,56 @@ of absolute ED thickness and relative systolic thickening.
 \end{figure}
 
 The two groups overlap more in relative thickening than in absolute thickness.
+
 \FloatBarrier
+\endgroup
 
 \section{Discussion}
 \label{sec:discussion}
 \noindent
-The results are interpreted below against the three research questions of~\cref{sec:research-questions}. Because no independent 3D reference is available~(\cref{sec:setup}), each answer concerns fidelity to the input contours,
-agreement between methods, or internal consistency, not anatomical accuracy.
+The research questions of~\cref{sec:research-questions} are addressed through
+contour fidelity, agreement between methods, and internal consistency, not
+anatomical accuracy, because no independent 3D reference is
+available~(\cref{sec:setup}).
 
 \textbf{RQ1} compares the learned reconstruction with RBF and SSM
 reconstructions of the same contours. Closure does not separate the methods:
 every surface is watertight after the shared repair stage, so closure is a
-property of the pipeline rather than of the learned prior. The methods differ
-instead in how closely they follow the contours and in the geometry they infer
-between slices.
+property of the pipeline rather than of the learned prior. The relevant
+differences are contour fidelity and the geometry inferred between slices.
 
-The model follows its input rings to within about one in-plane pixel~(\cref{tab:contour-fidelity}). Exact agreement with the rings is not the aim.
+The proposed model follows its input rings to within about one in-plane pixel~(\cref{tab:contour-fidelity}).
 Expert contours contain annotation errors and are restricted to the pixel grid,
 so a surface that matches them to 0.13~mm, as the RBF fit does by
-construction, also reproduces those errors. A consistent deviation of about one
-pixel is compatible with a surface that smooths this noise rather than one that
-misses the observations. The SSM fit has a similar mean distance but a much
-wider spread between patients, and the pathology subset locates the source of
-that spread: the SSM distance increases markedly on HCM cases, whereas the model
-distance changes little. A population model can represent only shapes within
+construction, also reproduces those errors. A pixel-sized deviation may reflect
+smoothing rather than missed observations. The SSM fit has a similar mean
+distance but a wider spread between patients: its distance increases markedly
+on HCM cases, whereas the model distance changes little. An SSM can represent only shapes within
 the variation of its training population, and thick hypertrophic walls lie
-partly outside it. The model, which is conditioned directly on the contours,
+partly outside it. The proposed model, which is conditioned directly on the contours,
 appears less tied to an average shape.
 
 The pairwise comparison shows where the three reconstructions disagree~(\cref{tab:reconstruction-agreement}). On the endocardium they differ by about
 one in-plane pixel, far less than the 10~mm slice spacing, and cavity DSC is
 high for every pair. Myocardial agreement is clearly lower, and myocardial
-volume varies by several tens of millilitres between methods. The cause lies in
-what the data constrain. The contours fix the cavity outline at each slice, but
+volume varies by several tens of millilitres between methods. The contours fix
+the cavity outline at each slice, but
 both surfaces must be inferred between slices, and small changes in the
 inferred epicardium alter myocardial volume and thickness much more than cavity
 overlap. Lower myocardial agreement therefore shows that the wall geometry
 depends on the reconstruction prior; it does not show that one method is
 anatomically better. Because wall thickness is measured on this geometry, the
 spread between methods is a lower bound on the uncertainty of every thickness
-value in this chapter, and selecting one method as correct would not remove it.
-The model lies closest to the RBF fit, but part of this agreement is expected,
+value in this chapter.
+The proposed model lies closest to the RBF fit, but part of this agreement is expected,
 because the training targets were produced by a similar surface fit~(\cref{subsec:baselines}).
 
-Slice removal degrades the three methods by similar amounts~(\cref{tab:slice-degradation}). The model has the largest epicardial
+Slice removal degrades the three methods by similar amounts~(\cref{tab:slice-degradation}). The proposed model has the largest epicardial
 displacement with three slices but not the largest change in myocardial volume,
 so no method is more robust on every metric. These values describe stability
 relative to each method's own complete-stack surface, not anatomical error.
 
-\textbf{RQ2} asks whether one phase-conditioned model can reconstruct paired
+\textbf{RQ2} asks whether the proposed phase-conditioned model can reconstruct paired
 surfaces at ED and ES while keeping a positive wall thickness. The architecture
 fixes the order of the two surfaces, because the epicardial field is defined as
 the endocardial field minus a strictly positive offset. On the output, the
@@ -728,103 +743,70 @@ ES~(\cref{tab:aha17-cohort}), which is the expected direction of systolic wall
 thickening. The evaluation did not measure the minimum pointwise separation
 between the extracted meshes, test for surface intersections after repair, or
 report the ED--ES change in cavity volume, and no fitting baseline is available
-at ES. The evidence therefore supports a phase-dependent reconstruction with a
-thickening wall. Positive separation holds in the continuous fields by
+at ES. Positive separation holds in the continuous fields by
 construction, but it has not been verified at every point of the extracted
 meshes, and accuracy at ES remains untested.
 
 \textbf{RQ3} asks how wall thickness depends on the reconstruction prior and on
 the measurement method, and whether regional and pathology-related differences
-are retained. Both factors change the measured thickness, in different ways.
+are retained.
 
 With the method fixed, the reconstruction prior mainly shifts the absolute
-scale~(\cref{tab:wall-thickness-geometry-agreement}). Thickness on the model and
-on the RBF fit is almost perfectly correlated across patients, yet the model is
-consistently thicker: the RBF fit preserves the ranking of patients but changes
-their absolute values. The SSM fit changes both the scale and, to a lesser
+scale~(\cref{tab:wall-thickness-geometry-agreement}). Thickness on the proposed reconstruction and
+on the RBF fit is almost perfectly correlated across patients, yet values from the proposed model are
+consistently higher. The SSM fit changes both the scale and, to a lesser
 extent, the ranking, as expected from a stronger shape prior. A high correlation
-therefore does not imply agreement in millimetres; only the bias reveals the
+therefore does not imply agreement in millimetres; the bias reveals the
 offset.
 
 With the geometry fixed, the measurement path matters~(\cref{tab:wall-thickness-agreement}). Yezzi--Prince and the EDT boundary sum
 agree closely with the Laplace field, whereas the SDF cone-ray method is both
-biased and highly variable. The most likely cause is geometric. A straight ray
-leaves the myocardium too early or too late wherever the wall curves, whereas
+biased and highly variable. A likely geometric explanation is that straight
+rays leave the curved wall too early or too late, whereas
 the Laplace and Yezzi--Prince paths follow the curvature of the wall and the
 EDT boundary sum does not depend on a single direction. The two effects are of
 similar size: the cone-ray bias of +3.31~mm is close to the 2.53 to
-2.91~mm offset between the model and SSM geometries with the non-ray methods.
+2.91~mm offset between the proposed-model and SSM geometries with the non-ray methods.
 Thickness values are therefore comparable only when both the reconstruction and
 the measurement method are the same.
 
-For the second part of RQ3, the reconstruction retains differences between
-patient groups instead of reproducing an average shape. At the patient level,
-the HCM group is thicker at ED in both mean thickness and thickest segment, with
+At the patient level, the HCM group is thicker at ED in both mean thickness
+and thickest segment, with
 confidence intervals that exclude zero and large effect sizes~(\cref{tab:aha17-group-effects}). Relative systolic thickening does not
 separate the groups in this cohort. With ten HCM patients, these are
-descriptive differences within the model output rather than evidence of
+descriptive differences within the proposed model output rather than evidence of
 diagnostic ability.
 
 \section{Limitations of the Evaluation}
 \label{sec:threats}
 \noindent
-The central limitation concerns the reference: no public dataset provides
-independently acquired 3D ground-truth surfaces for these scans, so the
-reconstruction is evaluated through fidelity to the observed contour rings and
-agreement with alternative reconstructions of those rings. The pairwise
-Chamfer distances measure disagreement between reconstruction priors,
-not distance from true anatomy. The same caveat applies to the wall-thickness
-comparison: the input is a stack of contours separated by several millimetres,
-so no method used in this chapter carries measured through-plane information,
-and the way that gap is inferred shifts the measured thickness. Absolute
-millimetre values should not be over-interpreted; the comparisons
-that the data support are relative ones between pipelines evaluated on identical
-input. The wall-thickness study compares methods and how consistently they measure
-thickness; it does not validate clinical use. Without expert manual wall-thickness measurements,
-this work can claim an objective and locally resolved computational framework,
-but cannot establish that it can replace clinical measurement methods.
+Without an independent 3D reference, contour fidelity and agreement between
+reconstructions measure consistency, not anatomical accuracy. The unobserved
+geometry between slices also affects wall thickness, so absolute values remain
+dependent on the reconstruction prior. Expert manual thickness measurements
+are unavailable, and neither clinical use nor replacement of established
+measurement methods has been validated.
 
-Several further factors limit how widely these results can be applied, and the whole
-evaluation should be read as preliminary. The general evaluation uses held-out
-patients from ACDC and M\&Ms-2, whereas the regional analysis by disease group
-is limited to 30 ACDC test patients: 20 normal and 10 with
-HCM. This subset is far too small to support claims of
-clinical or pathological generalisation, and the HCM subgroup in
-particular can only suggest a pattern rather than support broad conclusions. The regional
-analysis carries a further dependency: each patient contributes seventeen
-segments, so the segment values are repeated measures within a patient rather
-than independent samples, and they are reported as a descriptive summary for
-that reason. The relative thickening
-figures deserve particular caution, because dividing a systolic by a diastolic
-thickness amplifies small differences in where the wall is sampled. The
-regional summaries also depend on the AHA orientation, while all mesh-based
-measurements depend on the inference grid. A finer grid or an alternative
-anatomical frame could shift the values. Only the heatmap in~\cref{fig:recon-thickness-3d} is scaled to the input segmentation; the tables
-report thickness measured directly on the meshes. The
-reconstruction additionally inherits the
-quality of the input segmentation, and the training data span more than one
-collection, so some differences between the acquisition sources are expected.
-Finally, the synthetic epicardium used during pre-training is constructed
-rather than measured. Fine-tuning on clinical data is intended to correct for
-this difference, but the synthetic shapes may still influence the output. A
-larger cohort, and ideally a dataset with genuine 3D ground truth, would be
-needed to confirm the results reported here.
+The general evaluation uses held-out ACDC and M\&Ms-2 patients, but the
+pathology analysis includes only 30 ACDC cases, 20 normal and 10 with HCM,
+limiting clinical generalisation. The seventeen segments from each patient are
+repeated measures, not independent samples. Relative thickening is sensitive
+to differences in wall sampling because ED thickness appears in the
+denominator. Larger cohorts and independent anatomical references are needed
+to confirm these findings.
 
-Reconstruction comparisons are bounded in the same way. The implicit
-fit and the SSM fit were chosen because their priors differ from each
-other and from the learned one, so the spread between the three bounds the
-influence of the prior; it does not identify which is closest to the anatomy.
-Contour fidelity cannot settle the question either, because it evaluates
-only the observed rings and not the geometry between them.
-The slice-removal criterion in~\cref{tab:slice-degradation} may favour a
-stable prior that responds weakly to the observations as much as a method that
-generalises well from them. Because the acquired stacks vary in length, the
-three slice-removal levels are also supported by different subsets of patients,
-and the most extensive removal level rests on the longest stacks alone.
-The comparison does not cover spline lofting, Poisson reconstruction, or other
-learned models. No controlled experiment tests the effect of removing
+Measurements depend on segmentation quality, AHA orientation, and inference-grid
+resolution, while acquisition differences across datasets may also affect the
+output. Only the heatmap in~\cref{fig:recon-thickness-3d} is scaled to the input
+segmentation; the tables report thickness measured directly on the meshes.
+The synthetic epicardium is constructed rather than measured and may still
+influence the output after clinical fine-tuning.
+
+Slice-removal stability~(\cref{tab:slice-degradation}) may reflect a prior that
+responds weakly to observations rather than better reconstruction. Removal
+levels also use different patient subsets, with the greatest removal limited
+to the longest stacks. Comparisons cover RBF and SSM fitting, not spline
+lofting, Poisson reconstruction, or other learned models. No ablations isolate
 synthetic pre-training, local conditioning, phase conditioning, or positive
-surface coupling. The
-comparison describes the model alongside two conventional alternatives, but
-cannot show which component produced its behaviour or whether the full
-architecture is necessary.
+surface coupling, so their individual contributions and the need for the full
+architecture remain untested.

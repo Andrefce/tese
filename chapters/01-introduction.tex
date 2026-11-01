@@ -76,58 +76,29 @@ Reconstructing the LV in three dimensions from segmented SAX contours is a
 long-standing problem in cardiac image analysis. A cine SAX stack typically
 resolves the ventricle at 1--2~mm within each slice, but consecutive
 slices lie 6--10~mm apart~\parencite{petitjean2011segmentationreview}.
-Segmentation therefore delineates the myocardium accurately where it is
-imaged, yet leaves the geometry between slices, including the curvature of the
-apex and the closure of the base, unobserved. In this thesis, contours of this
-kind are called sparse: they describe the ventricle in detail within each
-slice but only at widely spaced positions along its long axis. The contours alone cannot
-uniquely determine a continuous surface: many different
-surfaces can pass through the same contours, and the result depends on the
-assumptions used to fill the gaps.
+These contours are sparse: they describe the ventricle in detail within each
+slice but leave the geometry between slices, including the curvature of the
+apex and the closure of the base, unobserved. Many surfaces can pass through
+the same contours, so the reconstruction depends on the assumptions used to
+fill the gaps.
 
 Several families of methods supply these assumptions. Contour lofting joins
 corresponding points on adjacent slices and passes exactly through the
 observations, but produces piecewise-linear geometry between them~\parencite{petitjean2011segmentationreview}. Statistical shape models (SSMs)
 restrict the surface to the modes of variation of a training population~\parencite{cootes1995asm,frangi2002cardiacssm,heimann2009ssmreview}, which
-stabilises the reconstruction when observations are sparse but can draw
-atypical anatomy towards the population mean. Radial basis function (RBF)
+stabilises sparse reconstructions but can draw atypical anatomy towards the
+population mean. Radial basis function (RBF)
 interpolation defines the surface as the zero level set of a smooth function
 fitted to the contour points~\parencite{carr2001rbf}, trading regional detail
-for smoothness. More recently, implicit neural representations (INRs), which
-encode a shape as the set of points where a function computed by a neural
-network is zero~\parencite{deepsdf2019,occupancynetworks2019}, have been used
-to reconstruct cardiac surfaces from images with widely spaced slices and
-from sparse segmentations~\parencite{bras2026anisotropy,muffoletto2025nihc}.
-Closed LV surfaces from sparse contours are therefore not new in themselves; the
-approaches differ in the prior that fills the unobserved geometry, and hence
-in how far a measurement on that geometry reflects the data rather than the
-prior.
+for smoothness. Implicit neural representations (INRs) instead encode shapes
+as zero level sets of functions computed by neural networks~\parencite{deepsdf2019,occupancynetworks2019}
+and have been used to reconstruct cardiac surfaces from widely spaced images
+and sparse segmentations~\parencite{bras2026anisotropy,muffoletto2025nihc}.
+Closed LV surfaces from sparse contours are therefore not new; the approaches
+differ in the prior that fills the unobserved geometry and in how far
+measurements reflect the data rather than that prior.
 
-The difference matters most when the quantity of interest is myocardial wall
-thickness. Thickness is measured between two surfaces, so the endocardium and
-epicardium must be reconstructed as a consistent pair whose separation remains
-positive and spatially coherent; surfaces reconstructed independently may each
-be plausible and still intersect or collapse the wall between them~\parencite{bras2026anisotropy}. Priors are also often tied to a single cardiac
-phase, and a shape model built from diastolic anatomy cannot describe the
-contracted ventricle at ES without imposing a diastolic shape space on systolic
-observations. Moreover, a discrepancy of one or two millimetres between two
-reconstructions of the same contours is small relative to the cavity but
-substantial relative to the wall. Surface-distance and overlap metrics, the
-usual criteria for reconstruction quality~\parencite{taha2015metrics}, do not
-by themselves show how such discrepancies propagate into thickness
-measurements.
-
-Public data impose a further constraint. Benchmarks such as the Automated
-Cardiac Diagnosis Challenge (ACDC) and the second Multi-Centre, Multi-Vendor
-and Multi-Disease Cardiac Image Segmentation Challenge (M\&Ms-2) provide images and segmentation masks for individual slices~\parencite{bernard2018acdc,martinisla2023mnms2}, that is, label images in
-which each pixel is marked as cavity, myocardium, or background, rather than
-complete three-dimensional LV meshes, surfaces made of connected triangles.
-Without an independent three-dimensional reference, a learned model must be
-supervised with surfaces fitted to the same contours and assessed only through
-fidelity to the observed slices and agreement with alternative
-reconstructions.
-
-\begin{figure}[h]
+\begin{figure}[H]
 	\centering
 	\includegraphics[width=0.76\linewidth]{intro_pipeline_overview}
 	\vspace{2mm}
@@ -140,31 +111,46 @@ reconstructions.
 	\label{fig:intro-overview}
 \end{figure}
 
+The difference matters most for myocardial wall thickness. The endocardium and
+epicardium must form a consistent pair whose separation remains positive and
+spatially coherent; independently reconstructed surfaces may be plausible yet
+intersect or collapse the wall between them~\parencite{bras2026anisotropy}.
+Priors are also often tied to a single cardiac phase, so a shape model built
+from diastolic anatomy imposes a diastolic shape space on systolic observations.
+A discrepancy of one or two millimetres between reconstructions is small
+relative to the cavity but substantial relative to the wall. Surface-distance
+and overlap metrics, the usual criteria for reconstruction
+quality~\parencite{taha2015metrics}, do not by themselves show how these
+discrepancies propagate into thickness measurements.
+
+Public data impose a further constraint. Benchmarks such as the Automated
+Cardiac Diagnosis Challenge (ACDC) and the second Multi-Centre, Multi-Vendor
+and Multi-Disease Cardiac Image Segmentation Challenge (M\&Ms-2) provide images
+and segmentation masks for individual slices rather than complete
+three-dimensional LV meshes~\parencite{bernard2018acdc,martinisla2023mnms2}.
+Without an independent three-dimensional reference, a learned model must be
+supervised with surfaces fitted to the same contours and assessed through
+fidelity to the observed slices and agreement with alternative reconstructions.
+
 This thesis addresses the problem with a phase-conditioned INR, trained on
 synthetic LV geometries sampled from an SSM and on meshes derived from real
 cardiac MRI segmentations, as illustrated in~\cref{fig:intro-overview}.
-Rather than introducing a new representation, it adapts the implicit
-formulation to the constraints described above. The proposed model takes
-sparse contours as input and represents the endocardial and epicardial
-surfaces as continuous three-dimensional functions that can be queried
-anywhere, not only at the acquired slices. Conditioning on cardiac phase lets
-one model represent both ED and ES, which differ markedly in cavity size and
-wall thickness, and defining the epicardium through a positive offset from the
+It adapts the implicit formulation rather than introducing a new
+representation, taking sparse contours as input and representing both surfaces
+as continuous three-dimensional functions that can be queried beyond the
+acquired slices. Conditioning on cardiac phase lets one model represent both
+ED and ES, while defining the epicardium through a positive offset from the
 endocardium keeps the outer surface outside the inner one by construction.
 
 Because no independent reference exists, the evaluation is comparative. The
 reconstruction is assessed against the observed contours and against RBF and
-SSM reconstructions of the same contours, and slices are removed from the
-input to measure how much each reconstruction changes when fewer slices are
-available (its sensitivity to slice removal). Wall thickness is then measured
-on each geometry with several methods. This
-design separates the effect of the reconstruction prior from that of the
-measurement method, and asks not only whether the proposed model produces
-continuous surfaces, but whether the resulting geometry preserves quantities
-relevant to cardiac analysis. The aim is not to replace clinical
-interpretation, but to investigate whether continuous geometric
-representations can provide a more consistent basis for quantitative analysis
-of sparse cardiac MRI.
+SSM reconstructions of the same contours, with slices removed from the input to
+measure sensitivity to slice removal. Wall thickness is measured on each
+geometry with several methods, separating the effect of the reconstruction
+prior from that of the measurement method. The aim is not to replace clinical
+interpretation, but to investigate whether the resulting geometry preserves
+quantities relevant to cardiac analysis and provides a more consistent basis
+for quantitative analysis of sparse cardiac MRI.
 
 \section{Research Questions}
 \label{sec:research-questions}
@@ -206,10 +192,10 @@ SSM and clinical ED and ES segmentations from ACDC
 and M\&Ms-2. Both sources are converted into input contours and target
 surfaces in the same format, allowing synthetic pre-training and clinical
 fine-tuning without changing how the data are represented. The clinical
-surfaces are fitted to the observed contours and used to train the model;
+surfaces are fitted to the observed contours and used to train the proposed model;
 they are not independent three-dimensional anatomical ground truth.
 
-The model adapts established point-set and implicit-representation methods by
+The proposed model adapts established point-set and implicit-representation methods by
 summarising endocardial and epicardial contour evidence separately and
 combining a global shape description with local contour information. A
 cardiac-phase input allows one model to represent both ED and ES, while a

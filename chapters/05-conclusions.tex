@@ -6,53 +6,64 @@
 \label{ch:conclusions}
 
 \noindent
-This chapter closes the thesis. It summarises what was built and why, answers
-the three research questions of~\cref{sec:research-questions} on the evidence
-of~\cref{ch:results}, states the contributions, delimits the claims, and sets
-out the work that should follow.
+This chapter summarises the work and answers the three research questions
+of~\cref{sec:research-questions} on the evidence of~\cref{ch:results}.
+It then states the contributions, limitations, and directions for future work.
 
 \section{Summary of the Work}
 \label{sec:conclusion-summary}
 \noindent
-Sparse SAX cardiac MRI presents a geometric limitation.
-Each slice observes the LV finely, at an in-plane pixel size
-below 2~mm, but the slices lie several millimetres
-apart~\parencite{bernard2018acdc,kramer2020cmrprotocols}, so the
-three-dimensional wall on which clinical measurement depends is never observed
-directly and has to be inferred. That inference was treated as the learning of a
-continuous signed-distance representation~\parencite{deepsdf2019}. A
-phase-conditioned implicit model was pre-trained on synthetic shapes sampled
-from an SSM~\parencite{bai2015biventricularatlas} and fine-tuned on ED and ES
-surfaces fitted to ACDC~\parencite{bernard2018acdc} and
-M\&Ms-2~\parencite{martinisla2023mnms2} segmentations. The model reads the
-sparse contour rings through a global PointNet
-pathway~\parencite{qi2017pointnet} and a local feature
-grid~\parencite{peng2020convonet}, predicts the
-endocardial signed-distance field, and defines the epicardial field as that
-field minus a strictly positive, directly supervised offset, so the two surfaces
-cannot cross. Its output was compared with an RBF
-implicit fit~\parencite{carr2001rbf} and an SSM fit of the same rings, and
-myocardial wall thickness was measured on all three geometries with four
-local
-methods~\parencite{saito1994edt,jones2000laplace,yezzi2003thickness,shapira2008sdf},
-summarised across the AHA 17 segments~\parencite{cerqueira2002segmentation},
-and compared between normal and HCM~\parencite{ommen2020hcm} patients.
+Wall thickness is measured on the three-dimensional LV, but SAX cardiac MRI
+records separate slices with an in-plane pixel size below 2~mm and several
+millimetres between them~\parencite{bernard2018acdc,kramer2020cmrprotocols}.
+The wall between slices must therefore be reconstructed. A method was developed
+to recover both ventricular surfaces from these contours and measure wall
+thickness beyond the acquired slices.
+
+The proposed 3D reconstruction model represents the LV surfaces as continuous
+signed-distance fields~\parencite{deepsdf2019}. It was first pre-trained on
+synthetic shapes sampled from an SSM~\parencite{bai2015biventricularatlas}
+to learn the general ventricular form, then fine-tuned on ED and ES surfaces
+fitted to ACDC~\parencite{bernard2018acdc} and
+M\&Ms-2~\parencite{martinisla2023mnms2} segmentations to capture differences
+between patients and cardiac phases.
+
+The proposedmodel combines a global PointNet pathway~\parencite{qi2017pointnet},
+which summarises the overall shape, with a local feature
+grid~\parencite{peng2020convonet}, which retains nearby contour information.
+Cardiac phase is supplied as input so that one network reconstructs both ED
+and ES. The epicardial field is defined by subtracting a strictly positive
+learned offset from the predicted endocardial signed-distance field, preventing
+crossing in the continuous representation. The fields are then converted into
+meshes for measurement.
+
+The reconstruction was compared with an RBF implicit
+fit~\parencite{carr2001rbf} and an SSM fit to the same rings, examining contour
+fidelity, agreement between methods, and sensitivity to slice removal. Without
+an independent three-dimensional reference, these comparisons describe
+consistency rather than establish which surface is closest to the true anatomy.
+
+Myocardial wall thickness was measured on each geometry with four local
+methods~\parencite{saito1994edt,jones2000laplace,yezzi2003thickness,shapira2008sdf}.
+Comparisons across geometries and within the same geometry separated the
+effects of reconstruction and measurement. Surface maps and AHA
+17-segment summaries~\parencite{cerqueira2002segmentation} showed regional
+thickness, changes from ED to ES, and differences between normal and
+HCM~\parencite{ommen2020hcm} patients.
 
 \section{Answers to the Research Questions}
 \label{sec:conclusion-research-questions}
 \noindent
-\textbf{RQ1} asked how a reconstruction learned from synthetic and clinical
-geometry compares with RBF and SSM reconstructions of the same sparse contours.
-The model follows its input contours to within about one in-plane pixel
+\textbf{RQ1} compared the learned reconstruction with RBF and SSM fits to the
+same contours. The proposed model follows its input to within about one in-plane pixel
 (1.50~mm on the endocardium and 1.96~mm on the epicardium), lies closer to
-the RBF fit than to the SSM fit, and, unlike the SSM fit, keeps a similar
-contour distance on normal and HCM cases. The three methods agree on the cavity
-but not on the wall, and removing slices degrades all three by similar amounts.
-The learned reconstruction therefore performs comparably to conventional
-fitting and handles abnormal anatomy more evenly than the population model, but
-it is not more robust to slice removal.
+the RBF fit than to the SSM fit, and, unlike the SSM, keeps a similar contour
+distance on normal and HCM cases. The three methods agree on the cavity but
+not on the wall. The learned reconstruction performs comparably to conventional
+fitting and handles abnormal anatomy more evenly than the SSM, but is not more
+robust to slice removal, which degrades all three by similar amounts.
 
-\textbf{RQ2} asked whether a single phase-conditioned model can reconstruct
+\textbf{RQ2} asked whether the proposed phase-conditioned model can reconstruct
 paired endocardial and epicardial surfaces at ED and ES while maintaining a
 positive wall thickness. The answer is a qualified yes. One network
 reconstructs both phases, the epicardial field cannot cross the endocardial
@@ -78,27 +89,23 @@ than a diagnostic one.
 This work makes three contributions. First, a shared data pipeline combines
 synthetic SSM meshes with clinical ED and ES segmentations from two public
 datasets. It stores contour rings, surface samples, signed-distance targets,
-and wall-offset targets in one format, allowing the model to be pre-trained on
-population shapes and fine-tuned on patient data without changing how the data
-are represented. Second, the phase-conditioned model processes endocardial and
-epicardial contour information separately, combines a global shape summary
-with local contour information, and uses a supervised positive offset to keep
-the epicardial field outside the endocardial field. Third, the evaluation
-approach assesses how closely reconstructions follow the observed rings, how
-much reconstructions from different methods agree, and how results change
-when slices are removed. It also compares wall-thickness methods on the same
-geometry, then summarises thickness by AHA segment and compares patient
-groups. This evaluation approach can be applied to other networks.
+and wall-offset targets in one format for both pre-training and fine-tuning.
+Second, the model processes endocardial and epicardial contours separately,
+combines global shape and local contour information, and uses a supervised
+positive offset to keep the epicardial field outside the endocardial field.
+Third, an evaluation approach applicable to other networks assesses contour
+fidelity, agreement between reconstructions, and sensitivity to slice removal.
+It also compares thickness methods on the same geometry, with AHA summaries
+and patient-group comparisons.
 
 \section{Limitations}
 \label{sec:conclusion-limitations}
 \noindent
-The limitations discussed in~\cref{sec:threats} bound all of these answers.
-The most important is the absence of an independent 3D reference: the
-geometric results measure fidelity to the contours and agreement between
-methods, and the thickness results measure reproducibility rather than
-accuracy. The pathology cohort is small, and no ablation experiment isolates
-the contribution of individual model components.
+The limitations in~\cref{sec:threats} bound these answers. Without an independent
+3D reference, geometric results measure contour fidelity and agreement between
+methods, while thickness results measure reproducibility rather than accuracy.
+The pathology cohort is small, and no ablation experiment isolates the
+contribution of individual model components.
 
 \section{Future Work}
 \label{sec:conclusion-future-work}
@@ -112,23 +119,19 @@ second is a wider and fully matched comparison, adding spline
 lofting~\parencite{fuchs1977contours}, Poisson
 reconstruction~\parencite{kazhdan2006poisson} and learned
 alternatives~\parencite{occupancynetworks2019,muffoletto2025nihc} under the
-same patients, physical
-spacing, repair procedure and metrics, with error maps showing where
-reconstructions disagree at the apex, the base and the most curved parts of
-the wall. The
-third is a set of controlled tests that remove
+same patients, physical spacing, repair procedure and metrics, with error maps
+at the apex, base and most curved parts of the wall. Controlled tests should
+then remove
 synthetic pre-training, local conditioning, phase conditioning and the
-positive-offset coupling one at a time to show which components drive the
-model's behaviour. Adding pointwise separation and intersection checks on the
-extracted meshes would complete the answer to RQ2. Replacing the binary phase
-label with a continuous position in the cardiac cycle would then allow the
-representation to be tested for coherence in time as well as continuity in
-space.
+positive-offset coupling one at a time to isolate their contributions.
+Pointwise separation and intersection checks on extracted meshes would address
+the remaining geometric checks in RQ2. Replacing the binary phase label with a
+continuous position in the cardiac cycle would allow coherence in time to be
+tested alongside continuity in space.
 
-In sum, this thesis shows that a phase-conditioned implicit representation can
-turn a sparse SAX stack into closed, paired LV surfaces that honour the
-observed contours, thicken consistently between diastole and systole, and
-support locally resolved wall-thickness analysis. It also shows, through the
-disagreement between equally plausible reconstructions of the same rings, how
-much of the myocardial wall is still inferred rather than observed, and
-therefore how carefully any thickness derived from it must be read.
+In sum, the proposed model turns separated SAX contours into closed, paired LV
+surfaces that honour the observations, thicken consistently from diastole to
+systole, and support local wall-thickness analysis. Disagreement between
+equally plausible reconstructions nevertheless shows how much of the wall
+remains inferred rather than observed, and how carefully its thickness must be
+interpreted.

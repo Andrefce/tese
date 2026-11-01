@@ -4,7 +4,7 @@
 %  See thesis-build references at .github/skills/ista-tese-mestrado
 % ============================================================
 
-\documentclass[10pt, reqno, twoside, openright]{amsbook}
+\documentclass[11pt, reqno, twoside, openright]{amsbook}
 
 % --- Encoding & language -------------------------------------
 \usepackage{fontspec}
@@ -28,7 +28,7 @@
 \usepackage{chngcntr}
 \usepackage[hang]{footmisc}        % hanging footnotes (norm 2.1.xi)
 \setlength{\footnotemargin}{0.4cm} % 0.4cm hanging indent on wrapped note lines
-\renewcommand{\footnotelayout}{\fontsize{11}{13}\selectfont\singlespacing} % 11pt, single
+\renewcommand{\footnotelayout}{\fontsize{10}{12}\selectfont\singlespacing} % 10pt, single
 
 % --- Graphics & typography -----------------------------------
 \usepackage{graphicx}
@@ -69,6 +69,7 @@
   \renewcommand{\arraystretch}{1.15}%
 }
 \usepackage[expansion=false]{microtype}
+\setlength{\emergencystretch}{2em}
 % Body language is English; without this csquotes inherits babel's main
 % language (portuguese) and typesets bibliography titles with guillemets.
 \usepackage[style=american]{csquotes}
@@ -120,14 +121,14 @@
 
 % --- PDF metadata --------------------------------------------
 \hypersetup{
-  pdftitle    = {Title of the Thesis},          % TODO: thesis title
-  pdfauthor   = {Author Full Name},             % TODO: author
-  pdfsubject  = {Master's Thesis, ISTA-IUL},
-  pdfkeywords = {keyword1, keyword2, keyword3}, % TODO: keywords
+  pdftitle    = {Phase-Conditioned Implicit Neural Representations for Three-Dimensional Left Ventricular Reconstruction and Myocardial Wall Thickness Estimation},
+  pdfauthor   = {André Filipe Cabaço Eusébio},
+  pdfsubject  = {Master's Thesis, ISCTE-IUL},
+  pdfkeywords = {Medical machine learning; cardiac magnetic resonance; three-dimensional reconstruction; myocardial wall thickness; implicit neural representations; cardiac modelling},
 }
 
 % --- Heading styles (matched to the ISCTE Word template) -----
-%  Body: Times New Roman 12pt justified, first-line indent 0.7cm.
+%  Body: Arial 11pt justified, first-line indent 0.7cm.
 %  Section 14pt bold, Subsection 12pt bold (left-aligned).
 %  Chapter: "CHAPTER N" 12pt caps centred + 18pt bold centred title.
 \setlength{\parindent}{0.7cm}
@@ -138,6 +139,8 @@
   \def\subsection{\@startsection{subsection}{2}%
     \z@{.5\linespacing\@plus.7\linespacing}{.25\linespacing}%
     {\normalfont\fontsize{12}{14.4}\selectfont\bfseries\flushleft}}
+  % Reserve space for two-digit figure numbers in the list of figures.
+  \def\l@figure{\@tocline{0}{3pt plus2pt}{0pt}{2.5pc}{}}
 \makeatother
 
 \titleformat{\chapter}[display]
